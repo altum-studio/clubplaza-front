@@ -1,0 +1,180 @@
+// pages/RegisterPage.tsx
+// Pantalla 1 · Alta de socio (/registro) — VARIANTE A del wireflow (formulario único).
+// Header verde con chevron + wordmark, título "Creá tu cuenta", formulario con
+// validación en tiempo real (react-hook-form + zod) y consentimiento Ley 25.326.
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ChevronLeft, User, Mail, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
+import { Logo } from '@/components/brand/Logo';
+import { Button } from '@/components/ui/app-button';
+import { TextField } from '@/components/ui/TextField';
+import { useAuth } from '@/hooks/useAuth';
+import { registerSchema, type RegisterSchema } from '@/lib/schemas';
+
+export default function RegisterPage() {
+  const navigate = useNavigate();
+  const { register: registerSocio } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterSchema>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onTouched', // validación en tiempo real tras el primer blur
+    defaultValues: {
+      nombre: '',
+      dni: '',
+      fecha_nacimiento: '',
+      email: '',
+      celular: '',
+      terminos: false,
+    },
+  });
+
+  const terminos = watch('terminos');
+
+  const onSubmit = async (data: RegisterSchema) => {
+    // TODO BACKEND: supabase.auth.signUp() + supabase.from('socios').insert()
+    //   con el timestamp de aceptación de términos. Por ahora simulamos el alta.
+    await registerSocio({
+      nombre: data.nombre,
+      dni: data.dni,
+      fecha_nacimiento: data.fecha_nacimiento,
+      email: data.email,
+      celular: data.celular,
+      terminos: data.terminos,
+    });
+    navigate('/credencial', { replace: true });
+  };
+
+  return (
+    <AppCanvas>
+      {/* Header verde */}
+      <header
+        className={`${STATUS_PAD} rounded-b-[18px] bg-brand px-4 pb-[18px]`}
+      >
+        <div className="mb-3.5 flex items-center gap-2.5">
+          <button
+            type="button"
+            aria-label="Volver"
+            onClick={() => navigate(-1)}
+            className="-ml-1 flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10"
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <Logo size={15} onGreen iso={false} />
+        </div>
+        <h1 className="text-[22px] font-extrabold text-white">Creá tu cuenta</h1>
+        <p className="text-[12.5px] font-normal text-white/85">
+          Es gratis y toma menos de un minuto
+        </p>
+      </header>
+
+      {/* Formulario */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-1 flex-col gap-3 px-4 pb-4 pt-[18px]"
+        noValidate
+      >
+        <TextField
+          label="NOMBRE Y APELLIDO"
+          placeholder="Tu nombre completo"
+          autoComplete="name"
+          icon={<User size={16} />}
+          error={errors.nombre?.message}
+          {...register('nombre')}
+        />
+        <div className="flex gap-3">
+          <TextField
+            label="DNI"
+            placeholder="30000000"
+            inputMode="numeric"
+            error={errors.dni?.message}
+            {...register('dni')}
+          />
+          <TextField
+            label="FECHA DE NAC."
+            placeholder="DD / MM / AAAA"
+            inputMode="numeric"
+            error={errors.fecha_nacimiento?.message}
+            {...register('fecha_nacimiento')}
+          />
+        </div>
+        <TextField
+          label="EMAIL"
+          type="email"
+          placeholder="vos@email.com"
+          autoComplete="email"
+          icon={<Mail size={16} />}
+          error={errors.email?.message}
+          {...register('email')}
+        />
+        <TextField
+          label="CELULAR"
+          type="tel"
+          placeholder="+54 9 11 1234 5678"
+          autoComplete="tel"
+          icon={<Phone size={16} />}
+          error={errors.celular?.message}
+          {...register('celular')}
+        />
+
+        {/* Consentimiento Ley 25.326 */}
+        <div className="mt-0.5">
+          <label className="flex cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={terminos}
+              onChange={(e) => setValue('terminos', e.target.checked, { shouldValidate: true })}
+            />
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-[1.5px] ${
+                terminos ? 'border-brand bg-brand' : 'border-line bg-white'
+              }`}
+            >
+              {terminos && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 6.5l2.5 2.5 4.5-5" />
+                </svg>
+              )}
+            </span>
+            <span className="text-[10.5px] leading-[1.5] text-graytext">
+              Acepto los <span className="font-semibold text-brand">Términos</span> y el tratamiento
+              de mis datos por Green Plaza (Ley 25.326).
+            </span>
+          </label>
+          {errors.terminos && (
+            <p className="ml-7 mt-1 text-[11px] font-medium text-[#EF4444]">
+              {errors.terminos.message}
+            </p>
+          )}
+        </div>
+
+        {/* CTA + link */}
+        <div className="mt-auto pt-3.5">
+          <Button type="submit" disabled={isSubmitting} className="mb-3">
+            {isSubmitting ? 'Creando tu cuenta…' : 'Crear mi cuenta'}
+          </Button>
+          <div className="pb-4 text-center">
+            <span className="text-xs text-graytext">¿Ya sos socio? </span>
+            <button
+              type="button"
+              onClick={() => navigate('/credencial')}
+              className="text-xs font-bold text-brand"
+            >
+              Ingresá
+            </button>
+          </div>
+        </div>
+      </form>
+    </AppCanvas>
+  );
+}
