@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/tomas/**)",
+      "Bash(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com)"
+    ]
+  }
+}
