@@ -27,7 +27,7 @@ export default function SplashPage() {
     <AppCanvas dark bg="#0c100e">
       {/* Foto del shopping */}
       <img
-        src="/shopping.jpg"
+        src={`${import.meta.env.BASE_URL}shopping.jpg`}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
