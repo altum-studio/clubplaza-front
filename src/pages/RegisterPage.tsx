@@ -14,6 +14,31 @@ import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
 import { registerSchema, type RegisterSchema } from '@/lib/schemas';
 
+// Limita un grupo de 2 dígitos a un rango [1, max]. Solo actúa cuando ya hay
+// 2 dígitos (mientras se escribe el primero no toca nada).
+function clampParte(parte: string, max: number): string {
+  if (parte.length < 2) return parte;
+  const n = Math.min(Math.max(parseInt(parte, 10) || 1, 1), max);
+  return String(n).padStart(2, '0');
+}
+
+// Formatea la entrada como DD/MM/AAAA insertando las barras solo (sin que el
+// usuario las escriba) y acotando día (01–31) y mes (01–12) al tipear.
+// `isDeleting` evita re-agregar la barra final al borrar, para que el backspace
+// no quede trabado.
+function formatFechaNac(value: string, isDeleting = false): string {
+  const d = value.replace(/\D/g, '').slice(0, 8); // DDMMAAAA
+  const dd = clampParte(d.slice(0, 2), 31);
+  const mm = clampParte(d.slice(2, 4), 12);
+  const aaaa = d.slice(4);
+  let out: string;
+  if (d.length >= 4) out = `${dd}/${mm}/${aaaa}`;
+  else if (d.length >= 2) out = `${dd}/${d.slice(2)}`;
+  else out = dd;
+  if (isDeleting && out.endsWith('/')) out = out.slice(0, -1);
+  return out;
+}
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register: registerSocio } = useAuth();
@@ -93,7 +118,7 @@ export default function RegisterPage() {
         <div className="flex gap-3">
           <TextField
             label="DNI"
-            placeholder="30000000"
+            placeholder="00000000"
             inputMode="numeric"
             error={errors.dni?.message}
             {...register('dni')}
@@ -102,8 +127,14 @@ export default function RegisterPage() {
             label="FECHA DE NAC."
             placeholder="DD / MM / AAAA"
             inputMode="numeric"
+            maxLength={10}
             error={errors.fecha_nacimiento?.message}
             {...register('fecha_nacimiento')}
+            onChange={(e) => {
+              const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
+              e.target.value = formatFechaNac(e.target.value, isDeleting);
+              register('fecha_nacimiento').onChange(e);
+            }}
           />
         </div>
         <TextField
@@ -118,7 +149,7 @@ export default function RegisterPage() {
         <TextField
           label="CELULAR"
           type="tel"
-          placeholder="+54 9 11 1234 5678"
+          placeholder="11 1234 5678"
           autoComplete="tel"
           icon={<Phone size={16} />}
           error={errors.celular?.message}

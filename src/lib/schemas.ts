@@ -22,10 +22,22 @@ export const registerSchema = z.object({
     .string()
     .min(1, 'Ingresá tu fecha de nacimiento')
     .refine(esFechaValida, 'Fecha inválida (DD/MM/AAAA)'),
-  email: z.string().email('Email inválido'),
+  // .email() de zod es permisivo (acepta "a@b" sin dominio completo). El refine
+  // extra exige usuario@dominio.tld con un TLD de al menos 2 letras (ej: .com).
+  email: z
+    .string()
+    .min(1, 'Ingresá tu email')
+    .email('Email inválido')
+    .refine((v) => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim()), {
+      message: 'Email inválido (ej: nombre@correo.com)',
+    }),
+  // El +54 es opcional: validamos sobre los dígitos (8 a 13), aceptando
+  // espacios, guiones y un prefijo internacional opcional.
   celular: z
     .string()
-    .regex(/^\+54\s?9?\s?\d{2,4}\s?\d{6,8}$/, 'Celular inválido (ej: +54 9 11 1234 5678)'),
+    .refine((v) => /^\d{8,13}$/.test(v.replace(/[\s()+-]/g, '')), {
+      message: 'Celular inválido (ej: 11 1234 5678)',
+    }),
   // boolean + refine (en vez de literal(true)) para que el tipo sea `boolean`
   // y juegue bien con react-hook-form. Valida lo mismo: debe estar en true.
   terminos: z.boolean().refine((v) => v === true, {
