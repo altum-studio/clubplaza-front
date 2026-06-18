@@ -74,9 +74,9 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
   return (
     <div className="mb-3">
       <div className="relative -mx-4">
-        {/* Degradados laterales: las tarjetas se funden en los bordes */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-screen to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-screen to-transparent" />
+        {/* Degradados laterales: las tarjetas se funden en los bordes (sutil) */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-screen to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-screen to-transparent" />
 
         {/* Scroller con snap centrado */}
         <div

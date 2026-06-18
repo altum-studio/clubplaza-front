@@ -6,9 +6,8 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, Search, ChevronDown, X } from 'lucide-react';
-import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
-import { Logo } from '@/components/brand/Logo';
+import { Search, ChevronDown, X } from 'lucide-react';
+import { AppCanvas } from '@/components/ui/AppCanvas';
 import { Button } from '@/components/ui/app-button';
 import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
@@ -16,7 +15,6 @@ import { BenefitCarousel } from '@/components/benefits/BenefitCarousel';
 import { CredentialSheet } from '@/components/credential/CredentialSheet';
 import { BenefitCardSkeleton, ErrorState, Skeleton } from '@/components/feedback/States';
 import { usePromos } from '@/hooks/usePromos';
-import { useSocio } from '@/hooks/useSocio';
 import { useDragSheet } from '@/hooks/useDragSheet';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
 import type { Categoria } from '@/types';
@@ -24,14 +22,10 @@ import type { Categoria } from '@/types';
 export default function HomePage() {
   const navigate = useNavigate();
   const { promos, loading, error } = usePromos();
-  const { socio } = useSocio();
   const [rubro, setRubro] = useState<Categoria | 'todos'>('todos');
   const [dia, setDia] = useState<DiaFiltro>('todos');
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-
-  // Primer nombre para el saludo (ej: "María González" → "María").
-  const primerNombre = socio?.nombre?.trim().split(/\s+/)[0] ?? '';
 
   // Credencial como panel arrastrable (top sheet) que se superpone al home.
   const sheet = useDragSheet();
@@ -71,43 +65,11 @@ export default function HomePage() {
   return (
     <AppCanvas>
       {/* Header verde con esquinas inferiores redondeadas */}
-      <header className={`${STATUS_PAD} rounded-b-[26px] bg-brand px-4 pb-2`}>
-        {/* Arriba: saludo + acceso a la credencial */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Saludo */}
-          <div className="min-w-0">
-            <p className="mb-1 text-[15px] font-semibold text-white">
-              Hola de nuevo{primerNombre ? `, ${primerNombre}` : ''}
-            </p>
-            <Logo size={19} onGreen iso={false} />
-          </div>
-
-          {/* Mi credencial */}
-          <button
-            type="button"
-            onClick={() => sheet.setOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-white/15 py-1.5 pl-2 pr-3 text-white hover:bg-white/25"
-          >
-            <QrCode size={16} />
-            <span className="text-xs font-semibold">Mi credencial</span>
-          </button>
-        </div>
-
-        {/* Abajo del todo: barra para arrastrar y bajar la credencial (o tap) */}
-        <button
-          type="button"
-          {...sheet.handleProps}
-          onClick={sheet.toggle}
-          aria-label="Bajar mi credencial"
-          className="mx-auto mt-2 flex touch-none flex-col items-center gap-0.5 text-white/75 hover:text-white"
-        >
-          <span className="block h-1 w-9 rounded-full bg-white/50" />
-          <ChevronDown size={18} className="animate-bounce" />
-        </button>
-      </header>
-
-      {/* Cuerpo */}
-      <div className="flex-1 overflow-y-auto px-4 pb-3 pt-4">
+      {/* Cuerpo (deja arriba el lugar del panel de credencial colapsado) */}
+      <div
+        className="flex-1 overflow-y-auto px-4 pb-3 pt-4"
+        style={{ paddingTop: sheet.collapsedH + 16 }}
+      >
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : (

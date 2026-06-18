@@ -1,9 +1,9 @@
 // components/credential/CredentialContent.tsx
-// Contenido visual de la credencial (logo + QR + código + instrucción).
-// Lo comparten la ruta /credencial y el panel arrastrable del home.
+// Cuerpo de la credencial (nombre + QR + código + instrucción). El encabezado
+// (logo o saludo) lo pone cada contenedor: la ruta /credencial usa el logo,
+// el panel del home usa el saludo. Se comparte el QR/código para no duplicar.
 
 import { QRCodeSVG } from 'qrcode.react';
-import { Logo } from '@/components/brand/Logo';
 import { useSocio } from '@/hooks/useSocio';
 
 export const CRED_GRADIENT = 'linear-gradient(160deg, #23753a 0%, #17502a 100%)';
@@ -22,12 +22,7 @@ export function CredentialContent() {
 
   return (
     <>
-      {/* Marca centrada, ISO arriba */}
-      <div className="mb-2 flex justify-center">
-        <Logo size={26} onGreen stacked />
-      </div>
-
-      {/* Centro: credencial */}
+      {/* Centro: QR + datos */}
       <div className="flex flex-1 flex-col items-center justify-center">
         <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[1px] text-white/70">
           Credencial de socio
@@ -56,7 +51,7 @@ export function CredentialContent() {
       </div>
 
       {/* Pie: instrucción */}
-      <div className="mb-3 rounded-xl bg-white/12 px-3.5 py-3 text-center">
+      <div className="rounded-xl bg-white/12 px-3.5 py-3 text-center">
         <p className="text-[11.5px] font-medium leading-snug text-white/90">
           Mostrá esta pantalla en el local junto a tu DNI
         </p>
