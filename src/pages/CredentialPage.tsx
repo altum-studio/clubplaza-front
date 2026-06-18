@@ -3,22 +3,22 @@
 // Carnet verde full-screen con degradado, QR real (qrcode.react) del token del
 // socio y código GP-XXXX-XXXX en monospace. Ruta protegida, sin bottom nav.
 
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Logo } from '@/components/brand/Logo';
 import { useSocio } from '@/hooks/useSocio';
-import { useAuth } from '@/hooks/useAuth';
+import { useVerticalSwipe } from '@/hooks/useVerticalSwipe';
 
 const GRADIENT = 'linear-gradient(160deg, #23753a 0%, #17502a 100%)';
 
 export default function CredentialPage() {
   const navigate = useNavigate();
   const { socio, loading } = useSocio();
-  const { logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Deslizar hacia arriba esconde la credencial y vuelve al home.
+  const swipe = useVerticalSwipe({ onSwipeUp: () => navigate('/beneficios') });
 
   if (loading) {
     return (
@@ -36,42 +36,14 @@ export default function CredentialPage() {
   return (
     <AppCanvas dark bg="#17502a">
       <div
+        {...swipe}
         className={`${STATUS_PAD} flex flex-1 flex-col px-[22px] pb-[max(env(safe-area-inset-bottom),30px)]`}
         style={{ background: GRADIENT }}
       >
-        {/* Top: logo + opciones */}
-        <div className="relative mb-1 flex items-center justify-between">
-          <Logo size={16} onGreen />
-          <button
-            type="button"
-            aria-label="Opciones de la credencial"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:bg-white/10"
-          >
-            <ChevronDown size={18} />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-10 z-10 w-48 overflow-hidden rounded-xl bg-white text-ink shadow-xl">
-              <button
-                type="button"
-                onClick={() => navigate('/beneficios')}
-                className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-fill"
-              >
-                Ver mis beneficios
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await logout();
-                  navigate('/registro', { replace: true });
-                }}
-                className="block w-full border-t border-line-soft px-4 py-3 text-left text-sm font-medium text-[#EF4444] hover:bg-fill"
-              >
-                Cerrar sesión
-              </button>
-            </div>
-          )}
+        {/* Top: marca centrada, ISO arriba (el margen del notch lo da STATUS_PAD).
+            El menú / cierre de sesión se reubica más adelante. */}
+        <div className="mb-2 flex justify-center">
+          <Logo size={26} onGreen stacked />
         </div>
 
         {/* Centro: credencial */}
@@ -103,11 +75,22 @@ export default function CredentialPage() {
         </div>
 
         {/* Pie: instrucción */}
-        <div className="rounded-xl bg-white/12 px-3.5 py-3 text-center">
+        <div className="mb-3 rounded-xl bg-white/12 px-3.5 py-3 text-center">
           <p className="text-[11.5px] font-medium leading-snug text-white/90">
             Mostrá esta pantalla en el local junto a tu DNI
           </p>
         </div>
+
+        {/* Grabber al pie: deslizar hacia arriba para ocultar la credencial */}
+        <button
+          type="button"
+          onClick={() => navigate('/beneficios')}
+          aria-label="Volver al inicio"
+          className="mx-auto flex flex-col items-center gap-1 text-white/75 hover:text-white"
+        >
+          <ChevronUp size={18} className="animate-bounce" />
+          <span className="block h-1 w-9 rounded-full bg-white/40" />
+        </button>
       </div>
     </AppCanvas>
   );

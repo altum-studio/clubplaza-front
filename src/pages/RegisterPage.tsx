@@ -5,7 +5,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronLeft, User, Mail, Phone } from 'lucide-react';
+import { ChevronLeft, User, Mail, Phone, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Logo } from '@/components/brand/Logo';
@@ -58,6 +58,7 @@ export default function RegisterPage() {
       fecha_nacimiento: '',
       email: '',
       celular: '',
+      password: '',
       terminos: false,
     },
   });
@@ -73,9 +74,10 @@ export default function RegisterPage() {
       fecha_nacimiento: data.fecha_nacimiento,
       email: data.email,
       celular: data.celular,
+      password: data.password,
       terminos: data.terminos,
     });
-    navigate('/credencial', { replace: true });
+    navigate('/beneficios', { replace: true });
   };
 
   return (
@@ -138,6 +140,15 @@ export default function RegisterPage() {
           />
         </div>
         <TextField
+          label="CELULAR"
+          type="tel"
+          placeholder="11 1234 5678"
+          autoComplete="tel"
+          icon={<Phone size={16} />}
+          error={errors.celular?.message}
+          {...register('celular')}
+        />
+        <TextField
           label="EMAIL"
           type="email"
           placeholder="vos@email.com"
@@ -147,13 +158,13 @@ export default function RegisterPage() {
           {...register('email')}
         />
         <TextField
-          label="CELULAR"
-          type="tel"
-          placeholder="11 1234 5678"
-          autoComplete="tel"
-          icon={<Phone size={16} />}
-          error={errors.celular?.message}
-          {...register('celular')}
+          label="CONTRASEÑA"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          autoComplete="new-password"
+          icon={<Lock size={16} />}
+          error={errors.password?.message}
+          {...register('password')}
         />
 
         {/* Consentimiento Ley 25.326 */}
@@ -198,7 +209,7 @@ export default function RegisterPage() {
             <span className="text-xs text-graytext">¿Ya sos socio? </span>
             <button
               type="button"
-              onClick={() => navigate('/credencial')}
+              onClick={() => navigate('/ingresar')}
               className="text-xs font-bold text-brand"
             >
               Ingresá

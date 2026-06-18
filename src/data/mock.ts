@@ -16,6 +16,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-07-15',
+    dias: [1, 2, 3, 4], // lunes a jueves
     como_usar: [
       'Mostrá tu credencial digital en la caja',
       'El local valida tu credencial y tu DNI',
@@ -34,6 +35,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-06-30',
+    dias: [0, 1, 2, 3, 4, 5, 6], // todos los días
     como_usar: [
       'Mostrá tu credencial digital al vendedor',
       'Se aplica el 20% sobre el total de la compra',
@@ -51,6 +53,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-08-31',
+    dias: [1, 2, 3, 4, 5], // días de semana
     como_usar: ['Mostrá tu credencial digital en la caja', 'Aplican el 15% sobre productos seleccionados'],
     es_mundialista: false,
     activo: true,
@@ -65,6 +68,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-07-31',
+    dias: [0, 1, 2, 3, 4, 5, 6], // todos los días
     como_usar: ['Mostrá tu credencial al pagar', 'Elegí 3 cuotas sin interés en la terminal'],
     es_mundialista: false,
     activo: true,
@@ -79,6 +83,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-06-30',
+    dias: [5, 6, 0], // fin de semana (vie/sáb/dom)
     como_usar: ['Mostrá tu credencial en la caja', 'Aplican el 25% sobre productos de deco'],
     es_mundialista: false,
     activo: true,
@@ -93,6 +98,7 @@ export const MOCK_PROMOS: Promo[] = [
     imagen_url: '',
     vigente_desde: '2026-06-01',
     vigente_hasta: '2026-07-15',
+    dias: [0, 1, 2, 3, 4, 5, 6], // todos los días
     como_usar: ['Mostrá tu credencial en el mostrador', 'Válido para café de especialidad'],
     es_mundialista: false,
     activo: true,

@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Button } from '@/components/ui/app-button';
+import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
 import { BenefitBadge } from '@/components/benefits/BenefitBadge';
 import { BenefitImage } from '@/components/benefits/BenefitImage';
 import { ErrorState, Skeleton } from '@/components/feedback/States';
@@ -115,13 +116,10 @@ export default function BenefitDetailPage() {
           aria-label="Compartir por WhatsApp"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border-[1.5px] border-brand text-brand"
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border-[1.5px] border-wa text-wa"
           onClick={(e) => e.preventDefault() /* TODO: URL real del canal */}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 3a7 7 0 00-6 10.5L3 17l3.7-1A7 7 0 1010 3z" />
-            <path d="M7.5 7.8c.2 2 1.7 3.5 3.7 3.7.6.05 1-.5 1.1-.9l-1.4-.7-.7.6c-.7-.3-1.3-.9-1.6-1.6l.6-.7-.7-1.4c-.4.1-.95.5-.9 1.1z" />
-          </svg>
+          <WhatsAppGlyph size={22} />
         </a>
         <Button onClick={() => navigate('/credencial')}>Ver mi credencial</Button>
       </div>

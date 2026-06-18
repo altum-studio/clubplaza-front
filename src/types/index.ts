@@ -33,6 +33,9 @@ export interface Promo {
   imagen_url: string;
   vigente_desde: string; // ISO date
   vigente_hasta: string; // ISO date
+  // Días de la semana en que aplica el beneficio (0=Domingo … 6=Sábado).
+  // TODO BACKEND: agregar esta columna a la tabla `promos` (ej: int[] o jsonb).
+  dias: number[];
   como_usar: string[]; // array de pasos
   es_mundialista: boolean;
   activo: boolean;
@@ -46,12 +49,15 @@ export interface Local {
   categoria: string;
 }
 
-// Datos del formulario de alta (deben coincidir con la tabla `socios`)
+// Datos del formulario de alta (los campos de socio deben coincidir con la tabla
+// `socios`; `password` es la excepción: se usa para supabase.auth.signUp(), no
+// se persiste en la tabla).
 export interface RegisterFormData {
   nombre: string;
   dni: string;
   fecha_nacimiento: string; // DD/MM/AAAA en el form, ISO al enviar
   email: string;
   celular: string;
+  password: string;
   terminos: boolean;
 }

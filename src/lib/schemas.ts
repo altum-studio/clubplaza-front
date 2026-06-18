@@ -38,6 +38,8 @@ export const registerSchema = z.object({
     .refine((v) => /^\d{8,13}$/.test(v.replace(/[\s()+-]/g, '')), {
       message: 'Celular inválido (ej: 11 1234 5678)',
     }),
+  // La contraseña no se guarda en la tabla `socios`: va a supabase.auth.signUp().
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   // boolean + refine (en vez de literal(true)) para que el tipo sea `boolean`
   // y juegue bien con react-hook-form. Valida lo mismo: debe estar en true.
   terminos: z.boolean().refine((v) => v === true, {
@@ -46,3 +48,17 @@ export const registerSchema = z.object({
 });
 
 export type RegisterSchema = z.infer<typeof registerSchema>;
+
+// Login de socio existente (email + contraseña). Mismo criterio de email que el alta.
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Ingresá tu email')
+    .email('Email inválido')
+    .refine((v) => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim()), {
+      message: 'Email inválido (ej: nombre@correo.com)',
+    }),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+});
+
+export type LoginSchema = z.infer<typeof loginSchema>;

@@ -5,6 +5,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import SplashPage from '@/pages/SplashPage'
 import RegisterPage from '@/pages/RegisterPage'
+import LoginPage from '@/pages/LoginPage'
 import HomePage from '@/pages/HomePage'
 import BenefitDetailPage from '@/pages/BenefitDetailPage'
 import CredentialPage from '@/pages/CredentialPage'
@@ -16,6 +17,7 @@ function App() {
       {/* Públicas */}
       <Route path="/" element={<SplashPage />} />
       <Route path="/registro" element={<RegisterPage />} />
+      <Route path="/ingresar" element={<LoginPage />} />
       <Route path="/beneficios" element={<HomePage />} />
       <Route path="/beneficios/:id" element={<BenefitDetailPage />} />
 

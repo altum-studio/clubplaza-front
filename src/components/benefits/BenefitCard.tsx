@@ -7,6 +7,7 @@ import type { Promo } from '@/types';
 import { labelCategoria } from '@/lib/categorias';
 import { BenefitBadge } from './BenefitBadge';
 import { BenefitImage } from './BenefitImage';
+import { LocalLogo } from './LocalLogo';
 
 export function BenefitCard({ promo }: { promo: Promo }) {
   return (
@@ -25,14 +26,21 @@ export function BenefitCard({ promo }: { promo: Promo }) {
         <span className="absolute left-2 top-2">
           <BenefitBadge>{labelCategoria(promo.categoria)}</BenefitBadge>
         </span>
+        {/* Logo del local montado en el borde inferior de la imagen */}
+        <LocalLogo
+          src={promo.local_logo_url}
+          name={promo.local_nombre}
+          size={34}
+          className="absolute left-2.5 top-[88px] -translate-y-1/2 shadow"
+        />
       </div>
-      <div className="px-2.5 pb-3 pt-2.5">
-        <div className="mb-1 truncate text-[17px] font-extrabold leading-none text-brand">
+      <div className="px-2.5 pb-3 pt-2">
+        <div className="flex min-h-[20px] items-center pl-[34px]">
+          <span className="truncate text-[11px] font-medium text-mute">{promo.local_nombre}</span>
+        </div>
+        <div className="mt-1 truncate text-[17px] font-extrabold leading-none text-brand">
           {promo.titulo}
         </div>
-        <p className="line-clamp-2 text-[11px] font-normal leading-snug text-mute">
-          {promo.local_nombre}
-        </p>
       </div>
     </Link>
   );
