@@ -1,23 +1,18 @@
 // hooks/useDragSheet.ts
-// Panel verde que se EXPANDE desde arriba: colapsado muestra solo su encabezado
-// (el saludo del home); al arrastrar la barra hacia abajo crece su altura
-// siguiendo el dedo (1:1) y revela la credencial. Es UN mismo elemento.
+// Panel verde fijo que se REVELA desde arriba: el contenido no se mueve ni
+// cambia de tamaño; lo que cambia es cuánto se ve (clip). Colapsado se ve solo
+// el encabezado (saludo); al arrastrar la barra hacia abajo se revela el resto
+// siguiendo el dedo (1:1). Como no toca el layout, el gesto es fluido.
 
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type RefObject,
-  type TouchEvent,
-} from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject, type TouchEvent } from 'react';
 
 export interface DragSheet {
   panelRef: RefObject<HTMLDivElement | null>;
   headerRef: RefObject<HTMLDivElement | null>;
   collapsedH: number;
   fullH: number;
-  style: CSSProperties;
+  revealed: number; // px visibles desde arriba (collapsedH … fullH)
+  dragging: boolean;
   open: boolean;
   setOpen: (v: boolean) => void;
   toggle: () => void;
@@ -31,15 +26,14 @@ export interface DragSheet {
 export function useDragSheet(): DragSheet {
   const panelRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const [collapsedH, setCollapsedH] = useState(140); // alto del encabezado (medido)
-  const [fullH, setFullH] = useState(0); // alto del marco (pantalla)
+  const [collapsedH, setCollapsedH] = useState(140);
+  const [fullH, setFullH] = useState(0);
   const [open, setOpen] = useState(false);
-  const [dragH, setDragH] = useState<number | null>(null); // alto en vivo durante el arrastre
+  const [dragR, setDragR] = useState<number | null>(null); // revelado en vivo durante el arrastre
   const info = useRef<{ startY: number; base: number; moved: boolean } | null>(null);
-  const dragHRef = useRef(0);
+  const dragRRef = useRef(0);
   const touchedAt = useRef(0);
 
-  // Medir el alto colapsado (encabezado) y el alto total (marco contenedor).
   useLayoutEffect(() => {
     const measure = () => {
       if (headerRef.current) setCollapsedH(headerRef.current.offsetHeight);
@@ -54,8 +48,8 @@ export function useDragSheet(): DragSheet {
   const onTouchStart = (e: TouchEvent) => {
     const base = open ? fullH : collapsedH;
     info.current = { startY: e.touches[0].clientY, base, moved: false };
-    dragHRef.current = base;
-    setDragH(base);
+    dragRRef.current = base;
+    setDragR(base);
   };
 
   const onTouchMove = (e: TouchEvent) => {
@@ -64,8 +58,8 @@ export function useDragSheet(): DragSheet {
     const dy = e.touches[0].clientY - d.startY;
     if (Math.abs(dy) > 4) d.moved = true;
     const next = Math.min(fullH, Math.max(collapsedH, d.base + dy)); // sigue el dedo, acotado
-    dragHRef.current = next;
-    setDragH(next);
+    dragRRef.current = next;
+    setDragR(next);
   };
 
   const onTouchEnd = () => {
@@ -74,33 +68,28 @@ export function useDragSheet(): DragSheet {
     if (!d) return;
     touchedAt.current = Date.now();
     if (!d.moved) {
-      setDragH(null);
+      setDragR(null);
       setOpen(!open); // tap = alterna
       return;
     }
-    setOpen(dragHRef.current > (collapsedH + fullH) / 2); // snap por la posición final
-    setDragH(null);
+    setOpen(dragRRef.current > (collapsedH + fullH) / 2); // snap por la posición final
+    setDragR(null);
   };
 
-  // Para mouse/desktop. Ignora el click sintético posterior al touch.
   const toggle = () => {
-    if (Date.now() - touchedAt.current < 500) return;
+    if (Date.now() - touchedAt.current < 500) return; // ignora el click sintético del touch
     setOpen(!open);
   };
 
-  const height = dragH != null ? dragH : open ? fullH : collapsedH;
-  const style: CSSProperties = {
-    height: height || collapsedH,
-    transition: dragH != null ? 'none' : 'height 0.34s cubic-bezier(0.22, 1, 0.36, 1)',
-    willChange: 'height',
-  };
+  const revealed = dragR != null ? dragR : open ? fullH || collapsedH : collapsedH;
 
   return {
     panelRef,
     headerRef,
     collapsedH,
     fullH,
-    style,
+    revealed,
+    dragging: dragR != null,
     open,
     setOpen,
     toggle,

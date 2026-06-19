@@ -26,3 +26,13 @@ export function vigenteHoy(desde: string, hasta: string, now = new Date()): bool
   const today = now.toISOString().slice(0, 10)
   return desde <= today && today <= hasta
 }
+
+/** Slug para URLs: "Burger Club" → "burger-club". */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}

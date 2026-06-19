@@ -1,7 +1,8 @@
 // components/credential/CredentialSheet.tsx
-// Panel verde único que vive arriba del home: colapsado es el "header" (saludo +
-// CLUBPLAZA + barra); al arrastrar la barra hacia abajo crece y revela la
-// credencial (QR + código). Es el MISMO elemento, solo cambia su altura.
+// Credencial fija que se revela desde arriba. El panel ocupa toda la pantalla
+// con su contenido fijo (saludo arriba, QR centrado); con clip-path mostramos
+// solo la parte de arriba (colapsado = encabezado) y revelamos el resto al
+// arrastrar la barra. La barra vive pegada al borde revelado y lo sigue.
 
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { STATUS_PAD } from '@/components/ui/AppCanvas';
@@ -14,18 +15,24 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
   const { socio } = useSocio();
   const primerNombre = socio?.nombre?.trim().split(/\s+/)[0] ?? '';
 
+  const bottomInset = Math.max(0, sheet.fullH - sheet.revealed);
+  const clip = `inset(0px 0px ${bottomInset}px 0px round 0px 0px 26px 26px)`;
+  const clipTransition = sheet.dragging ? 'none' : 'clip-path 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
+
   return (
-    <div
-      ref={sheet.panelRef}
-      style={{ ...sheet.style, background: CRED_GRADIENT }}
-      className="absolute inset-x-0 top-0 z-50 overflow-hidden rounded-b-[26px] text-white"
-    >
-      {/* Contenido a altura completa; el panel lo recorta según su alto animado */}
+    <>
+      {/* Panel fijo a pantalla completa, recortado por clip-path */}
       <div
-        className="flex flex-col px-[22px] pb-[max(env(safe-area-inset-bottom),22px)]"
-        style={{ height: sheet.fullH || undefined }}
+        ref={sheet.panelRef}
+        style={{
+          background: CRED_GRADIENT,
+          clipPath: clip,
+          WebkitClipPath: clip,
+          transition: clipTransition,
+        }}
+        className="absolute inset-0 z-40 flex flex-col px-[22px] pb-[max(env(safe-area-inset-bottom),22px)] text-white"
       >
-        {/* Encabezado = vista colapsada (saludo). pb deja lugar a la barra. */}
+        {/* Encabezado = vista colapsada (saludo) */}
         <div ref={sheet.headerRef} className={`${STATUS_PAD} pb-10`}>
           <p className="mb-1 text-[15px] font-semibold text-white">
             Hola de nuevo{primerNombre ? `, ${primerNombre}` : ''}
@@ -33,17 +40,18 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
           <Logo size={19} onGreen iso={false} />
         </div>
 
-        {/* Credencial (se revela al expandir) */}
+        {/* Credencial (se revela al bajar) */}
         <CredentialContent />
       </div>
 
-      {/* Barra: borde inferior del panel (se arrastra para abrir/cerrar, o tap) */}
+      {/* Barra: pegada al borde revelado, lo sigue mientras arrastrás */}
       <button
         type="button"
         {...sheet.handleProps}
         onClick={sheet.toggle}
         aria-label={sheet.open ? 'Cerrar credencial' : 'Bajar mi credencial'}
-        className="absolute inset-x-0 bottom-0 flex touch-none flex-col items-center gap-0.5 pb-2 pt-1 text-white/75 hover:text-white"
+        style={{ top: sheet.revealed, transition: sheet.dragging ? 'none' : 'top 0.34s cubic-bezier(0.22, 1, 0.36, 1)' }}
+        className="absolute left-1/2 z-50 flex -translate-x-1/2 -translate-y-full touch-none flex-col items-center gap-0.5 px-6 pb-2 text-white/75 hover:text-white"
       >
         {sheet.open ? (
           <ChevronUp size={18} />
@@ -52,6 +60,6 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
         )}
         <span className="block h-1 w-9 rounded-full bg-white/50" />
       </button>
-    </div>
+    </>
   );
 }

@@ -207,6 +207,15 @@
     opacity: 1;
   }
 }
+/* Marquee continuo (loop infinito). La pista está duplicada, así -50% es seamless. */
+@keyframes cpMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .cp-pen {
     animation: none;

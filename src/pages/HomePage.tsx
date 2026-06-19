@@ -8,10 +8,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, X } from 'lucide-react';
 import { AppCanvas } from '@/components/ui/AppCanvas';
-import { Button } from '@/components/ui/app-button';
 import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCarousel } from '@/components/benefits/BenefitCarousel';
+import { LocalsMarquee } from '@/components/benefits/LocalsMarquee';
 import { CredentialSheet } from '@/components/credential/CredentialSheet';
 import { BenefitCardSkeleton, ErrorState, Skeleton } from '@/components/feedback/States';
 import { usePromos } from '@/hooks/usePromos';
@@ -50,6 +50,17 @@ export default function HomePage() {
       .filter((p) => rubro === 'todos' || p.categoria === rubro);
   }, [promos, rubro, dia]);
 
+  // Locales únicos (para el marquee de logos).
+  const locales = useMemo(() => {
+    const seen = new Map<string, { nombre: string; logo: string }>();
+    for (const p of promos) {
+      if (!seen.has(p.local_nombre)) {
+        seen.set(p.local_nombre, { nombre: p.local_nombre, logo: p.local_logo_url });
+      }
+    }
+    return [...seen.values()];
+  }, [promos]);
+
   // Búsqueda: sobre TODAS las promos (título, descripción y local).
   const resultados = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,7 +78,7 @@ export default function HomePage() {
       {/* Header verde con esquinas inferiores redondeadas */}
       {/* Cuerpo (deja arriba el lugar del panel de credencial colapsado) */}
       <div
-        className="flex-1 overflow-y-auto px-4 pb-3 pt-4"
+        className="flex-1 overflow-y-auto px-4 pb-24 pt-4"
         style={{ paddingTop: sheet.collapsedH + 16 }}
       >
         {error ? (
@@ -102,6 +113,9 @@ export default function HomePage() {
             ) : (
               <BenefitCarousel promos={beneficiosDia} />
             )}
+
+            {/* Marquee de logos de locales (loop infinito, sin dots) */}
+            {!loading && <LocalsMarquee locales={locales} />}
 
             {/* Fila de filtros / búsqueda (debajo del beneficio del día).
                 Altura fija para que al abrir el buscador no se mueva lo de abajo. */}
@@ -189,20 +203,19 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Barra WhatsApp al pie */}
-      <footer className="border-t border-line-soft bg-white px-4 pb-[max(env(safe-area-inset-bottom),22px)] pt-2.5">
-        <div className="flex items-center gap-3">
-          <WhatsAppGlyph size={24} className="text-wa" />
-          <div className="flex-1">
-            <p className="text-[12.5px] font-bold text-ink">Seguinos en WhatsApp</p>
-            <p className="text-[10.5px] font-normal text-graytext">Un beneficio nuevo cada día</p>
-          </div>
-          {/* TODO: poner la URL real del canal de WhatsApp de Green Plaza */}
-          <Button variant="wa" full={false} sm>
-            Sumarme
-          </Button>
-        </div>
-      </footer>
+      {/* Etiqueta flotante: sumarse a la comunidad de WhatsApp.
+          TODO: poner la URL real del canal/comunidad de Green Plaza. */}
+      <a
+        href="https://wa.me/"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.preventDefault()}
+        aria-label="Sumate a la comunidad de WhatsApp"
+        className="fixed bottom-[max(env(safe-area-inset-bottom),16px)] right-4 z-30 flex items-center gap-2 rounded-full bg-wa py-2.5 pl-3 pr-4 text-white shadow-[0_4px_12px_rgba(37,211,102,0.22)] active:scale-95 sm:absolute"
+      >
+        <WhatsAppGlyph size={20} className="text-white" />
+        <span className="text-[12.5px] font-semibold leading-tight">Sumate a la comunidad</span>
+      </a>
 
       {/* Credencial arrastrable, superpuesta al home */}
       <CredentialSheet sheet={sheet} />

@@ -69,7 +69,7 @@ export function CredentialContent() {
       </div>
 
       {/* Pie: instrucción */}
-      <div className="rounded-xl bg-white/12 px-3.5 py-3 text-center">
+      <div className="mb-6 rounded-xl bg-white/12 px-3.5 py-3 text-center">
         <p className="text-[11.5px] font-medium leading-snug text-white/90">
           Mostrá esta pantalla en el local junto a tu DNI
         </p>
