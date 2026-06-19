@@ -4,13 +4,16 @@
 
 import { cn } from '@/lib/utils';
 
+// Monograma de 1-2 letras (tipo ISO): primera letra + mayúsculas internas
+// (ej. "Farmacia Maschwitz"→FM, "MaxiPet"→MP, "iTech"→IT, "Origen"→OR).
 function iniciales(nombre: string): string {
-  return nombre
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
+  const t = nombre.trim();
+  if (!t) return '';
+  const caps = t.slice(1).match(/\p{Lu}/gu) ?? [];
+  const mono = (t[0] + caps.join('')).toUpperCase();
+  if (mono.length >= 2) return mono.slice(0, 2);
+  const alpha = t.replace(/[^\p{L}]/gu, '');
+  return alpha.slice(0, 2).toUpperCase();
 }
 
 export function LocalLogo({

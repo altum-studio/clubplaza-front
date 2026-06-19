@@ -17,7 +17,7 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
 
   const bottomInset = Math.max(0, sheet.fullH - sheet.revealed);
   const clip = `inset(0px 0px ${bottomInset}px 0px round 0px 0px 26px 26px)`;
-  const clipTransition = sheet.dragging ? 'none' : 'clip-path 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
+  const slideTransition = 'clip-path 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
 
   return (
     <>
@@ -28,7 +28,7 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
           background: CRED_GRADIENT,
           clipPath: clip,
           WebkitClipPath: clip,
-          transition: clipTransition,
+          transition: slideTransition,
         }}
         className="absolute inset-0 z-40 flex flex-col px-[22px] pb-[max(env(safe-area-inset-bottom),22px)] text-white"
       >
@@ -44,14 +44,13 @@ export function CredentialSheet({ sheet }: { sheet: DragSheet }) {
         <CredentialContent />
       </div>
 
-      {/* Barra: pegada al borde revelado, lo sigue mientras arrastrás */}
+      {/* Barra: tocar para bajar / subir la credencial (sin arrastre) */}
       <button
         type="button"
-        {...sheet.handleProps}
         onClick={sheet.toggle}
         aria-label={sheet.open ? 'Cerrar credencial' : 'Bajar mi credencial'}
-        style={{ top: sheet.revealed, transition: sheet.dragging ? 'none' : 'top 0.34s cubic-bezier(0.22, 1, 0.36, 1)' }}
-        className="absolute left-1/2 z-50 flex -translate-x-1/2 -translate-y-full touch-none flex-col items-center gap-0.5 px-6 pb-2 text-white/75 hover:text-white"
+        style={{ top: sheet.revealed, transition: 'top 0.34s cubic-bezier(0.22, 1, 0.36, 1)' }}
+        className="absolute left-1/2 z-50 flex -translate-x-1/2 -translate-y-full flex-col items-center gap-0.5 px-6 pb-2 text-white/75 hover:text-white"
       >
         {sheet.open ? (
           <ChevronUp size={18} />

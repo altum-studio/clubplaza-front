@@ -11,6 +11,7 @@ import { LocalLogo } from '@/components/benefits/LocalLogo';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCardSkeleton, ErrorState } from '@/components/feedback/States';
 import { usePromos } from '@/hooks/usePromos';
+import { MOCK_LOCALES } from '@/data/mock';
 import { slugify } from '@/lib/utils';
 
 export default function LocalPage() {
@@ -18,11 +19,12 @@ export default function LocalPage() {
   const navigate = useNavigate();
   const { promos, loading, error } = usePromos();
 
+  // Info del local desde el directorio (funciona aunque no tenga beneficios).
+  const local = useMemo(() => MOCK_LOCALES.find((l) => slugify(l.nombre) === slug), [slug]);
   const delLocal = useMemo(
     () => promos.filter((p) => slugify(p.local_nombre) === slug),
     [promos, slug],
   );
-  const local = delLocal[0];
 
   return (
     <AppCanvas>
@@ -39,14 +41,14 @@ export default function LocalPage() {
 
         <div className="flex items-center gap-3.5">
           <LocalLogo
-            src={local?.local_logo_url}
-            name={local?.local_nombre ?? '—'}
+            src={local?.logo_url}
+            name={local?.nombre ?? '—'}
             size={64}
             className="ring-2 ring-white/80"
           />
           <div className="min-w-0">
             <h1 className="truncate text-[20px] font-extrabold text-white">
-              {local?.local_nombre ?? 'Local'}
+              {local?.nombre ?? 'Local'}
             </h1>
             <p className="text-[12.5px] font-normal text-white/85">
               {delLocal.length === 1 ? '1 beneficio' : `${delLocal.length} beneficios`}

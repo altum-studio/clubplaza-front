@@ -1,26 +1,19 @@
 // hooks/useDragSheet.ts
-// Panel verde fijo que se REVELA desde arriba: el contenido no se mueve ni
-// cambia de tamaño; lo que cambia es cuánto se ve (clip). Colapsado se ve solo
-// el encabezado (saludo); al arrastrar la barra hacia abajo se revela el resto
-// siguiendo el dedo (1:1). Como no toca el layout, el gesto es fluido.
+// Panel verde fijo que se REVELA desde arriba con un tap (sin arrastre): tocás y
+// baja (se revela), tocás de nuevo y sube (se cierra). El contenido no se mueve;
+// lo que cambia es cuánto se ve (clip-path), animado suave.
 
-import { useLayoutEffect, useRef, useState, type RefObject, type TouchEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 export interface DragSheet {
   panelRef: RefObject<HTMLDivElement | null>;
   headerRef: RefObject<HTMLDivElement | null>;
   collapsedH: number;
   fullH: number;
-  revealed: number; // px visibles desde arriba (collapsedH … fullH)
-  dragging: boolean;
+  revealed: number; // px visibles desde arriba (collapsedH cerrado, fullH abierto)
   open: boolean;
   setOpen: (v: boolean) => void;
   toggle: () => void;
-  handleProps: {
-    onTouchStart: (e: TouchEvent) => void;
-    onTouchMove: (e: TouchEvent) => void;
-    onTouchEnd: () => void;
-  };
 }
 
 export function useDragSheet(): DragSheet {
@@ -29,11 +22,8 @@ export function useDragSheet(): DragSheet {
   const [collapsedH, setCollapsedH] = useState(140);
   const [fullH, setFullH] = useState(0);
   const [open, setOpen] = useState(false);
-  const [dragR, setDragR] = useState<number | null>(null); // revelado en vivo durante el arrastre
-  const info = useRef<{ startY: number; base: number; moved: boolean } | null>(null);
-  const dragRRef = useRef(0);
-  const touchedAt = useRef(0);
 
+  // Medir el alto del encabezado (colapsado) y el del marco (abierto).
   useLayoutEffect(() => {
     const measure = () => {
       if (headerRef.current) setCollapsedH(headerRef.current.offsetHeight);
@@ -45,54 +35,8 @@ export function useDragSheet(): DragSheet {
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  const onTouchStart = (e: TouchEvent) => {
-    const base = open ? fullH : collapsedH;
-    info.current = { startY: e.touches[0].clientY, base, moved: false };
-    dragRRef.current = base;
-    setDragR(base);
-  };
+  const toggle = () => setOpen((o) => !o);
+  const revealed = open ? fullH || collapsedH : collapsedH;
 
-  const onTouchMove = (e: TouchEvent) => {
-    const d = info.current;
-    if (!d) return;
-    const dy = e.touches[0].clientY - d.startY;
-    if (Math.abs(dy) > 4) d.moved = true;
-    const next = Math.min(fullH, Math.max(collapsedH, d.base + dy)); // sigue el dedo, acotado
-    dragRRef.current = next;
-    setDragR(next);
-  };
-
-  const onTouchEnd = () => {
-    const d = info.current;
-    info.current = null;
-    if (!d) return;
-    touchedAt.current = Date.now();
-    if (!d.moved) {
-      setDragR(null);
-      setOpen(!open); // tap = alterna
-      return;
-    }
-    setOpen(dragRRef.current > (collapsedH + fullH) / 2); // snap por la posición final
-    setDragR(null);
-  };
-
-  const toggle = () => {
-    if (Date.now() - touchedAt.current < 500) return; // ignora el click sintético del touch
-    setOpen(!open);
-  };
-
-  const revealed = dragR != null ? dragR : open ? fullH || collapsedH : collapsedH;
-
-  return {
-    panelRef,
-    headerRef,
-    collapsedH,
-    fullH,
-    revealed,
-    dragging: dragR != null,
-    open,
-    setOpen,
-    toggle,
-    handleProps: { onTouchStart, onTouchMove, onTouchEnd },
-  };
+  return { panelRef, headerRef, collapsedH, fullH, revealed, open, setOpen, toggle };
 }

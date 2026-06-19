@@ -24,12 +24,17 @@ export function LocalsMarquee({ locales }: { locales: Local[] }) {
     const el = scrollerRef.current;
     if (!el) return;
     let raf = 0;
+    // Acumulador en float: el navegador redondea scrollLeft, así que llevamos la
+    // posición real acá para que avance aunque la velocidad sea muy baja.
+    let pos = el.scrollLeft;
     const tick = () => {
-      if (!pausedRef.current) el.scrollLeft += SPEED;
       const half = el.scrollWidth / 2; // ancho de una pasada (la pista está duplicada)
-      if (half > 0) {
-        if (el.scrollLeft >= half) el.scrollLeft -= half;
-        else if (el.scrollLeft < 0) el.scrollLeft += half;
+      if (pausedRef.current) {
+        pos = el.scrollLeft; // sincronizar con el scroll manual
+      } else {
+        pos += SPEED;
+        if (half > 0 && pos >= half) pos -= half;
+        el.scrollLeft = pos;
       }
       raf = requestAnimationFrame(tick);
     };
