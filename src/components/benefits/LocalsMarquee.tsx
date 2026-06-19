@@ -13,7 +13,7 @@ interface Local {
   logo: string;
 }
 
-const SPEED = 0.25; // px por frame del auto-scroll
+const SPEED = 0.12; // px por frame del auto-scroll
 
 export function LocalsMarquee({ locales }: { locales: Local[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
