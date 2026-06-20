@@ -1,6 +1,6 @@
 // pages/CredentialPage.tsx
-// Ruta /credencial (acceso directo por URL). En el home, la credencial es un
-// panel arrastrable (CredentialSheet); acá se muestra como pantalla completa.
+// Ruta /credencial (acceso directo por URL). En el home y en los beneficios la
+// credencial sube desde abajo (CredentialOverlay); acá se muestra a pantalla completa.
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp } from 'lucide-react';

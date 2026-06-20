@@ -6,49 +6,55 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X } from 'lucide-react';
-import { AppCanvas } from '@/components/ui/AppCanvas';
+import { Search, ChevronDown, QrCode, X } from 'lucide-react';
+import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
+import { Logo } from '@/components/brand/Logo';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCarousel } from '@/components/benefits/BenefitCarousel';
 import { LocalsMarquee } from '@/components/benefits/LocalsMarquee';
-import { CredentialSheet } from '@/components/credential/CredentialSheet';
+import { CredentialOverlay } from '@/components/credential/CredentialOverlay';
 import { BenefitCardSkeleton, ErrorState, Skeleton } from '@/components/feedback/States';
 import { MOCK_LOCALES } from '@/data/mock';
 import { usePromos } from '@/hooks/usePromos';
-import { useDragSheet } from '@/hooks/useDragSheet';
+import { useSocio } from '@/hooks/useSocio';
+import { useAuth } from '@/hooks/useAuth';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
-import type { Categoria } from '@/types';
+import type { Categoria, Promo } from '@/types';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { promos, loading, error } = usePromos();
+  const { socio } = useSocio();
+  const { isAuthenticated } = useAuth();
   const [rubro, setRubro] = useState<Categoria | 'todos'>('todos');
   const [dia, setDia] = useState<DiaFiltro>('todos');
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Credencial como panel arrastrable (top sheet) que se superpone al home.
-  const sheet = useDragSheet();
+  // Credencial superpuesta (sube desde abajo). Se abre con el icono de QR.
+  // Si el socio no inició sesión, lo mandamos a la pantalla de ingreso.
+  const [credOpen, setCredOpen] = useState(false);
+  const abrirCredencial = () =>
+    isAuthenticated ? setCredOpen(true) : navigate('/ingresar');
 
+  const primerNombre = socio?.nombre?.trim().split(/\s+/)[0] ?? '';
   const buscando = query.trim() !== '';
 
-  // Beneficios para el carrusel "Beneficio del día":
-  //   'todos' → todos · 'hoy' → día real de hoy · número → ese día (0=Dom).
-  const beneficiosDia = useMemo(() => {
-    if (dia === 'todos') return promos;
-    const d = dia === 'hoy' ? new Date().getDay() : dia;
-    return promos.filter((p) => p.dias.includes(d));
-  }, [promos, dia]);
+  // Carrusel "BENEFICIO DEL DÍA": SOLO lo vigente HOY (cada beneficio tiene sus
+  // días). Es INDEPENDIENTE de los filtros de Rubro/Fecha (esos afinan la grilla).
+  const beneficiosHoy = useMemo(() => {
+    const hoy = new Date().getDay();
+    return promos.filter((p) => p.dias.includes(hoy));
+  }, [promos]);
 
-  // "Más beneficios": los que NO entran en el carrusel (otros días), por rubro.
-  // Con 'todos' el carrusel ya muestra todo, así que esta lista queda vacía.
-  const masBeneficios = useMemo(() => {
-    if (dia === 'todos') return [];
+  // Grilla de abajo: TODOS los beneficios (para leer todo). Se afina con los
+  // filtros: sin fecha específica muestra todos; con fecha, los de ese día.
+  const beneficiosFiltrados = useMemo(() => {
+    const porRubro = (p: Promo) => rubro === 'todos' || p.categoria === rubro;
+    if (dia === 'todos') return promos.filter(porRubro);
     const d = dia === 'hoy' ? new Date().getDay() : dia;
-    return promos
-      .filter((p) => !p.dias.includes(d))
-      .filter((p) => rubro === 'todos' || p.categoria === rubro);
+    return promos.filter((p) => p.dias.includes(d) && porRubro(p));
   }, [promos, rubro, dia]);
 
   // Directorio de locales para el marquee de logos (todo el shopping).
@@ -71,12 +77,26 @@ export default function HomePage() {
 
   return (
     <AppCanvas>
-      {/* Header verde con esquinas inferiores redondeadas */}
-      {/* Cuerpo (deja arriba el lugar del panel de credencial colapsado) */}
-      <div
-        className="flex-1 overflow-y-auto px-4 pb-24 pt-4"
-        style={{ paddingTop: sheet.collapsedH + 16 }}
-      >
+      {/* Encabezado: saludo + logo, y el icono de QR para abrir la credencial */}
+      <header className={`${STATUS_PAD} flex items-center justify-between gap-3 px-4 pb-3`}>
+        <div className="min-w-0">
+          <p className="mb-1 truncate text-[15px] font-semibold text-ink">
+            Hola de nuevo{primerNombre ? `, ${primerNombre}` : ''}
+          </p>
+          <Logo size={18} iso={false} />
+        </div>
+        <button
+          type="button"
+          onClick={abrirCredencial}
+          aria-label="Mi credencial"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_4px_12px_rgba(35,117,58,0.25)] transition-transform active:scale-95"
+        >
+          <QrCode size={22} />
+        </button>
+      </header>
+
+      {/* Cuerpo scrolleable */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-1">
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : (
@@ -96,18 +116,12 @@ export default function HomePage() {
                   <HeroSkeleton />
                 </div>
               </div>
-            ) : beneficiosDia.length === 0 ? (
+            ) : beneficiosHoy.length === 0 ? (
               <p className="mb-3 px-2 py-6 text-center text-[13px] text-mute">
-                No hay beneficios disponibles
-                {dia === 'todos'
-                  ? ''
-                  : dia === 'hoy'
-                    ? ' para hoy'
-                    : ` el ${DIAS.find((d) => d.value === dia)?.label.toLowerCase()}`}
-                .
+                Hoy no hay beneficios vigentes. Mirá todos más abajo.
               </p>
             ) : (
-              <BenefitCarousel promos={beneficiosDia} />
+              <BenefitCarousel promos={beneficiosHoy} />
             )}
 
             {/* Marquee de logos de locales (loop infinito, sin dots) */}
@@ -173,27 +187,32 @@ export default function HomePage() {
                 </>
               )
             ) : (
-              /* "Más beneficios" (otros días). Se oculta si no hay nada que mostrar. */
-              loading ? (
-                <>
-                  <h3 className="mb-2.5 ml-0.5 text-[15px] font-bold">Más beneficios</h3>
+              /* Grilla con TODOS los beneficios (o los del día/rubro elegido). */
+              <>
+                <h3 className="mb-2.5 ml-0.5 text-[15px] font-bold">
+                  {dia === 'todos'
+                    ? 'Todos los beneficios'
+                    : `Beneficios ${dia === 'hoy' ? 'de hoy' : `del ${DIAS.find((d) => d.value === dia)?.label.toLowerCase()}`}`}
+                </h3>
+                {loading ? (
                   <div className="grid grid-cols-2 gap-3">
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                   </div>
-                </>
-              ) : masBeneficios.length > 0 ? (
-                <>
-                  <h3 className="mb-2.5 ml-0.5 text-[15px] font-bold">Más beneficios</h3>
+                ) : beneficiosFiltrados.length > 0 ? (
                   <div className="grid grid-cols-2 gap-3">
-                    {masBeneficios.map((p) => (
+                    {beneficiosFiltrados.map((p) => (
                       <BenefitCard key={p.id} promo={p} />
                     ))}
                   </div>
-                </>
-              ) : null
+                ) : (
+                  <p className="px-2 py-8 text-center text-[13px] text-mute">
+                    No hay beneficios con esos filtros.
+                  </p>
+                )}
+              </>
             )}
           </>
         )}
@@ -213,8 +232,8 @@ export default function HomePage() {
         <span className="text-[12.5px] font-semibold leading-tight">Sumate a la comunidad</span>
       </a>
 
-      {/* Credencial arrastrable, superpuesta al home */}
-      <CredentialSheet sheet={sheet} />
+      {/* Credencial superpuesta (sube desde abajo al tocar el QR) */}
+      <CredentialOverlay open={credOpen} onClose={() => setCredOpen(false)} />
     </AppCanvas>
   );
 }

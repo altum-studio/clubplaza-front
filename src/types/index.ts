@@ -3,13 +3,14 @@
 // Cuando el backend genere los tipos (`supabase gen types typescript`),
 // estas formas deben coincidir. No agregar campos sin avisar al backend dev.
 
+// Rubros del directorio de Green Plaza (tabla de locales).
 export type Categoria =
-  | 'gastronomia'
-  | 'indumentaria'
-  | 'salud'
-  | 'cafe'
-  | 'entretenimiento'
-  | 'otros';
+  | 'gastronomia' // Gastronomía
+  | 'almacen' // Almacén
+  | 'salud' // Salud y Bienestar
+  | 'hogar' // Hogar y Mascotas
+  | 'servicios' // Servicios
+  | 'tecnologia'; // Tecnología y Movilidad
 
 export interface Socio {
   id: string;

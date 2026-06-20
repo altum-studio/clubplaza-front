@@ -93,7 +93,7 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
           {promos.map((p) => (
             <article
               key={p.id}
-              className="relative w-[80%] flex-shrink-0 snap-center overflow-hidden rounded-2xl border border-line-soft bg-white shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
+              className="relative flex w-[80%] flex-shrink-0 snap-center flex-col overflow-hidden rounded-2xl border border-line-soft bg-white shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
             >
               <div className="h-[110px] w-full">
                 <BenefitImage
@@ -113,7 +113,8 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
                 size={48}
                 className="absolute left-3.5 top-[110px] -translate-y-1/2 shadow-md"
               />
-              <div className="px-3.5 pb-3.5 pt-2.5">
+              {/* Cuerpo en columna: el botón queda anclado abajo (misma altura en todas) */}
+              <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-2.5">
                 <div className="flex min-h-[26px] items-center pl-[56px]">
                   <span className="truncate text-[12.5px] font-semibold text-graytext">
                     {p.local_nombre}
@@ -123,7 +124,9 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
                   {p.titulo}
                 </h2>
                 <p className="mb-3 line-clamp-2 text-[12.5px] text-graytext">{p.descripcion}</p>
-                <Button onClick={() => navigate(`/beneficios/${p.id}`)}>Ver beneficio</Button>
+                <Button className="mt-auto" onClick={() => navigate(`/beneficios/${p.id}`)}>
+                  Ver beneficio
+                </Button>
               </div>
             </article>
           ))}

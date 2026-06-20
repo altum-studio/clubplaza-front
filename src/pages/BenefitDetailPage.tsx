@@ -3,15 +3,18 @@
 // Imagen hero con controles superpuestos + badges + título + "Cómo usarlo" (pasos)
 // + CTA fijo "Ver mi credencial". Datos desde usePromo(id) (mock).
 
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Share2 } from 'lucide-react';
+import { ChevronLeft, QrCode, Share2 } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Button } from '@/components/ui/app-button';
-import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
 import { BenefitBadge } from '@/components/benefits/BenefitBadge';
 import { BenefitImage } from '@/components/benefits/BenefitImage';
+import { LocalLogo } from '@/components/benefits/LocalLogo';
+import { CredentialOverlay } from '@/components/credential/CredentialOverlay';
 import { ErrorState, Skeleton } from '@/components/feedback/States';
 import { usePromo } from '@/hooks/usePromos';
+import { useAuth } from '@/hooks/useAuth';
 import { labelCategoria } from '@/lib/categorias';
 import { vigenteHoy } from '@/lib/utils';
 
@@ -19,6 +22,12 @@ export default function BenefitDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { promo, loading, error } = usePromo(id);
+  const { isAuthenticated } = useAuth();
+  const [credOpen, setCredOpen] = useState(false);
+
+  // Sin sesión, "Ver mi credencial" lleva a la pantalla de ingreso.
+  const verCredencial = () =>
+    isAuthenticated ? setCredOpen(true) : navigate('/ingresar');
 
   const onShare = async () => {
     const url = window.location.href;
@@ -84,6 +93,14 @@ export default function BenefitDetailPage() {
             <Share2 size={16} />
           </button>
         </div>
+
+        {/* Logo del local montado en el borde inferior de la imagen */}
+        <LocalLogo
+          src={promo.local_logo_url}
+          name={promo.local_nombre}
+          size={56}
+          className="absolute bottom-0 right-[18px] translate-y-1/2 shadow-md"
+        />
       </div>
 
       {/* Contenido */}
@@ -109,20 +126,16 @@ export default function BenefitDetailPage() {
         </ol>
       </div>
 
-      {/* CTA fijo */}
-      <div className="sticky bottom-0 flex gap-2.5 border-t border-line-soft bg-white px-[18px] pb-[max(env(safe-area-inset-bottom),22px)] pt-3">
-        <a
-          href="https://wa.me/"
-          aria-label="Compartir por WhatsApp"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border-[1.5px] border-wa text-wa"
-          onClick={(e) => e.preventDefault() /* TODO: URL real del canal */}
-        >
-          <WhatsAppGlyph size={22} />
-        </a>
-        <Button onClick={() => navigate('/credencial')}>Ver mi credencial</Button>
+      {/* CTA fijo: abre la credencial desde abajo (sin salir del beneficio) */}
+      <div className="sticky bottom-0 border-t border-line-soft bg-white px-[18px] pb-[max(env(safe-area-inset-bottom),22px)] pt-3">
+        <Button onClick={verCredencial}>
+          <QrCode size={18} />
+          Ver mi credencial
+        </Button>
       </div>
+
+      {/* Credencial superpuesta (sube desde abajo) */}
+      <CredentialOverlay open={credOpen} onClose={() => setCredOpen(false)} />
     </AppCanvas>
   );
 }
