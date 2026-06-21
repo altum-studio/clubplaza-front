@@ -6,10 +6,11 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, QrCode, X } from 'lucide-react';
+import { Search, ChevronDown, X } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { WhatsAppGlyph } from '@/components/ui/WhatsAppGlyph';
 import { Logo } from '@/components/brand/Logo';
+import { CredencialIcon } from '@/components/brand/CredencialIcon';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCarousel } from '@/components/benefits/BenefitCarousel';
 import { LocalsMarquee } from '@/components/benefits/LocalsMarquee';
@@ -77,26 +78,28 @@ export default function HomePage() {
 
   return (
     <AppCanvas>
-      {/* Encabezado: saludo + logo, y el icono de QR para abrir la credencial */}
-      <header className={`${STATUS_PAD} flex items-center justify-between gap-3 px-4 pb-3`}>
+      {/* Encabezado verde: saludo + logo en blanco, y el QR (blanco con icono verde) */}
+      <header
+        className={`${STATUS_PAD} flex items-center justify-between gap-3 rounded-b-[22px] bg-brand px-4 pb-4`}
+      >
         <div className="min-w-0">
-          <p className="mb-1 truncate text-[15px] font-semibold text-ink">
+          <p className="mb-1 truncate text-[15px] font-semibold text-white">
             Hola de nuevo{primerNombre ? `, ${primerNombre}` : ''}
           </p>
-          <Logo size={18} iso={false} />
+          <Logo size={18} iso={false} onGreen />
         </div>
         <button
           type="button"
           onClick={abrirCredencial}
-          aria-label="Mi credencial"
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_4px_12px_rgba(35,117,58,0.25)] transition-transform active:scale-95"
+          aria-label="Mi perfil / credencial"
+          className="flex h-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white px-3.5 text-brand shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-transform active:scale-95"
         >
-          <QrCode size={22} />
+          <CredencialIcon height={24} />
         </button>
       </header>
 
       {/* Cuerpo scrolleable */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-1">
+      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : (
