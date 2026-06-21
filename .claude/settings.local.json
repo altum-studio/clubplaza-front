@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Read(//Users/tomas/**)",
-      "Bash(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com)"
+      "Bash(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com)",
+      "Bash(curl -s --max-time 90 \"https://clubplaza-back.onrender.com/api/locales?limit=2\")",
+      "Bash(curl -s --max-time 30 -o /dev/null -w \"%{http_code}\" \"https://clubplaza-back.onrender.com/api/auth/me\")",
+      "Bash(nslookup owdlmvkhjzpoyubhdvom.supabase.co)",
+      "Bash(curl -s --max-time 20 -o /dev/null -w \"[HTTP %{http_code}]\\\\n\" \"https://owdlmvkhjzpoyubhdvom.supabase.co/rest/v1/\")"
     ]
   }
 }

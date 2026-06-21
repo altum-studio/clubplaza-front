@@ -50,6 +50,74 @@ export interface Local {
   categoria: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend real (Express + Supabase). El frontend consume la API REST documentada
+// en clubplaza-frontend-prompt.md. Estas formas espejan EXACTO lo que devuelve
+// la API. (Conviven con Socio/Promo/Local del flujo mock de socio existente.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Role = 'comun' | 'local' | 'admin';
+
+export interface Profile {
+  id: string; // UUID (auth uid)
+  nombre: string;
+  apellido: string;
+  fecha_nacimiento: string; // ISO date
+  email: string;
+  dni: string;
+  telefono: string;
+  rol: Role;
+  local_id: string | null; // solo rol "local"
+  activo: boolean;
+  created_at: string;
+  locales?: { id: string; nombre: string } | null; // join cuando aplica
+}
+
+export interface ApiLocal {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  piso: string | null;
+  logo_url: string | null;
+  activo: boolean;
+  created_at: string;
+  // en listado viene como [{ count }]; en detalle como Promo[].
+  promos?: { count: number }[] | ApiPromo[];
+  promos_count?: number;
+}
+
+export interface ApiPromo {
+  id: string;
+  local_id: string;
+  titulo: string;
+  descripcion: string | null;
+  descuento: number | null; // ej 20 = 20%
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  imagen_url: string | null;
+  activa: boolean;
+  created_at: string;
+  locales: { id: string; nombre: string; logo_url: string | null };
+}
+
+export interface Session {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+}
+
+export interface AuthResponse {
+  user: { id: string; email: string };
+  session: Session;
+  profile: Profile;
+}
+
+export interface Paginated<T> {
+  data: T[];
+  count: number;
+}
+
 // Datos del formulario de alta (los campos de socio deben coincidir con la tabla
 // `socios`; `password` es la excepción: se usa para supabase.auth.signUp(), no
 // se persiste en la tabla).

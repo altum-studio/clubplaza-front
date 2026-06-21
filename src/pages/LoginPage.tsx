@@ -6,16 +6,19 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, Mail, Lock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Logo } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/app-button';
 import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
+import { homeForRole } from '@/lib/roles';
+import { humanizeError } from '@/lib/api';
 import { loginSchema, type LoginSchema } from '@/lib/schemas';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const {
@@ -30,15 +33,14 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginSchema) => {
-    // TODO BACKEND: supabase.auth.signInWithPassword({ email, password }).
-    //   Por ahora el login es simulado (no valida la contraseña real).
     try {
-      await login(data.email, data.password);
-      navigate('/beneficios', { replace: true });
-    } catch {
-      setError('password', {
-        message: 'No pudimos iniciar sesión. Revisá tus datos.',
-      });
+      const profile = await login(data.email, data.password);
+      // Redirige según el rol (admin→/admin, local→/panel, comun→/beneficios),
+      // o vuelve a la ruta protegida desde la que se redirigió al login.
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from ?? homeForRole(profile.rol), { replace: true });
+    } catch (e) {
+      setError('password', { message: humanizeError(e) });
     }
   };
 

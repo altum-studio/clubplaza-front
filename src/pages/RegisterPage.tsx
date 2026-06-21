@@ -12,6 +12,8 @@ import { Logo } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/app-button';
 import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
+import { homeForRole } from '@/lib/roles';
+import { ApiError, humanizeError } from '@/lib/api';
 import { registerSchema, type RegisterSchema } from '@/lib/schemas';
 
 // Limita un grupo de 2 dígitos a un rango [1, max]. Solo actúa cuando ya hay
@@ -47,6 +49,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterSchema>({
@@ -66,18 +69,25 @@ export default function RegisterPage() {
   const terminos = watch('terminos');
 
   const onSubmit = async (data: RegisterSchema) => {
-    // TODO BACKEND: supabase.auth.signUp() + supabase.from('socios').insert()
-    //   con el timestamp de aceptación de términos. Por ahora simulamos el alta.
-    await registerSocio({
-      nombre: data.nombre,
-      dni: data.dni,
-      fecha_nacimiento: data.fecha_nacimiento,
-      email: data.email,
-      celular: data.celular,
-      password: data.password,
-      terminos: data.terminos,
-    });
-    navigate('/beneficios', { replace: true });
+    try {
+      const profile = await registerSocio({
+        nombre: data.nombre,
+        dni: data.dni,
+        fecha_nacimiento: data.fecha_nacimiento,
+        email: data.email,
+        celular: data.celular,
+        password: data.password,
+        terminos: data.terminos,
+      });
+      navigate(homeForRole(profile.rol), { replace: true });
+    } catch (e) {
+      const raw = e instanceof ApiError ? e.message : '';
+      // "Ya registrado" es un error real y útil; el resto se muestra amigable
+      // (los errores de infraestructura del backend llegan como "fetch failed").
+      setError('email', {
+        message: /registered|registrad/i.test(raw) ? 'Ese email ya está registrado' : humanizeError(e),
+      });
+    }
   };
 
   return (

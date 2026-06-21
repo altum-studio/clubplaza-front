@@ -138,6 +138,19 @@
   --color-wa: #25d366;
   --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
   --animate-cp-fade: cpFade 0.6s ease-out both;
+
+  /* Panel web (Admin/Local) — tokens extra del panel-kit (PK). El verde de
+     marca es el mismo; acá se suman soft/faint/estados para data-viz. */
+  --color-brand-soft: rgba(35, 117, 58, 0.1);
+  --color-faint: #aeb3ae;
+  --color-surface: #ffffff;
+  --color-panel: #f6f7f5;
+  --color-warn: oklch(0.7 0.13 75);
+  --color-warn-soft: oklch(0.95 0.045 80);
+  --color-info: oklch(0.6 0.11 245);
+  --color-info-soft: oklch(0.95 0.035 245);
+  --color-bad: oklch(0.58 0.16 27);
+  --color-bad-soft: oklch(0.95 0.04 27);
 }
 
 @layer base {
