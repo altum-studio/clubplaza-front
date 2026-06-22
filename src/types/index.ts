@@ -40,6 +40,12 @@ export interface Promo {
   como_usar: string[]; // array de pasos
   es_mundialista: boolean;
   activo: boolean;
+  // Campos del modelo nuevo (ver backend-spec). Opcionales en el mock.
+  tipo?: TipoBeneficio;
+  valor?: number | null;
+  limite_cantidad?: number | null;
+  limite_periodo?: LimitePeriodo;
+  vigencia_indefinida?: boolean; // si true, ignora vigente_desde/hasta
 }
 
 export interface Local {
@@ -50,6 +56,18 @@ export interface Local {
   categoria: string;
 }
 
+// Entrada del directorio de locales (mock del flujo de socio), con los campos
+// nuevos para la pantalla del local (nro, rubro, horarios, banner).
+export interface LocalDirectorio {
+  nombre: string;
+  logo_url: string;
+  nro_local: string;
+  rubro: Categoria;
+  descripcion?: string;
+  banner_url?: string;
+  horarios?: HorarioDia[];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend real (Express + Supabase). El frontend consume la API REST documentada
 // en clubplaza-frontend-prompt.md. Estas formas espejan EXACTO lo que devuelve
@@ -57,6 +75,28 @@ export interface Local {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Role = 'comun' | 'local' | 'admin';
+
+// Tipo de beneficio (lista predefinida; ver backend-spec-locales-beneficios.md).
+export type TipoBeneficio =
+  | '2x1'
+  | '3x2'
+  | 'descuento'
+  | 'descuento_fijo'
+  | 'cuotas'
+  | 'combo'
+  | 'regalo'
+  | 'envio_gratis'
+  | 'bonificacion';
+
+// Período del límite de uso de un beneficio.
+export type LimitePeriodo = 'dia' | 'semana' | 'mes' | 'vigencia' | 'ilimitado';
+
+// Horario de apertura de un día (soporta turno cortado con varios rangos).
+export interface HorarioDia {
+  dia: number; // 0=Dom … 6=Sáb
+  cerrado: boolean;
+  rangos: [string, string][]; // [["10:00","13:00"], ["17:00","21:00"]]
+}
 
 export interface Profile {
   id: string; // UUID (auth uid)
@@ -77,8 +117,13 @@ export interface ApiLocal {
   id: string;
   nombre: string;
   descripcion: string | null;
-  piso: string | null;
+  piso: string | null; // DEPRECATED → usar nro_local
+  nro_local?: string | null;
+  rubro?: Categoria | null;
   logo_url: string | null;
+  logo_svg?: string | null; // SVG inline (alternativa a logo_url)
+  banner_url?: string | null;
+  horarios?: HorarioDia[] | null;
   activo: boolean;
   created_at: string;
   // en listado viene como [{ count }]; en detalle como Promo[].
@@ -89,12 +134,21 @@ export interface ApiLocal {
 export interface ApiPromo {
   id: string;
   local_id: string;
+  rubro?: Categoria | null; // se deriva del rubro del local
   titulo: string;
+  tipo?: TipoBeneficio | null;
+  valor?: number | null; // significado según `tipo` (no siempre)
   descripcion: string | null;
-  descuento: number | null; // ej 20 = 20%
-  fecha_inicio: string | null;
-  fecha_fin: string | null;
-  imagen_url: string | null;
+  descuento: number | null; // DEPRECATED → usar `valor`
+  dias?: number[] | null; // días válidos 0–6
+  fecha_inicio: string | null; // DEPRECATED → vigencia_desde
+  fecha_fin: string | null; // DEPRECATED → vigencia_hasta
+  vigencia_desde?: string | null;
+  vigencia_hasta?: string | null;
+  limite_cantidad?: number | null;
+  limite_periodo?: LimitePeriodo | null;
+  imagen_url: string | null; // DEPRECATED → banner_url
+  banner_url?: string | null;
   activa: boolean;
   created_at: string;
   locales: { id: string; nombre: string; logo_url: string | null };

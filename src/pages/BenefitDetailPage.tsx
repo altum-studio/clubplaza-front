@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, QrCode, Share2 } from 'lucide-react';
+import { ChevronLeft, QrCode, Share2, Tag, Calendar, Clock, Repeat } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
 import { Button } from '@/components/ui/app-button';
 import { BenefitBadge } from '@/components/benefits/BenefitBadge';
@@ -16,6 +16,13 @@ import { ErrorState, Skeleton } from '@/components/feedback/States';
 import { usePromo } from '@/hooks/usePromos';
 import { useAuth } from '@/hooks/useAuth';
 import { labelCategoria } from '@/lib/categorias';
+import {
+  tipoBeneficioLabel,
+  valorLabel,
+  vigenciaLabel,
+  diasLabel,
+  limiteLabel,
+} from '@/lib/opciones';
 import { vigenteHoy } from '@/lib/utils';
 
 export default function BenefitDetailPage() {
@@ -105,13 +112,42 @@ export default function BenefitDetailPage() {
 
       {/* Contenido */}
       <div className="flex-1 overflow-y-auto px-[18px] pb-4 pt-4">
-        <div className="mb-2.5 flex gap-1.5">
+        <div className="mb-2.5 flex flex-wrap gap-1.5">
           <BenefitBadge>{labelCategoria(promo.categoria)}</BenefitBadge>
           {vigente && <BenefitBadge tone="gray">Vigente hoy</BenefitBadge>}
+          {promo.tipo && (
+            <span className="inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand">
+              {valorLabel(promo.tipo, promo.valor)}
+            </span>
+          )}
         </div>
         <h1 className="mb-1 text-[23px] font-extrabold text-brand">{promo.titulo}</h1>
         <p className="mb-3.5 text-sm font-medium text-ink">{promo.local_nombre}</p>
         <p className="mb-5 text-[13px] leading-relaxed text-graytext">{promo.descripcion}</p>
+
+        {/* Detalles del beneficio (modelo nuevo) */}
+        <div className="mb-5 rounded-2xl border border-line-soft p-4">
+          <ul className="flex flex-col gap-3.5">
+            {promo.tipo && (
+              <DetailRow icon={Tag} label="Tipo" value={tipoBeneficioLabel(promo.tipo)} />
+            )}
+            <DetailRow icon={Clock} label="Días válidos" value={diasLabel(promo.dias)} />
+            <DetailRow
+              icon={Calendar}
+              label="Vigencia"
+              value={vigenciaLabel({
+                indefinida: promo.vigencia_indefinida,
+                desde: promo.vigente_desde,
+                hasta: promo.vigente_hasta,
+              })}
+            />
+            <DetailRow
+              icon={Repeat}
+              label="Límite de uso"
+              value={limiteLabel(promo.limite_cantidad, promo.limite_periodo)}
+            />
+          </ul>
+        </div>
 
         <h2 className="mb-3 text-[13px] font-bold">Cómo usarlo</h2>
         <ol className="flex flex-col gap-2.5">
@@ -137,6 +173,26 @@ export default function BenefitDetailPage() {
       {/* Credencial superpuesta (sube desde abajo) */}
       <CredentialOverlay open={credOpen} onClose={() => setCredOpen(false)} />
     </AppCanvas>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Tag;
+  label: string;
+  value: string;
+}) {
+  return (
+    <li className="flex items-start gap-3">
+      <Icon size={16} className="mt-0.5 flex-shrink-0 text-mute" />
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[11px] uppercase tracking-wide text-mute">{label}</span>
+        <span className="text-[13px] font-semibold text-ink">{value}</span>
+      </div>
+    </li>
   );
 }
 

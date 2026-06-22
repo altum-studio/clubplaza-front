@@ -146,11 +146,41 @@ export interface RegisterPayload {
   rol?: Role;
 }
 
-type LocalInput = Partial<Pick<ApiLocal, 'nombre' | 'descripcion' | 'piso' | 'logo_url' | 'activo'>>;
+type LocalInput = Partial<
+  Pick<
+    ApiLocal,
+    | 'nombre'
+    | 'descripcion'
+    | 'piso'
+    | 'nro_local'
+    | 'rubro'
+    | 'logo_url'
+    | 'logo_svg'
+    | 'banner_url'
+    | 'horarios'
+    | 'activo'
+  >
+>;
 type PromoInput = Partial<
   Pick<
     ApiPromo,
-    'local_id' | 'titulo' | 'descripcion' | 'descuento' | 'fecha_inicio' | 'fecha_fin' | 'imagen_url' | 'activa'
+    | 'local_id'
+    | 'rubro'
+    | 'titulo'
+    | 'tipo'
+    | 'valor'
+    | 'descripcion'
+    | 'descuento'
+    | 'dias'
+    | 'fecha_inicio'
+    | 'fecha_fin'
+    | 'vigencia_desde'
+    | 'vigencia_hasta'
+    | 'limite_cantidad'
+    | 'limite_periodo'
+    | 'imagen_url'
+    | 'banner_url'
+    | 'activa'
   >
 >;
 type ProfileInput = Partial<

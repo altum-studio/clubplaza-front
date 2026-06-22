@@ -2,18 +2,31 @@
 // Panel Admin · Beneficios · aprobaciones (estado vacío / hub). Cola de revisión
 // a la izquierda + estado vacío con accesos a cargar/revisar a la derecha.
 
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, LogoBox, PButton, PCard, PChip } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
+import { BeneficioFormModal } from '@/components/panel/BeneficioFormModal';
 import { api } from '@/lib/api';
 import { useAsync } from '@/hooks/useAsync';
 import { ADMIN_NAV } from '@/data/panelMock';
+import type { ApiPromo } from '@/types';
 
 export default function AdminBeneficios() {
-  const navigate = useNavigate();
   const state = useAsync(() => api.promos.list({ limit: 50 }), []);
+  const localesState = useAsync(() => api.locales.list({ limit: 100 }), []);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<ApiPromo | null>(null);
+  const openAlta = () => {
+    setEditing(null);
+    setModalOpen(true);
+  };
+  const openEdit = (p: ApiPromo) => {
+    setEditing(p);
+    setModalOpen(true);
+  };
 
   return (
     <PanelShell
@@ -48,7 +61,8 @@ export default function AdminBeneficios() {
                   {page.data.map((promo, i) => (
                     <div
                       key={promo.id}
-                      className={`flex items-center gap-[11px] px-4 py-[13px] ${
+                      onClick={() => openEdit(promo)}
+                      className={`flex cursor-pointer items-center gap-[11px] px-4 py-[13px] hover:bg-fill ${
                         i === page.data.length - 1 ? '' : 'border-b border-line-soft'
                       }`}
                     >
@@ -100,7 +114,7 @@ export default function AdminBeneficios() {
                 variant="primary"
                 icon="plus"
                 size="lg"
-                onClick={() => navigate('/admin/beneficios/cargar')}
+                onClick={openAlta}
               >
                 Cargar beneficio
               </PButton>
@@ -126,6 +140,15 @@ export default function AdminBeneficios() {
           </div>
         </PCard>
       </div>
+
+      <BeneficioFormModal
+        open={modalOpen}
+        promo={editing}
+        mode="admin"
+        locales={localesState.data?.data ?? []}
+        onClose={() => setModalOpen(false)}
+        onSaved={state.reload}
+      />
     </PanelShell>
   );
 }

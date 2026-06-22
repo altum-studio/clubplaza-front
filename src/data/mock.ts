@@ -2,7 +2,8 @@
 // Datos mock para desarrollo mientras el backend de Supabase no está conectado.
 // Respetan EXACTAMENTE la forma de los tipos (types/index.ts) que devolverá la API.
 
-import type { Promo, Socio } from '@/types';
+import type { LocalDirectorio, Promo, Socio, TipoBeneficio } from '@/types';
+import { DEFAULT_HORARIOS } from '@/lib/opciones';
 
 // Ruta a los logos reales de cada local (en public/locales/<slug>.svg).
 // El slug coincide con slugify(nombre) para que el marquee resuelva solo.
@@ -26,6 +27,23 @@ const PASOS_BANCO = [
   'Se aplica el descuento / las cuotas',
 ];
 
+// Infiere tipo + valor del beneficio a partir del título (mock; el backend los
+// guardará como campos propios — ver backend-spec-locales-beneficios.md).
+function inferTipo(titulo: string): { tipo?: TipoBeneficio; valor: number | null } {
+  const t = titulo.toLowerCase();
+  if (/2x1/.test(t)) return { tipo: '2x1', valor: null };
+  if (/3x2/.test(t)) return { tipo: '3x2', valor: null };
+  const cuotas = t.match(/(\d+)\s*cuotas/);
+  if (cuotas) return { tipo: 'cuotas', valor: Number(cuotas[1]) };
+  const pct = t.match(/(\d+)\s*%/);
+  if (pct) return { tipo: 'descuento', valor: Number(pct[1]) };
+  if (/env[ií]o gratis/.test(t)) return { tipo: 'envio_gratis', valor: null };
+  if (/bonificaci/.test(t)) return { tipo: 'bonificacion', valor: null };
+  if (/combo/.test(t)) return { tipo: 'combo', valor: null };
+  if (/gratis/.test(t)) return { tipo: 'regalo', valor: null };
+  return { tipo: undefined, valor: null };
+}
+
 // Factory para no repetir la forma de Promo (mock; el backend la traerá de Supabase).
 let _id = 0;
 const mk = (
@@ -36,21 +54,30 @@ const mk = (
   descripcion: string,
   dias: number[],
   pasos: string[] = PASOS_CRED,
-): Promo => ({
-  id: String(++_id),
-  titulo,
-  descripcion,
-  categoria,
-  local_nombre: local,
-  local_logo_url: logo(slug),
-  imagen_url: '',
-  vigente_desde: '2026-06-01',
-  vigente_hasta: '2026-12-31',
-  dias,
-  como_usar: pasos,
-  es_mundialista: false,
-  activo: true,
-});
+): Promo => {
+  const { tipo, valor } = inferTipo(titulo);
+  return {
+    id: String(++_id),
+    titulo,
+    descripcion,
+    categoria,
+    local_nombre: local,
+    local_logo_url: logo(slug),
+    imagen_url: '',
+    vigente_desde: '2026-06-01',
+    vigente_hasta: '2026-12-31',
+    dias,
+    como_usar: pasos,
+    es_mundialista: false,
+    activo: true,
+    tipo,
+    valor,
+    limite_cantidad: 1,
+    limite_periodo: 'dia',
+    // Las financiaciones (cuotas) suelen ser permanentes → vigencia indefinida.
+    vigencia_indefinida: tipo === 'cuotas',
+  };
+};
 
 export const MOCK_PROMOS: Promo[] = [
   // ── Gastronomía ──────────────────────────────────────────────
@@ -97,34 +124,50 @@ export const MOCK_PROMOS: Promo[] = [
   mk('salud', 'Concept Vision', 'concept-vision', '6 cuotas con Banco Macro', 'Financiá tus lentes en 6 cuotas sin interés con tarjetas Banco Macro.', TODOS, PASOS_BANCO),
 ];
 
-// Directorio de locales de Green Plaza (para el marquee de logos).
-// TODO BACKEND: traer de la tabla `locales` (con logo real). Por ahora sin logo
-// (se muestra el monograma). Orden por código; L.01 y St.05 (sin definir) se omiten.
-export const MOCK_LOCALES: { nombre: string; logo_url: string }[] = [
-  { nombre: 'Farmacia Maschwitz', logo_url: logo('farmacia-maschwitz') }, // L.02 · Farmacia
-  { nombre: 'Pannus', logo_url: logo('pannus') }, // L.03 · Panadería
-  { nombre: 'La Juvenil', logo_url: logo('la-juvenil') }, // L.04 · Fábrica de pastas
-  { nombre: 'Deli Moon', logo_url: logo('deli-moon') }, // L.05 · Kiosco
-  { nombre: 'Mapache', logo_url: logo('mapache') }, // L.06y07 · Pinturería
-  { nombre: 'Eneldo', logo_url: logo('eneldo') }, // L.08y09 · Dietética
-  { nombre: 'MaxiPet', logo_url: logo('maxipet') }, // L.10 · Petshop
-  { nombre: 'Matilda', logo_url: logo('matilda') }, // L.11 · Librería
-  { nombre: 'Bruce', logo_url: logo('bruce') }, // L.12 · Hamburguesería
-  { nombre: 'SomosPalta', logo_url: logo('somospalta') }, // L.13 · Gastronomía natural
-  { nombre: 'Super2000', logo_url: logo('super2000') }, // L.14 · Supermercado
-  { nombre: 'Persicco', logo_url: logo('persicco') }, // L.15 · Heladería
-  { nombre: 'Almacen de Pizzas', logo_url: logo('almacen-de-pizzas') }, // L.16 · Pizzería
-  { nombre: 'Juan Valdez Cafe', logo_url: logo('juan-valdez-cafe') }, // L.17 · Café
-  { nombre: 'Kaia Sushi', logo_url: logo('kaia-sushi') }, // L.18 · Sushi
-  { nombre: 'Concept Vision', logo_url: logo('concept-vision') }, // L.19 · Óptica
-  { nombre: 'SportClub', logo_url: logo('sportclub') }, // L.20 · Gimnasio
-  { nombre: 'Nyra', logo_url: logo('nyra') }, // L.21 · Centro de estética
-  { nombre: 'El Candil', logo_url: logo('el-candil') }, // St.01 · Vivero
-  { nombre: 'iTech', logo_url: logo('itech') }, // St.02 · Tecnología
-  { nombre: 'crumBread', logo_url: logo('crumbread') }, // St.03 · Milanesería
-  { nombre: 'BoyCut barbershop', logo_url: logo('boycut-barbershop') }, // St.04 · Barbería
-  { nombre: 'Ramallo Club', logo_url: logo('ramallo-club') }, // St.06 · Sándwich de miga
-  { nombre: 'BYD', logo_url: logo('byd') }, // St.07 · Concesionaria
+// Directorio de locales de Green Plaza. Incluye nº de local, rubro y horarios
+// (los nuevos campos del modelo). TODO BACKEND: traer de la tabla `locales`.
+// Horario estándar del shopping (Lun a Sáb 10–21, Dom cerrado) para todos.
+const L = (
+  nombre: string,
+  slug: string,
+  nro_local: string,
+  rubro: LocalDirectorio['rubro'],
+  descripcion: string,
+): LocalDirectorio => ({
+  nombre,
+  logo_url: logo(slug),
+  nro_local,
+  rubro,
+  descripcion,
+  banner_url: '', // sin banner real todavía → la pantalla muestra un degradé
+  horarios: DEFAULT_HORARIOS,
+});
+
+export const MOCK_LOCALES: LocalDirectorio[] = [
+  L('Farmacia Maschwitz', 'farmacia-maschwitz', 'L.02', 'salud', 'Farmacia y perfumería'),
+  L('Pannus', 'pannus', 'L.03', 'gastronomia', 'Panadería y bollería artesanal'),
+  L('La Juvenil', 'la-juvenil', 'L.04', 'gastronomia', 'Fábrica de pastas frescas'),
+  L('Deli Moon', 'deli-moon', 'L.05', 'almacen', 'Kiosco y golosinas'),
+  L('Mapache', 'mapache', 'L.06/07', 'hogar', 'Pinturería y accesorios'),
+  L('Eneldo', 'eneldo', 'L.08/09', 'almacen', 'Dietética y productos naturales'),
+  L('MaxiPet', 'maxipet', 'L.10', 'hogar', 'Petshop y alimento para mascotas'),
+  L('Matilda', 'matilda', 'L.11', 'almacen', 'Librería y papelería'),
+  L('Bruce', 'bruce', 'L.12', 'gastronomia', 'Hamburguesería'),
+  L('SomosPalta', 'somospalta', 'L.13', 'gastronomia', 'Gastronomía natural y saludable'),
+  L('Super2000', 'super2000', 'L.14', 'almacen', 'Supermercado'),
+  L('Persicco', 'persicco', 'L.15', 'gastronomia', 'Heladería de especialidad'),
+  L('Almacen de Pizzas', 'almacen-de-pizzas', 'L.16', 'gastronomia', 'Pizzería artesanal'),
+  L('Juan Valdez Cafe', 'juan-valdez-cafe', 'L.17', 'gastronomia', 'Café de especialidad'),
+  L('Kaia Sushi', 'kaia-sushi', 'L.18', 'gastronomia', 'Sushi y cocina japonesa'),
+  L('Concept Vision', 'concept-vision', 'L.19', 'salud', 'Óptica y lentes recetados'),
+  L('SportClub', 'sportclub', 'L.20', 'salud', 'Gimnasio y entrenamiento'),
+  L('Nyra', 'nyra', 'L.21', 'servicios', 'Centro de estética'),
+  L('El Candil', 'el-candil', 'St.01', 'hogar', 'Vivero y jardinería'),
+  L('iTech', 'itech', 'St.02', 'tecnologia', 'Tecnología y electrónica'),
+  L('crumBread', 'crumbread', 'St.03', 'gastronomia', 'Milanesería'),
+  L('BoyCut barbershop', 'boycut-barbershop', 'St.04', 'servicios', 'Barbería'),
+  L('Ramallo Club', 'ramallo-club', 'St.06', 'gastronomia', 'Sándwiches de miga'),
+  L('BYD', 'byd', 'St.07', 'tecnologia', 'Concesionaria de autos'),
 ];
 
 export const MOCK_SOCIO: Socio = {

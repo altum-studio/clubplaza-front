@@ -1,54 +1,22 @@
 // components/panel/LocalFormModal.tsx
-// Alta / edición de un local contra la API real (POST/PATCH/DELETE /api/locales).
-// Inputs reales (el `Field` del kit es solo de lectura). Al guardar/eliminar
-// con éxito avisa con onSaved() para que la lista recargue.
+// Alta / edición de un local contra la API real (POST/PATCH/DELETE /api/locales),
+// con todos los campos del modelo nuevo: nº de local, rubro, logo SVG, banner y
+// horarios. Al guardar/eliminar con éxito avisa con onSaved() para recargar.
 
 import { useEffect, useState } from 'react';
 import { api, humanizeError } from '@/lib/api';
-import type { ApiLocal } from '@/types';
+import type { ApiLocal, Categoria, HorarioDia } from '@/types';
 import { PanelModal } from './PanelModal';
 import { PButton, Toggle } from './kit';
-
-function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-  textarea,
-  type = 'text',
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  textarea?: boolean;
-  type?: string;
-}) {
-  const cls =
-    'w-full rounded-[10px] border border-line bg-white px-[13px] py-2.5 text-[13.5px] text-ink outline-none placeholder:text-faint focus:border-brand';
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-graytext">{label}</span>
-      {textarea ? (
-        <textarea
-          rows={3}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className={cls}
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className={cls}
-        />
-      )}
-    </label>
-  );
-}
+import {
+  HorariosEditor,
+  ImagePicker,
+  SelectInput,
+  SvgPicker,
+  TextArea,
+  TextInput,
+} from './FormControls';
+import { DEFAULT_HORARIOS, RUBRO_OPTIONS } from '@/lib/opciones';
 
 export function LocalFormModal({
   open,
@@ -63,39 +31,45 @@ export function LocalFormModal({
 }) {
   const isEdit = !!local;
   const [nombre, setNombre] = useState('');
+  const [nroLocal, setNroLocal] = useState('');
+  const [rubro, setRubro] = useState<Categoria | ''>('');
   const [descripcion, setDescripcion] = useState('');
-  const [piso, setPiso] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
+  const [logoSvg, setLogoSvg] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
+  const [horarios, setHorarios] = useState<HorarioDia[]>(DEFAULT_HORARIOS);
   const [activo, setActivo] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
 
-  // Reset al abrir / cambiar de local.
   useEffect(() => {
     if (!open) return;
     setNombre(local?.nombre ?? '');
+    setNroLocal(local?.nro_local ?? local?.piso ?? '');
+    setRubro(local?.rubro ?? '');
     setDescripcion(local?.descripcion ?? '');
-    setPiso(local?.piso ?? '');
-    setLogoUrl(local?.logo_url ?? '');
+    setLogoSvg(local?.logo_svg ?? '');
+    setBannerUrl(local?.banner_url ?? '');
+    setHorarios(local?.horarios ?? DEFAULT_HORARIOS);
     setActivo(local?.activo ?? true);
     setError(null);
     setConfirmDel(false);
   }, [open, local]);
 
   const submit = async () => {
-    if (!nombre.trim()) {
-      setError('El nombre es obligatorio');
-      return;
-    }
+    if (!nombre.trim()) return setError('El nombre es obligatorio');
+    if (!rubro) return setError('Elegí un rubro');
     setSaving(true);
     setError(null);
     try {
       const payload = {
         nombre: nombre.trim(),
+        nro_local: nroLocal.trim() || null,
+        rubro,
         descripcion: descripcion.trim() || null,
-        piso: piso.trim() || null,
-        logo_url: logoUrl.trim() || null,
+        logo_svg: logoSvg || null,
+        banner_url: bannerUrl || null,
+        horarios,
         activo,
       };
       if (isEdit) await api.locales.update(local!.id, payload);
@@ -141,28 +115,33 @@ export function LocalFormModal({
       }
     >
       <div className="flex flex-col gap-3.5">
-        <Input label="Nombre *" value={nombre} onChange={setNombre} placeholder="Ej. Café Central" />
-        <Input
-          label="Descripción"
-          value={descripcion}
-          onChange={setDescripcion}
-          placeholder="Breve descripción del local"
-          textarea
-        />
         <div className="flex gap-3">
-          <div className="flex-1">
-            <Input label="Piso" value={piso} onChange={setPiso} placeholder="Ej. 1, PB, 2" />
-          </div>
           <div className="flex-[2]">
-            <Input
-              label="Logo (URL)"
-              value={logoUrl}
-              onChange={setLogoUrl}
-              placeholder="https://…"
-              type="url"
-            />
+            <TextInput label="Nombre *" value={nombre} onChange={setNombre} placeholder="Ej. Café Central" />
+          </div>
+          <div className="flex-1">
+            <TextInput label="Nº de local" value={nroLocal} onChange={setNroLocal} placeholder="L.16" />
           </div>
         </div>
+
+        <SelectInput
+          label="Rubro *"
+          value={rubro}
+          onChange={setRubro}
+          options={RUBRO_OPTIONS}
+          placeholder="Elegí un rubro"
+        />
+
+        <TextArea label="Descripción" value={descripcion} onChange={setDescripcion} placeholder="Breve descripción del local" />
+
+        <div className="flex flex-wrap gap-5">
+          <SvgPicker label="Logo (SVG)" value={logoSvg} onChange={setLogoSvg} hint="Archivo .svg" />
+          <div className="min-w-[200px] flex-1">
+            <ImagePicker label="Banner del local" value={bannerUrl} onChange={setBannerUrl} hint="PNG/JPG/WebP" />
+          </div>
+        </div>
+
+        <HorariosEditor value={horarios} onChange={setHorarios} />
 
         <button
           type="button"
@@ -177,9 +156,7 @@ export function LocalFormModal({
         </button>
 
         {error && (
-          <p className="rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-bad">
-            {error}
-          </p>
+          <p className="rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-bad">{error}</p>
         )}
 
         {isEdit && (
@@ -197,11 +174,7 @@ export function LocalFormModal({
                 </div>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmDel(true)}
-                className="text-[12.5px] font-bold text-bad hover:underline"
-              >
+              <button type="button" onClick={() => setConfirmDel(true)} className="text-[12.5px] font-bold text-bad hover:underline">
                 Eliminar local
               </button>
             )}
