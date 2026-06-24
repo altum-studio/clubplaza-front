@@ -33,7 +33,7 @@ function buildColumns(onEdit: (p: ApiPromo) => void): Column<ApiPromo>[] {
             <img
               src={promo.locales.logo_url}
               alt=""
-              className="h-9 w-9 flex-shrink-0 rounded-[9px] object-cover"
+              className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
             />
           ) : (
             <LogoBox size={36} />

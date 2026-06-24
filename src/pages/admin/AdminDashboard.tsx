@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                       {l.logo_url ? (
                         <img
                           src={l.logo_url}
-                          className="h-[34px] w-[34px] rounded-[9px] object-cover border border-line"
+                          className="h-[34px] w-[34px] rounded-full object-cover border border-line"
                         />
                       ) : (
                         <LogoBox size={34} />

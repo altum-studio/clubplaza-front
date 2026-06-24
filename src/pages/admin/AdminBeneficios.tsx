@@ -94,7 +94,7 @@ export default function AdminBeneficios() {
                     >
                       <Icon name={isOpen ? 'chevD' : 'chevR'} size={16} className="text-mute" />
                       {l.logo_url ? (
-                        <img src={l.logo_url} className="h-9 w-9 rounded-[9px] border border-line object-cover" />
+                        <img src={l.logo_url} className="h-9 w-9 rounded-full border border-line object-cover" />
                       ) : (
                         <LogoBox size={36} />
                       )}

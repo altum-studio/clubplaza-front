@@ -47,7 +47,7 @@ export default function AdminLocales() {
         render: (_v, r) => (
           <div className="flex items-center gap-[11px]">
             {r.logo_url ? (
-              <img src={r.logo_url} className="h-9 w-9 rounded-[9px] border border-line object-cover" />
+              <img src={r.logo_url} className="h-9 w-9 rounded-full border border-line object-cover" />
             ) : (
               <LogoBox size={36} />
             )}

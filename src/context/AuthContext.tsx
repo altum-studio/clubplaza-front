@@ -40,6 +40,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Persistimos el perfil para sobrevivir un refresh sin depender de que /auth/me
+// responda al instante (Render free tier puede tardar/caerse).
+const PROFILE_KEY = 'clubplaza.profile';
+function readStoredProfile(): Profile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as Profile) : null;
+  } catch {
+    return null;
+  }
+}
+function storeProfile(p: Profile | null) {
+  try {
+    if (p) localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    else localStorage.removeItem(PROFILE_KEY);
+  } catch {
+    /* almacenamiento no disponible */
+  }
+}
+
 // Número de socio legible derivado del UUID (estable). El QR codifica el uid,
 // que es lo que un endpoint de validación usaría para resolver al miembro.
 function numeroSocio(id: string): string {
@@ -62,35 +82,53 @@ function profileToSocio(p: Profile): Socio {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfileState] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Si el refresh falla, el cliente API limpia tokens y nos avisa para borrar el perfil.
+  // setProfile que además persiste (para sobrevivir un refresh).
+  const setProfile = useCallback((p: Profile | null) => {
+    setProfileState(p);
+    storeProfile(p);
+  }, []);
+
+  // Solo un 401 definitivo (refresh fallido) tumba la sesión: el cliente API
+  // nos avisa para limpiar el perfil.
   useEffect(() => {
     setUnauthorizedHandler(() => setProfile(null));
     return () => setUnauthorizedHandler(null);
-  }, []);
+  }, [setProfile]);
 
-  // Rehidratar sesión al montar: si hay token, traemos el perfil real.
+  // Rehidratar al montar: primero el perfil GUARDADO (optimista, así un refresh
+  // mantiene al admin/local en SU panel al instante, sin parpadeo ni rebote), y
+  // luego revalidamos contra /auth/me en segundo plano. Un error transitorio
+  // (backend lento o caído) NO cierra la sesión; solo un 401 real lo hace
+  // (vía onUnauthorized del cliente API).
   useEffect(() => {
     let active = true;
+    const stored = readStoredProfile();
+    if (stored) {
+      setProfileState(stored);
+      setIsLoading(false);
+    }
     if (!getAccessToken()) {
       setIsLoading(false);
       return;
     }
     api.auth
       .me()
-      .then((r) => active && setProfile(r.profile))
-      .catch(() => {
-        if (!active) return;
-        clearTokens();
-        setProfile(null);
+      .then((r) => {
+        if (active) setProfile(r.profile);
       })
-      .finally(() => active && setIsLoading(false));
+      .catch(() => {
+        /* error transitorio: conservamos la sesión guardada */
+      })
+      .finally(() => {
+        if (active && !stored) setIsLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, []);
+  }, [setProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.auth.login(email, password);

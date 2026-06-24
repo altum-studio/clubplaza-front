@@ -160,21 +160,23 @@ export function SvgPicker({
   onChange: (v: string) => void;
   hint?: string;
 }) {
+  // Lee el SVG como data-URI (data:image/svg+xml;base64,…) para guardarlo en
+  // `logo_url` como string y poder mostrarlo con <img> en todos lados.
   const read = (file?: File) => {
     if (!file) return;
     const r = new FileReader();
     r.onload = () => onChange(String(r.result));
-    r.readAsText(file);
+    r.readAsDataURL(file);
   };
   return (
     <Labeled label={label} hint={hint}>
       <div className="flex items-center gap-3">
-        <div
-          className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-white [&_svg]:h-full [&_svg]:w-full"
-          // SVG provisto por el comercio. TODO: sanitizar en el backend antes de servir.
-          dangerouslySetInnerHTML={value ? { __html: value } : undefined}
-        >
-          {!value && <Icon name="upload" size={18} className="text-faint" />}
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-white">
+          {value ? (
+            <img src={value} alt="Logo" className="h-full w-full object-contain" />
+          ) : (
+            <Icon name="upload" size={18} className="text-faint" />
+          )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-graytext hover:bg-fill">

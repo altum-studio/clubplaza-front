@@ -502,15 +502,14 @@ export function Avatar({
   );
 }
 
-// Placeholder de logo de comercio (se reemplaza por el asset real del local).
-export function LogoBox({ size = 40, r = 9, className }: { size?: number; r?: number; className?: string }) {
+// Placeholder de logo de comercio (circular; se reemplaza por el asset real).
+export function LogoBox({ size = 40, className }: { size?: number; className?: string }) {
   return (
     <div
-      className={cn('flex flex-shrink-0 items-center justify-center border border-dashed border-line', className)}
+      className={cn('flex flex-shrink-0 items-center justify-center rounded-full border border-dashed border-line', className)}
       style={{
         width: size,
         height: size,
-        borderRadius: r,
         background: 'repeating-linear-gradient(45deg, rgba(35,117,58,0.10) 0 1px, transparent 1px 8px), #f4f6f4',
       }}
     />

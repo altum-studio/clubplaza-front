@@ -34,7 +34,7 @@ export function LocalFormModal({
   const [nroLocal, setNroLocal] = useState('');
   const [rubro, setRubro] = useState<Categoria | ''>('');
   const [descripcion, setDescripcion] = useState('');
-  const [logoSvg, setLogoSvg] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
   const [horarios, setHorarios] = useState<HorarioDia[]>(DEFAULT_HORARIOS);
   const [activo, setActivo] = useState(true);
@@ -48,7 +48,7 @@ export function LocalFormModal({
     setNroLocal(local?.nro_local ?? local?.piso ?? '');
     setRubro(local?.rubro ?? '');
     setDescripcion(local?.descripcion ?? '');
-    setLogoSvg(local?.logo_svg ?? '');
+    setLogoUrl(local?.logo_url ?? '');
     setBannerUrl(local?.banner_url ?? '');
     setHorarios(local?.horarios ?? DEFAULT_HORARIOS);
     setActivo(local?.activo ?? true);
@@ -67,7 +67,7 @@ export function LocalFormModal({
         nro_local: nroLocal.trim() || null,
         rubro,
         descripcion: descripcion.trim() || null,
-        logo_svg: logoSvg || null,
+        logo_url: logoUrl || null,
         banner_url: bannerUrl || null,
         horarios,
         activo,
@@ -135,7 +135,7 @@ export function LocalFormModal({
         <TextArea label="Descripción" value={descripcion} onChange={setDescripcion} placeholder="Breve descripción del local" />
 
         <div className="flex flex-wrap gap-5">
-          <SvgPicker label="Logo (SVG)" value={logoSvg} onChange={setLogoSvg} hint="Archivo .svg" />
+          <SvgPicker label="Logo (SVG)" value={logoUrl} onChange={setLogoUrl} hint="Archivo .svg" />
           <div className="min-w-[200px] flex-1">
             <ImagePicker label="Banner del local" value={bannerUrl} onChange={setBannerUrl} hint="PNG/JPG/WebP" />
           </div>
