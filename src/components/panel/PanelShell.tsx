@@ -4,9 +4,11 @@
 // verde + nav inferior. Reusa el isotipo de marca y los tokens del panel.
 
 import { type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { BrandIso } from '@/components/brand/Logo';
+import { useAuth } from '@/hooks/useAuth';
+import { ROLE_LABEL } from '@/lib/roles';
 import { Icon, type IconName } from './Icon';
 import { Avatar } from './kit';
 
@@ -54,6 +56,18 @@ export function PanelShell({
   children: ReactNode;
 }) {
   const active = useActive(nav);
+  const navigate = useNavigate();
+  const { profile, logout } = useAuth();
+
+  // Nombre y rol REALES de la cuenta logueada (con fallback a los props).
+  const accountName =
+    [profile?.nombre, profile?.apellido].filter(Boolean).join(' ').trim() || profile?.email || userName;
+  const accountRole = profile ? ROLE_LABEL[profile.rol] : userRole;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/ingresar', { replace: true });
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-panel font-sans text-ink">
@@ -87,12 +101,20 @@ export function PanelShell({
           })}
         </nav>
         <div className="flex items-center gap-2.5 border-t border-white/10 pt-3.5">
-          <Avatar name={userName} size={32} tone="mute" />
+          <Avatar name={accountName} size={32} tone="mute" />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-bold text-white">{userName}</div>
-            <div className="text-[11px] text-white/50">{userRole}</div>
+            <div className="truncate text-[12.5px] font-bold text-white">{accountName}</div>
+            <div className="text-[11px] text-white/50">{accountRole}</div>
           </div>
-          <Icon name="logout" size={17} className="text-white/50" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="flex-shrink-0 rounded-md p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <Icon name="logout" size={17} />
+          </button>
         </div>
       </aside>
 
@@ -109,19 +131,12 @@ export function PanelShell({
               <div className="text-[15px] font-extrabold leading-tight text-white">{topbarTitle}</div>
             </div>
           </div>
-          <Icon name="bell" size={19} className="text-white" />
         </header>
 
         {/* Topbar (desktop) */}
         <div className="hidden h-16 flex-shrink-0 items-center justify-between border-b border-line bg-white px-7 lg:flex">
           <div className="text-[18px] font-extrabold tracking-[-0.3px]">{topbarTitle}</div>
-          <div className="flex items-center gap-3.5">
-            {topbarActions}
-            <div className="relative flex h-[38px] w-[38px] items-center justify-center rounded-[9px] border border-line">
-              <Icon name="bell" size={18} className="text-graytext" />
-              <span className="absolute right-[9px] top-2 h-[7px] w-[7px] rounded-full border-[1.5px] border-white bg-bad" />
-            </div>
-          </div>
+          <div className="flex items-center gap-3.5">{topbarActions}</div>
         </div>
 
         {/* Acciones (mobile) — debajo del header, si hay */}

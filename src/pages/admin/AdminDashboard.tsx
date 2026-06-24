@@ -3,8 +3,10 @@
 // (área) + top locales por canjes. Totales reales desde la API; el resto de las
 // métricas (altas, canjes) sigue detrás de METRICS_SOON.
 
+import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Area, PButton, PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
+import { Area, PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
+import { Icon } from '@/components/panel/Icon';
 import { DataView } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
@@ -15,6 +17,45 @@ const benCount = (l: ApiLocal) =>
   Array.isArray(l.promos) && l.promos[0] && 'count' in l.promos[0]
     ? (l.promos[0] as { count: number }).count
     : (l.promos_count ?? 0);
+
+// Selector de mes (mensual, desde Junio 2026). offset 0 = Junio 2026.
+const MES_NOMBRES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+function monthLabel(offset: number): string {
+  const total = 5 + offset; // 5 = Junio (0-indexed), 2026
+  const year = 2026 + Math.floor(total / 12);
+  const m = ((total % 12) + 12) % 12;
+  return `${MES_NOMBRES[m]} ${year}`;
+}
+function MonthPicker({ offset, onChange }: { offset: number; onChange: (o: number) => void }) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-1 py-0.5">
+      <button
+        type="button"
+        onClick={() => onChange(offset - 1)}
+        disabled={offset <= 0}
+        aria-label="Mes anterior"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-graytext transition-colors hover:bg-fill disabled:opacity-30"
+      >
+        <Icon name="chevL" size={15} />
+      </button>
+      <span className="flex items-center gap-1.5 px-1 text-[12.5px] font-semibold text-graytext">
+        <Icon name="cal" size={14} className="text-mute" />
+        {monthLabel(offset)}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(offset + 1)}
+        aria-label="Mes siguiente"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-graytext transition-colors hover:bg-fill"
+      >
+        <Icon name="chevR" size={15} />
+      </button>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const state = useAsync(
@@ -32,6 +73,10 @@ export default function AdminDashboard() {
     [],
   );
 
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [vista, setVista] = useState<'mes' | 'semana'>('mes');
+  const ejeLabels = vista === 'mes' ? MESES : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
   return (
     <PanelShell
       role="Administrador"
@@ -39,14 +84,7 @@ export default function AdminDashboard() {
       userName="Ana Ruiz"
       userRole="Administradora"
       topbarTitle="Dashboard general"
-      topbarActions={
-        <>
-          <PChip icon="cal">Junio 2026</PChip>
-          <PButton icon="download" variant="outline">
-            Exportar
-          </PButton>
-        </>
-      }
+      topbarActions={<MonthPicker offset={monthOffset} onChange={setMonthOffset} />}
     >
       <DataView state={state}>
         {(d) => (
@@ -61,17 +99,21 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
               <PCard
                 title="Altas de miembros"
-                sub="Nuevos registros por mes · 2025–2026"
+                sub={vista === 'mes' ? 'Nuevos registros por mes' : 'Nuevos registros por semana'}
                 actions={
                   <div className="hidden gap-1.5 sm:flex">
-                    <PChip active>Mes</PChip>
-                    <PChip>Semana</PChip>
+                    <PChip active={vista === 'mes'} onClick={() => setVista('mes')}>
+                      Mes
+                    </PChip>
+                    <PChip active={vista === 'semana'} onClick={() => setVista('semana')}>
+                      Semana
+                    </PChip>
                   </div>
                 }
               >
                 <Area data={ALTAS} h={180} />
                 <div className="mt-1 flex justify-between">
-                  {MESES.map((m, i) => (
+                  {ejeLabels.map((m, i) => (
                     <span key={i} className="text-[10.5px] font-semibold text-faint">
                       {m}
                     </span>

@@ -141,7 +141,7 @@ export default function AdminLocales() {
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Stat live label="Locales" value={String(page.count)} icon="store" />
                 <Stat live label="Activos" value={String(activos)} icon="check" />
-                <Stat label="Solicitudes" icon="clock" />
+                <Stat live label="Inactivos" value={String(page.count - activos)} icon="store" />
                 <Stat label="Beneficios totales" icon="tag" />
               </div>
 

@@ -1,10 +1,11 @@
 // pages/admin/AdminBeneficios.tsx
-// Panel Admin · Beneficios · aprobaciones (estado vacío / hub). Cola de revisión
-// a la izquierda + estado vacío con accesos a cargar/revisar a la derecha.
+// Panel Admin · Beneficios. SIN aprobación: los locales publican directo.
+// Vista = lista de locales; cada uno se despliega (flecha) y muestra sus
+// beneficios. El admin carga un beneficio desde el botón de arriba.
 
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Badge, LogoBox, PButton, PCard, PChip } from '@/components/panel/kit';
+import { Badge, LogoBox, PButton, PCard } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { BeneficioFormModal } from '@/components/panel/BeneficioFormModal';
@@ -14,18 +15,32 @@ import { ADMIN_NAV } from '@/data/panelMock';
 import type { ApiPromo } from '@/types';
 
 export default function AdminBeneficios() {
-  const state = useAsync(() => api.promos.list({ limit: 50 }), []);
-  const localesState = useAsync(() => api.locales.list({ limit: 100 }), []);
+  const state = useAsync(
+    () =>
+      Promise.all([api.locales.list({ limit: 200 }), api.promos.list({ limit: 500 })]).then(
+        ([l, p]) => ({ locales: l.data, promos: p.data, publicados: p.count }),
+      ),
+    [],
+  );
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ApiPromo | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setExpanded((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   const openAlta = () => {
     setEditing(null);
-    setModalOpen(true);
+    setOpen(true);
   };
   const openEdit = (p: ApiPromo) => {
     setEditing(p);
-    setModalOpen(true);
+    setOpen(true);
   };
 
   return (
@@ -34,119 +49,112 @@ export default function AdminBeneficios() {
       nav={ADMIN_NAV}
       userName="Ana Ruiz"
       userRole="Administradora"
-      topbarTitle="Beneficios · aprobaciones"
+      topbarTitle="Beneficios"
       topbarActions={
         <>
-          <PChip active>Pendientes · 7</PChip>
-          <PChip>Publicados · 312</PChip>
-          <PChip>Rechazados</PChip>
+          <span className="inline-flex items-center whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] text-[12.5px] font-semibold text-graytext">
+            Publicados · {state.data?.publicados ?? 0}
+          </span>
+          <PButton icon="plus" onClick={openAlta}>
+            Cargar beneficio
+          </PButton>
         </>
       }
     >
-      <div className="grid min-h-[560px] grid-cols-1 items-stretch gap-4 lg:grid-cols-[340px_1fr]">
-        {/* Beneficios */}
-        <PCard title="Beneficios" sub={`${state.data?.count ?? 0} cargados`} pad={0}>
-          <DataView state={state}>
-            {(page) =>
-              page.data.length === 0 ? (
-                <div className="p-4">
-                  <PanelEmpty
-                    icon="tag"
-                    title="No hay beneficios"
-                    hint="Cargá el primero desde el botón."
-                  />
-                </div>
-              ) : (
-                <div>
-                  {page.data.map((promo, i) => (
-                    <div
-                      key={promo.id}
-                      onClick={() => openEdit(promo)}
-                      className={`flex cursor-pointer items-center gap-[11px] px-4 py-[13px] hover:bg-fill ${
-                        i === page.data.length - 1 ? '' : 'border-b border-line-soft'
-                      }`}
+      <DataView state={state}>
+        {(d) => {
+          if (d.locales.length === 0) {
+            return (
+              <PanelEmpty
+                icon="store"
+                title="No hay locales todavía"
+                hint="Cuando existan locales vas a poder cargarles beneficios."
+              />
+            );
+          }
+          const byLocal = new Map<string, ApiPromo[]>();
+          for (const p of d.promos) {
+            const arr = byLocal.get(p.local_id) ?? [];
+            arr.push(p);
+            byLocal.set(p.local_id, arr);
+          }
+
+          return (
+            <PCard pad={0}>
+              {d.locales.map((l, i) => {
+                const promos = byLocal.get(l.id) ?? [];
+                const isOpen = expanded.has(l.id);
+                return (
+                  <div key={l.id} className={i === d.locales.length - 1 ? '' : 'border-b border-line-soft'}>
+                    {/* Fila del local (clickeable para desplegar sus beneficios) */}
+                    <button
+                      type="button"
+                      onClick={() => toggle(l.id)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-fill"
                     >
-                      {promo.locales?.logo_url ? (
-                        <img
-                          src={promo.locales.logo_url}
-                          alt=""
-                          className="h-[38px] w-[38px] rounded-[9px] border border-line object-cover"
-                        />
+                      <Icon name={isOpen ? 'chevD' : 'chevR'} size={16} className="text-mute" />
+                      {l.logo_url ? (
+                        <img src={l.logo_url} className="h-9 w-9 rounded-[9px] border border-line object-cover" />
                       ) : (
-                        <LogoBox size={38} />
+                        <LogoBox size={36} />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-bold text-ink">{promo.titulo}</div>
-                        <div className="truncate text-[11.5px] text-mute">
-                          {promo.locales?.nombre ?? 'Local'}
+                        <div className="truncate text-[13.5px] font-bold text-ink">{l.nombre}</div>
+                        <div className="text-[11.5px] text-mute">
+                          {promos.length === 1 ? '1 beneficio' : `${promos.length} beneficios`}
+                          {l.nro_local ? ` · ${l.nro_local}` : ''}
                         </div>
                       </div>
-                      <Badge tone={promo.activa ? 'ok' : 'mute'} dot={false}>
-                        {promo.activa ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )
-            }
-          </DataView>
-        </PCard>
+                      {!l.activo && (
+                        <Badge tone="mute" dot={false}>
+                          Inactivo
+                        </Badge>
+                      )}
+                    </button>
 
-        {/* Estado vacío */}
-        <PCard className="h-full">
-          <div className="flex h-full flex-col items-center justify-center gap-[18px] px-5 py-10 text-center">
-            <div className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-brand-soft">
-              <Icon name="tag" size={42} className="text-brand" />
-            </div>
-
-            <div>
-              <div className="text-[20px] font-extrabold tracking-[-0.3px]">
-                Seleccioná un beneficio para revisarlo
-              </div>
-              <p className="mx-auto mt-2 max-w-[380px] text-[13.5px] leading-relaxed text-graytext">
-                Elegí uno de los 7 beneficios de la cola para ver su detalle y aprobarlo, pedir
-                cambios o rechazarlo. O cargá uno nuevo vos mismo.
-              </p>
-            </div>
-
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <PButton
-                variant="primary"
-                icon="plus"
-                size="lg"
-                onClick={openAlta}
-              >
-                Cargar beneficio
-              </PButton>
-              <PButton variant="outline" icon="chevR" size="lg">
-                Revisar el primero de la cola
-              </PButton>
-            </div>
-
-            <div className="mt-4 flex w-full max-w-[420px] justify-center gap-7 border-t border-line-soft pt-5">
-              <div>
-                <div className="text-[22px] font-extrabold text-brand">7</div>
-                <div className="text-[11.5px] font-semibold text-mute">Pendientes</div>
-              </div>
-              <div>
-                <div className="text-[22px] font-extrabold text-ink">312</div>
-                <div className="text-[11.5px] font-semibold text-mute">Publicados</div>
-              </div>
-              <div>
-                <div className="text-[22px] font-extrabold text-ink">2 h</div>
-                <div className="text-[11.5px] font-semibold text-mute">Espera promedio</div>
-              </div>
-            </div>
-          </div>
-        </PCard>
-      </div>
+                    {/* Beneficios del local (desplegados) */}
+                    {isOpen && (
+                      <div className="bg-fill/50 px-4 pb-3 pl-[52px]">
+                        {promos.length === 0 ? (
+                          <div className="py-3 text-[12.5px] text-mute">
+                            Este local no tiene beneficios.{' '}
+                            <button type="button" onClick={openAlta} className="font-bold text-brand hover:underline">
+                              Cargar uno
+                            </button>
+                          </div>
+                        ) : (
+                          promos.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => openEdit(p)}
+                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white"
+                            >
+                              <Icon name="tag" size={15} className="text-mute" />
+                              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{p.titulo}</span>
+                              <Badge tone={p.activa ? 'ok' : 'mute'} dot={false}>
+                                {p.activa ? 'Publicado' : 'Inactivo'}
+                              </Badge>
+                              <Icon name="edit" size={15} className="text-graytext" />
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </PCard>
+          );
+        }}
+      </DataView>
 
       <BeneficioFormModal
-        open={modalOpen}
+        open={open}
         promo={editing}
         mode="admin"
-        locales={localesState.data?.data ?? []}
-        onClose={() => setModalOpen(false)}
+        locales={state.data?.locales ?? []}
+        onClose={() => setOpen(false)}
         onSaved={state.reload}
       />
     </PanelShell>
