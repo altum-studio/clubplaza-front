@@ -17,7 +17,7 @@ import type {
   Session,
 } from '@/types';
 
-const BASE = import.meta.env.VITE_API_URL ?? 'https://clubplaza-back.onrender.com/api';
+const BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const ACCESS_KEY = 'clubplaza.access';
 const REFRESH_KEY = 'clubplaza.refresh';
