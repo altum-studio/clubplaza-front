@@ -1,31 +1,25 @@
 // hooks/useLocales.ts
-// Directorio de locales activos desde la API (/api/locales), mapeado a
-// LocalDirectorio para el marquee de logos y la pantalla del local.
+// TEMP (preview): directorio de locales HARDCODEADO desde MOCK_LOCALES, para que
+// las pantallas de local matcheen con los beneficios mock (ver usePromos). Para
+// volver a la API real, revertir este archivo (versión con `api.locales.list`).
 
 import { useEffect, useState } from 'react';
 import type { LocalDirectorio } from '@/types';
-import { api, humanizeError } from '@/lib/api';
-import { mapLocalDir } from '@/lib/mapApi';
+import { MOCK_LOCALES } from '@/data/mock';
 
 export function useLocalesDir() {
   const [locales, setLocales] = useState<LocalDirectorio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
-      setError(null);
-      try {
-        const l = await api.locales.list({ activo: true, limit: 500 });
-        if (cancel) return;
-        setLocales(l.data.map(mapLocalDir));
-      } catch (e) {
-        if (!cancel) setError(humanizeError(e));
-      } finally {
-        if (!cancel) setLoading(false);
-      }
+      await new Promise((r) => setTimeout(r, 350));
+      if (cancel) return;
+      setLocales(MOCK_LOCALES);
+      setLoading(false);
     })();
     return () => {
       cancel = true;

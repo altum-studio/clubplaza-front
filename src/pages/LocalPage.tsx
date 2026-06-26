@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
+import { AppCanvas } from '@/components/ui/AppCanvas';
 import { LocalLogo } from '@/components/benefits/LocalLogo';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCardSkeleton, ErrorState } from '@/components/feedback/States';
@@ -50,7 +50,7 @@ export default function LocalPage() {
           type="button"
           aria-label="Volver"
           onClick={() => navigate(-1)}
-          className={`${STATUS_PAD} absolute left-3 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm hover:bg-black/40`}
+          className="absolute left-3 top-[max(env(safe-area-inset-top),28px)] flex h-8 w-8 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm hover:bg-black/40"
         >
           <ChevronLeft size={22} />
         </button>
