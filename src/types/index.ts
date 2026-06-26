@@ -19,7 +19,7 @@ export interface Socio {
   celular: string;
   dni: string;
   fecha_nacimiento: string; // ISO date
-  numero_socio: string; // formato: GP-XXXX-XXXX
+  numero_socio: string; // código corto: 6 alfanumérico (ej. A7K2QM)
   token_qr: string;
   created_at: string;
 }

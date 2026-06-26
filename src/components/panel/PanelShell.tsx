@@ -70,8 +70,8 @@ export function PanelShell({
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-panel font-sans text-ink">
-      {/* ── Sidebar (desktop) ── */}
+    <div className="flex h-dvh w-full overflow-hidden bg-panel font-sans text-ink">
+      {/* ── Sidebar (desktop) — fija, no scrollea ── */}
       <aside className="hidden w-[232px] flex-shrink-0 flex-col bg-brand-dark px-4 py-5 text-white lg:flex">
         <div className="mb-6 flex items-center gap-[9px] px-1.5">
           <BrandIso size={30} onGreen />
@@ -80,7 +80,7 @@ export function PanelShell({
         <div className="px-2 pb-2.5 text-[10px] font-bold uppercase tracking-[1px] text-white/40">
           Panel {role}
         </div>
-        <nav className="flex flex-1 flex-col gap-[3px]">
+        <nav className="flex min-h-0 flex-1 flex-col gap-[3px] overflow-y-auto">
           {nav.map((n) => {
             const on = active === n.to;
             return (
@@ -100,6 +100,13 @@ export function PanelShell({
             );
           })}
         </nav>
+        <Link
+          to="/beneficios"
+          className="mb-3 flex items-center gap-[11px] rounded-[9px] border border-white/15 px-3 py-2.5 transition-colors hover:bg-white/5"
+        >
+          <Icon name="eye" size={18} className="text-white/70" />
+          <span className="text-[13px] font-semibold text-white/85">Ver app de miembro</span>
+        </Link>
         <div className="flex items-center gap-2.5 border-t border-white/10 pt-3.5">
           <Avatar name={accountName} size={32} tone="mute" />
           <div className="min-w-0 flex-1">
@@ -118,10 +125,10 @@ export function PanelShell({
         </div>
       </aside>
 
-      {/* ── Columna principal ── */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* ── Columna principal (lo único que scrollea es el <main>) ── */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Header verde (mobile) */}
-        <header className="flex items-center justify-between bg-brand-dark px-4 pb-3.5 pt-[max(env(safe-area-inset-top),14px)] text-white lg:hidden">
+        <header className="flex flex-shrink-0 items-center justify-between bg-brand-dark px-4 pb-3.5 pt-[max(env(safe-area-inset-top),14px)] text-white lg:hidden">
           <div className="flex items-center gap-2.5">
             <BrandIso size={24} onGreen />
             <div>
@@ -131,6 +138,13 @@ export function PanelShell({
               <div className="text-[15px] font-extrabold leading-tight text-white">{topbarTitle}</div>
             </div>
           </div>
+          <Link
+            to="/beneficios"
+            aria-label="Ver app de miembro"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+          >
+            <Icon name="eye" size={20} />
+          </Link>
         </header>
 
         {/* Topbar (desktop) */}
@@ -141,12 +155,12 @@ export function PanelShell({
 
         {/* Acciones (mobile) — debajo del header, si hay */}
         {topbarActions && (
-          <div className="flex items-center gap-2 overflow-x-auto border-b border-line bg-white px-4 py-2.5 lg:hidden [&::-webkit-scrollbar]:hidden">
+          <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-white px-4 py-2.5 lg:hidden [&::-webkit-scrollbar]:hidden">
             {topbarActions}
           </div>
         )}
 
-        <main className="flex-1 overflow-x-hidden p-4 pb-24 lg:p-7 lg:pb-7">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 lg:p-7 lg:pb-7">{children}</main>
 
         {/* Nav inferior (mobile) */}
         <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-white pb-[max(env(safe-area-inset-bottom),10px)] pt-2 lg:hidden">

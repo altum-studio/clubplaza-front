@@ -10,7 +10,7 @@ export function homeForRole(role: Role | null | undefined): string {
 }
 
 export const ROLE_LABEL: Record<Role, string> = {
-  comun: 'Socio',
+  comun: 'Miembro',
   local: 'Comercio',
   admin: 'Administrador',
 };

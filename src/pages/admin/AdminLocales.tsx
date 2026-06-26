@@ -8,6 +8,7 @@ import { Badge, type Column, LogoBox, PButton, PCard, PChip, Stat, Table } from 
 import { Icon } from '@/components/panel/Icon';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { LocalFormModal } from '@/components/panel/LocalFormModal';
+import { ConfirmDialog, RowMenu } from '@/components/panel/RowMenu';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
 import type { ApiLocal } from '@/types';
@@ -28,6 +29,7 @@ export default function AdminLocales() {
   // Modal de alta/edición. `editing` null = alta.
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ApiLocal | null>(null);
+  const [del, setDel] = useState<ApiLocal | null>(null);
 
   const openAlta = () => {
     setEditing(null);
@@ -83,18 +85,13 @@ export default function AdminLocales() {
         w: '24%',
         align: 'right',
         render: (_v, r) => (
-          <div className="inline-flex items-center gap-2">
-            <PButton size="sm" variant="outline" onClick={() => openEdit(r)}>
-              Editar
-            </PButton>
-            <button
-              type="button"
-              aria-label="Editar local"
-              onClick={() => openEdit(r)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line hover:bg-fill"
-            >
-              <Icon name="dots" size={16} className="text-graytext" />
-            </button>
+          <div className="inline-flex justify-end">
+            <RowMenu
+              items={[
+                { label: 'Editar', icon: 'edit', onClick: () => openEdit(r) },
+                { label: 'Eliminar', icon: 'trash', danger: true, onClick: () => setDel(r) },
+              ]}
+            />
           </div>
         ),
       },
@@ -202,6 +199,19 @@ export default function AdminLocales() {
         local={editing}
         onClose={() => setModalOpen(false)}
         onSaved={state.reload}
+      />
+
+      <ConfirmDialog
+        open={!!del}
+        title="Eliminar local"
+        message={`¿Seguro que querés eliminar "${del?.nombre ?? ''}"? Se eliminan también sus beneficios. Esta acción no se puede deshacer.`}
+        onConfirm={async () => {
+          if (del) {
+            await api.locales.remove(del.id);
+            state.reload();
+          }
+        }}
+        onClose={() => setDel(null)}
       />
     </PanelShell>
   );

@@ -177,7 +177,7 @@ export const MOCK_SOCIO: Socio = {
   celular: '+54 9 11 1234-5678',
   dni: '30123456',
   fecha_nacimiento: '1990-05-15',
-  numero_socio: 'GP-8K2D-4F9X',
+  numero_socio: 'A7K2QM',
   token_qr: 'clubplaza-token-mock-123',
   created_at: new Date('2026-06-01T12:00:00Z').toISOString(),
 };

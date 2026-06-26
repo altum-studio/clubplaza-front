@@ -9,6 +9,7 @@
 
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { PreviewBanner } from './PreviewBanner';
 
 interface AppCanvasProps {
   children: ReactNode;
@@ -21,18 +22,22 @@ interface AppCanvasProps {
 
 export function AppCanvas({ children, bg, dark = false, className }: AppCanvasProps) {
   return (
-    <div className="flex min-h-dvh w-full justify-center sm:py-6">
-      <div
-        className={cn(
-          'relative flex w-full max-w-[440px] flex-col overflow-hidden',
-          'min-h-dvh sm:min-h-0 sm:h-[920px] sm:max-h-[calc(100dvh-3rem)]',
-          'sm:rounded-[40px] sm:shadow-[0_28px_60px_rgba(0,0,0,0.18)]',
-          dark ? 'text-white' : 'text-ink',
-          className,
-        )}
-        style={{ background: bg ?? '#FBFCFB' }}
-      >
-        {children}
+    <div className="flex h-dvh w-full flex-col overflow-hidden">
+      {/* Barra de preview FIJA (solo admin/local viendo la app de miembro) */}
+      <PreviewBanner />
+      <div className="flex w-full min-h-0 flex-1 justify-center sm:py-6">
+        <div
+          className={cn(
+            'relative flex w-full max-w-[440px] flex-col overflow-hidden',
+            'h-full sm:h-[920px] sm:max-h-[calc(100dvh-3rem)]',
+            'sm:rounded-[40px] sm:shadow-[0_28px_60px_rgba(0,0,0,0.18)]',
+            dark ? 'text-white' : 'text-ink',
+            className,
+          )}
+          style={{ background: bg ?? '#FBFCFB' }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

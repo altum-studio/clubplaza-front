@@ -9,6 +9,7 @@ export const ADMIN_NAV: NavItem[] = [
   { icon: 'dash', label: 'Dashboard', to: '/admin' },
   { icon: 'store', label: 'Locales', to: '/admin/locales' },
   { icon: 'tag', label: 'Beneficios', to: '/admin/beneficios' },
+  { icon: 'users', label: 'Usuarios', to: '/admin/usuarios' },
 ];
 
 export const LOCAL_NAV: NavItem[] = [
@@ -66,15 +67,15 @@ export interface Validacion {
   estado: 'ok' | 'dup' | 'rej';
 }
 export const VALIDACIONES: Validacion[] = [
-  { hora: '14:32', miembro: 'María González', cod: 'GP-8K2D-4F9X', ben: '2x1 en cafetería', estado: 'ok' },
-  { hora: '14:18', miembro: 'Lucas Pérez', cod: 'GP-3M7P-2QW1', ben: '2x1 en cafetería', estado: 'ok' },
-  { hora: '13:51', miembro: 'Sofía Romero', cod: 'GP-9L4T-8RX2', ben: '15% en pastelería', estado: 'ok' },
-  { hora: '13:40', miembro: 'Diego Sosa', cod: 'GP-1A2B-3C4D', ben: '2x1 en cafetería', estado: 'dup' },
-  { hora: '13:12', miembro: 'Carla Núñez', cod: 'GP-5F6G-7H8J', ben: '15% en pastelería', estado: 'ok' },
-  { hora: '12:58', miembro: 'Pedro Maidana', cod: 'GP-7Y8U-9I0O', ben: '2x1 en cafetería', estado: 'ok' },
-  { hora: '12:30', miembro: 'Valentina Cruz', cod: 'GP-2W3E-4R5T', ben: '15% en pastelería', estado: 'rej' },
-  { hora: '11:47', miembro: 'Tomás Vega', cod: 'GP-6Y7U-8I9O', ben: '2x1 en cafetería', estado: 'ok' },
-  { hora: '11:20', miembro: 'Julieta Paz', cod: 'GP-1Q2W-3E4R', ben: 'Envío sin cargo', estado: 'ok' },
+  { hora: '14:32', miembro: 'María González', cod: 'A7K2QM', ben: '2x1 en cafetería', estado: 'ok' },
+  { hora: '14:18', miembro: 'Lucas Pérez', cod: 'B4N8RP', ben: '2x1 en cafetería', estado: 'ok' },
+  { hora: '13:51', miembro: 'Sofía Romero', cod: 'C9L3TX', ben: '15% en pastelería', estado: 'ok' },
+  { hora: '13:40', miembro: 'Diego Sosa', cod: 'D2A5CK', ben: '2x1 en cafetería', estado: 'dup' },
+  { hora: '13:12', miembro: 'Carla Núñez', cod: 'F6G7HJ', ben: '15% en pastelería', estado: 'ok' },
+  { hora: '12:58', miembro: 'Pedro Maidana', cod: 'H8U9YK', ben: '2x1 en cafetería', estado: 'ok' },
+  { hora: '12:30', miembro: 'Valentina Cruz', cod: 'J3E4RT', ben: '15% en pastelería', estado: 'rej' },
+  { hora: '11:47', miembro: 'Tomás Vega', cod: 'K7Y8UP', ben: '2x1 en cafetería', estado: 'ok' },
+  { hora: '11:20', miembro: 'Julieta Paz', cod: 'M2Q3WE', ben: 'Envío sin cargo', estado: 'ok' },
 ];
 
 export interface BeneficioLocal {

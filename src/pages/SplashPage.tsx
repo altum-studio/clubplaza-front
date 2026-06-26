@@ -5,7 +5,6 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppCanvas } from '@/components/ui/AppCanvas';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,15 +23,15 @@ export default function SplashPage() {
   }, [isAuthenticated, isLoading, navigate]);
 
   return (
-    <AppCanvas dark bg="#0c100e">
-      {/* Foto del shopping */}
+    <div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#0c100e] text-white">
+      {/* Foto del shopping (cubre toda la pantalla en cualquier tamaño) */}
       <img
         src={`${import.meta.env.BASE_URL}shopping.jpg`}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
-      {/* Degradado de abajo (variante C) */}
+      {/* Degradado */}
       <div
         className="absolute inset-0"
         style={{
@@ -41,25 +40,25 @@ export default function SplashPage() {
         }}
       />
 
-      {/* Contenido */}
-      <div className="animate-cp-fade relative flex flex-1 flex-col items-center justify-center gap-6">
+      {/* Contenido centrado */}
+      <div className="animate-cp-fade relative flex flex-col items-center justify-center gap-6">
         <BrandMark size={122} color="#fff" animated />
         <div className="text-[22px] leading-none tracking-[1px] text-white">
           <span className="font-extrabold">CLUB</span>
           <span className="font-light">PLAZA</span>
         </div>
-
-        {/* dots animados al pie */}
-        <div className="absolute inset-x-0 bottom-[58px] flex justify-center gap-2">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="h-2 w-2 rounded-full bg-white"
-              style={{ animation: `cpDot 1.2s ease-in-out ${i * 0.15}s infinite` }}
-            />
-          ))}
-        </div>
       </div>
-    </AppCanvas>
+
+      {/* dots animados al pie */}
+      <div className="absolute inset-x-0 bottom-[max(env(safe-area-inset-bottom),48px)] flex justify-center gap-2">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-2 w-2 rounded-full bg-white"
+            style={{ animation: `cpDot 1.2s ease-in-out ${i * 0.15}s infinite` }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

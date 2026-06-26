@@ -1,12 +1,12 @@
 // hooks/usePromos.ts
-// Lista y detalle de promos. Toda la data va por acá, nunca directo en componentes.
-// Hoy devuelve mocks; el día de mañana se reemplaza por la llamada a Supabase
-// SIN tocar los componentes que consumen el hook.
+// Lista y detalle de beneficios desde la API real (/api/promos). Mapea ApiPromo
+// → Promo (forma que usan las pantallas) y joinea el nombre/logo del local
+// (la lista de promos no los trae embebidos).
 
 import { useEffect, useState } from 'react';
 import type { Promo } from '@/types';
-import { MOCK_PROMOS } from '@/data/mock';
-// import { supabase } from '@/lib/supabase'; // ← descomentar cuando backend esté listo
+import { api, humanizeError } from '@/lib/api';
+import { mapPromo } from '@/lib/mapApi';
 
 export function usePromos() {
   const [promos, setPromos] = useState<Promo[]>([]);
@@ -15,25 +15,23 @@ export function usePromos() {
 
   useEffect(() => {
     let cancel = false;
-    async function load() {
+    (async () => {
       setLoading(true);
       setError(null);
       try {
-        // TODO BACKEND:
-        //   const { data, error } = await supabase
-        //     .from('promos').select('*').eq('activo', true)
-        //     .order('vigente_hasta', { ascending: true });
-        //   if (error) throw error;
-        await new Promise((r) => setTimeout(r, 350)); // simula latencia para ver el skeleton
+        const [p, l] = await Promise.all([
+          api.promos.list({ activa: true, limit: 500 }),
+          api.locales.list({ limit: 500 }),
+        ]);
         if (cancel) return;
-        setPromos(MOCK_PROMOS.filter((p) => p.activo));
+        const locMap = new Map(l.data.map((x) => [x.id, { nombre: x.nombre, logo_url: x.logo_url }]));
+        setPromos(p.data.map((pr) => mapPromo(pr, locMap.get(pr.local_id))));
       } catch (e) {
-        if (!cancel) setError(e instanceof Error ? e.message : 'Error al cargar beneficios');
+        if (!cancel) setError(humanizeError(e));
       } finally {
         if (!cancel) setLoading(false);
       }
-    }
-    load();
+    })();
     return () => {
       cancel = true;
     };
@@ -49,30 +47,34 @@ export function usePromo(id: string | undefined) {
 
   useEffect(() => {
     let cancel = false;
-    async function load() {
+    if (!id) {
+      setLoading(false);
+      setError('Beneficio inválido');
+      return;
+    }
+    (async () => {
       setLoading(true);
       setError(null);
       try {
-        // TODO BACKEND:
-        //   const { data, error } = await supabase
-        //     .from('promos').select('*').eq('id', id).single();
-        //   if (error) throw error;
-        await new Promise((r) => setTimeout(r, 300));
+        const p = await api.promos.get(id);
+        let loc: { nombre: string; logo_url: string | null } | undefined;
+        try {
+          const l = await api.locales.get(p.local_id);
+          loc = { nombre: l.nombre, logo_url: l.logo_url };
+        } catch {
+          /* el local no está disponible: el beneficio igual se muestra */
+        }
         if (cancel) return;
-        const found = MOCK_PROMOS.find((p) => p.id === id) ?? null;
-        setPromo(found);
-        if (!found) setError('No encontramos ese beneficio');
+        setPromo(mapPromo(p, loc));
       } catch (e) {
-        if (!cancel) setError(e instanceof Error ? e.message : 'Error al cargar el beneficio');
+        if (!cancel) {
+          setPromo(null);
+          setError(humanizeError(e));
+        }
       } finally {
         if (!cancel) setLoading(false);
       }
-    }
-    if (id) load();
-    else {
-      setLoading(false);
-      setError('Beneficio inválido');
-    }
+    })();
     return () => {
       cancel = true;
     };

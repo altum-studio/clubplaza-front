@@ -111,6 +111,7 @@ function FilePicker({
   value,
   onChange,
   hint,
+  spec,
   tipo,
   accept,
   buttonLabel,
@@ -121,6 +122,7 @@ function FilePicker({
   value: string; // URL
   onChange: (v: string) => void;
   hint?: string;
+  spec?: string; // resolución recomendada (se muestra debajo del recuadro)
   tipo: 'logo' | 'banner';
   accept: string;
   buttonLabel: string;
@@ -150,19 +152,26 @@ function FilePicker({
 
   return (
     <Labeled label={label} hint={hint}>
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            'flex flex-shrink-0 items-center justify-center overflow-hidden border',
-            round ? 'h-16 w-16 rounded-full border-line bg-white' : 'h-16 w-28 rounded-[10px] border-dashed border-line bg-fill',
-          )}
-        >
-          {uploading ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand" />
-          ) : value ? (
-            <img src={value} alt="" className={cn('h-full w-full', round ? 'object-contain' : 'object-cover')} />
-          ) : (
-            <Icon name="upload" size={18} className="text-faint" />
+      <div className="flex items-start gap-3">
+        <div className="flex flex-shrink-0 flex-col items-center gap-1">
+          <div
+            className={cn(
+              'flex items-center justify-center overflow-hidden border',
+              round ? 'h-16 w-16 rounded-full border-line bg-white' : 'h-16 w-28 rounded-[10px] border-dashed border-line bg-fill',
+            )}
+          >
+            {uploading ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand" />
+            ) : value ? (
+              <img src={value} alt="" className={cn('h-full w-full', round ? 'object-contain' : 'object-cover')} />
+            ) : (
+              <Icon name="upload" size={18} className="text-faint" />
+            )}
+          </div>
+          {spec && (
+            <span className="block max-w-[7.5rem] text-center text-[10px] font-medium leading-tight text-mute">
+              {spec}
+            </span>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
@@ -193,19 +202,18 @@ export function ImagePicker({
   label,
   value,
   onChange,
-  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  hint?: string;
 }) {
   return (
     <FilePicker
       label={label}
       value={value}
       onChange={onChange}
-      hint={hint}
+      hint="PNG/JPG/WebP · máx 2 MB"
+      spec="1200 × 600 px (2:1)"
       tipo="banner"
       accept="image/png,image/jpeg,image/webp,image/svg+xml"
       buttonLabel="Subir imagen"
@@ -223,19 +231,18 @@ export function SvgPicker({
   label,
   value,
   onChange,
-  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  hint?: string;
 }) {
   return (
     <FilePicker
       label={label}
       value={value}
       onChange={onChange}
-      hint={hint}
+      hint="SVG · máx 512 KB"
+      spec="Cuadrado · 1:1"
       tipo="logo"
       accept="image/svg+xml,.svg"
       buttonLabel="Subir SVG"

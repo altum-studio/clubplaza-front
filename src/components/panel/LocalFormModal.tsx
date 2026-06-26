@@ -139,9 +139,9 @@ export function LocalFormModal({
         <TextArea label="Descripción" value={descripcion} onChange={setDescripcion} placeholder="Breve descripción del local" />
 
         <div className="flex flex-wrap gap-5">
-          <SvgPicker label="Logo (SVG)" value={logoUrl} onChange={setLogoUrl} hint="Archivo .svg" />
+          <SvgPicker label="Logo (SVG)" value={logoUrl} onChange={setLogoUrl} />
           <div className="min-w-[200px] flex-1">
-            <ImagePicker label="Banner del local" value={bannerUrl} onChange={setBannerUrl} hint="PNG/JPG/WebP" />
+            <ImagePicker label="Banner del local" value={bannerUrl} onChange={setBannerUrl} />
           </div>
         </div>
 

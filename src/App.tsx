@@ -15,6 +15,7 @@ import { RequireRole } from '@/components/auth/RequireRole'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminLocales from '@/pages/admin/AdminLocales'
 import AdminBeneficios from '@/pages/admin/AdminBeneficios'
+import AdminUsuarios from '@/pages/admin/AdminUsuarios'
 import LocalInicio from '@/pages/panel/LocalInicio'
 import LocalValidar from '@/pages/panel/LocalValidar'
 import LocalBeneficios from '@/pages/panel/LocalBeneficios'
@@ -46,6 +47,7 @@ function App() {
       <Route path="/admin" element={<RequireRole roles={['admin']}><AdminDashboard /></RequireRole>} />
       <Route path="/admin/locales" element={<RequireRole roles={['admin']}><AdminLocales /></RequireRole>} />
       <Route path="/admin/beneficios" element={<RequireRole roles={['admin']}><AdminBeneficios /></RequireRole>} />
+      <Route path="/admin/usuarios" element={<RequireRole roles={['admin']}><AdminUsuarios /></RequireRole>} />
 
       {/* Panel Local / comercio adherido — rol "local" (admin puede supervisar) */}
       <Route path="/panel" element={<RequireRole roles={['local', 'admin']}><LocalInicio /></RequireRole>} />

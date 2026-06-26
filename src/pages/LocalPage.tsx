@@ -11,7 +11,7 @@ import { LocalLogo } from '@/components/benefits/LocalLogo';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
 import { BenefitCardSkeleton, ErrorState } from '@/components/feedback/States';
 import { usePromos } from '@/hooks/usePromos';
-import { MOCK_LOCALES } from '@/data/mock';
+import { useLocalesDir } from '@/hooks/useLocales';
 import { slugify } from '@/lib/utils';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
 import { DIAS_ORDEN, DIAS_SEMANA, rangosLabel } from '@/lib/opciones';
@@ -21,8 +21,9 @@ export default function LocalPage() {
   const navigate = useNavigate();
   const { promos, loading, error } = usePromos();
 
-  // Info del local desde el directorio (funciona aunque no tenga beneficios).
-  const local = useMemo(() => MOCK_LOCALES.find((l) => slugify(l.nombre) === slug), [slug]);
+  // Info del local desde el directorio (API). Funciona aunque no tenga beneficios.
+  const { locales } = useLocalesDir();
+  const local = useMemo(() => locales.find((l) => slugify(l.nombre) === slug), [locales, slug]);
   const delLocal = useMemo(
     () => promos.filter((p) => slugify(p.local_nombre) === slug),
     [promos, slug],

@@ -60,11 +60,22 @@ function storeProfile(p: Profile | null) {
   }
 }
 
-// Número de socio legible derivado del UUID (estable). El QR codifica el uid,
-// que es lo que un endpoint de validación usaría para resolver al miembro.
+// Código de socio corto y estable derivado del UUID: 6 caracteres alfanuméricos
+// (sin 0/O/1/I para que no se confundan al tipearlo en el mostrador). El QR
+// igual codifica el uid completo, que es lo que un endpoint de validación
+// resolvería.
+const COD_ALFABETO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // 32 chars, sin ambiguos
 function numeroSocio(id: string): string {
-  const hex = id.replace(/[^a-f0-9]/gi, '').toUpperCase();
-  return `GP-${(hex.slice(0, 4) || '0000').padEnd(4, '0')}-${(hex.slice(4, 8) || '0000').padEnd(4, '0')}`;
+  const hex = id.replace(/[^a-f0-9]/gi, '') || '0';
+  let n = 0n;
+  for (const c of hex) n = n * 16n + BigInt(parseInt(c, 16));
+  const base = BigInt(COD_ALFABETO.length);
+  let out = '';
+  for (let i = 0; i < 6; i++) {
+    out = COD_ALFABETO[Number(n % base)] + out;
+    n = n / base;
+  }
+  return out;
 }
 
 function profileToSocio(p: Profile): Socio {

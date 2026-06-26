@@ -16,7 +16,7 @@ import { BenefitCarousel } from '@/components/benefits/BenefitCarousel';
 import { LocalsMarquee } from '@/components/benefits/LocalsMarquee';
 import { CredentialOverlay } from '@/components/credential/CredentialOverlay';
 import { BenefitCardSkeleton, ErrorState, Skeleton } from '@/components/feedback/States';
-import { MOCK_LOCALES } from '@/data/mock';
+import { useLocalesDir } from '@/hooks/useLocales';
 import { usePromos } from '@/hooks/usePromos';
 import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,11 +58,9 @@ export default function HomePage() {
     return promos.filter((p) => p.dias.includes(d) && porRubro(p));
   }, [promos, rubro, dia]);
 
-  // Directorio de locales para el marquee de logos (todo el shopping).
-  const locales = useMemo(
-    () => MOCK_LOCALES.map((l) => ({ nombre: l.nombre, logo: l.logo_url })),
-    [],
-  );
+  // Directorio de locales (API) para el marquee de logos (todo el shopping).
+  const { locales: dir } = useLocalesDir();
+  const locales = useMemo(() => dir.map((l) => ({ nombre: l.nombre, logo: l.logo_url })), [dir]);
 
   // Búsqueda: sobre TODAS las promos (título, descripción y local).
   const resultados = useMemo(() => {

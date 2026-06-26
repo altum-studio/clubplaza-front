@@ -5,10 +5,9 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronLeft, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
-import { Logo } from '@/components/brand/Logo';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/app-button';
 import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,32 +44,8 @@ export default function LoginPage() {
   };
 
   return (
-    <AppCanvas>
-      {/* Header verde */}
-      <header className={`${STATUS_PAD} rounded-b-[18px] bg-brand px-4 pb-[18px]`}>
-        <div className="mb-3.5 flex items-center gap-2.5">
-          <button
-            type="button"
-            aria-label="Volver"
-            onClick={() => navigate(-1)}
-            className="-ml-1 flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10"
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <Logo size={15} onGreen iso={false} />
-        </div>
-        <h1 className="text-[22px] font-extrabold text-white">Iniciá sesión</h1>
-        <p className="text-[12.5px] font-normal text-white/85">
-          Bienvenido de nuevo a ClubPlaza
-        </p>
-      </header>
-
-      {/* Formulario */}
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-1 flex-col gap-3 px-4 pb-4 pt-[18px]"
-        noValidate
-      >
+    <AuthLayout title="Iniciá sesión" subtitle="Bienvenido de nuevo a ClubPlaza">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-3" noValidate>
         <TextField
           label="EMAIL"
           type="email"
@@ -91,11 +66,11 @@ export default function LoginPage() {
         />
 
         {/* CTA + link */}
-        <div className="mt-auto pt-3.5">
+        <div className="mt-auto pt-3.5 md:mt-8">
           <Button type="submit" disabled={isSubmitting} className="mb-3">
             {isSubmitting ? 'Ingresando…' : 'Ingresar'}
           </Button>
-          <div className="pb-4 text-center">
+          <div className="pb-4 text-center md:pb-0">
             <span className="text-xs text-graytext">¿No tenés cuenta? </span>
             <button
               type="button"
@@ -107,6 +82,6 @@ export default function LoginPage() {
           </div>
         </div>
       </form>
-    </AppCanvas>
+    </AuthLayout>
   );
 }

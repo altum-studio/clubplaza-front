@@ -18,6 +18,7 @@ export function BeneficioFormModal({
   promo,
   mode,
   locales = [],
+  lockedLocalId,
   onClose,
   onSaved,
 }: {
@@ -25,6 +26,8 @@ export function BeneficioFormModal({
   promo: ApiPromo | null; // null = alta
   mode: 'admin' | 'local'; // admin elige local; local usa el propio
   locales?: ApiLocal[]; // solo admin: lista para el select
+  // Si se carga desde un local desplegado, ese local viene fijado (no se elige).
+  lockedLocalId?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -47,7 +50,7 @@ export function BeneficioFormModal({
 
   useEffect(() => {
     if (!open) return;
-    setLocalId(promo?.local_id ?? '');
+    setLocalId(promo?.local_id ?? lockedLocalId ?? '');
     setTitulo(promo?.titulo ?? '');
     setTipo(promo?.tipo ?? '');
     setValor(promo?.valor != null ? String(promo.valor) : '');
@@ -63,7 +66,7 @@ export function BeneficioFormModal({
     setBannerUrl(promo?.banner_url ?? promo?.imagen_url ?? '');
     setActiva(promo?.activa ?? true);
     setError(null);
-  }, [open, promo, isEdit]);
+  }, [open, promo, isEdit, lockedLocalId]);
 
   const tipoDef = TIPO_BENEFICIO.find((t) => t.value === tipo);
   const localOptions = useMemo(
@@ -133,8 +136,16 @@ export function BeneficioFormModal({
       }
     >
       <div className="flex flex-col gap-3.5">
-        {mode === 'admin' && !isEdit && (
+        {mode === 'admin' && !isEdit && !lockedLocalId && (
           <SelectInput label="Local *" value={localId} onChange={setLocalId} options={localOptions} placeholder="Elegí el local" />
+        )}
+        {mode === 'admin' && !isEdit && lockedLocalId && (
+          <div className="flex items-center gap-2 rounded-[10px] bg-fill px-3.5 py-2.5">
+            <span className="text-[12.5px] font-semibold text-graytext">Local</span>
+            <span className="text-[12.5px] font-bold text-ink">
+              {locales.find((l) => l.id === localId)?.nombre ?? ''}
+            </span>
+          </div>
         )}
 
         {rubro && (
@@ -195,7 +206,7 @@ export function BeneficioFormModal({
           )}
         </div>
 
-        <ImagePicker label="Banner del beneficio" value={bannerUrl} onChange={setBannerUrl} hint="PNG/JPG/WebP" />
+        <ImagePicker label="Banner del beneficio" value={bannerUrl} onChange={setBannerUrl} />
 
         <button
           type="button"
