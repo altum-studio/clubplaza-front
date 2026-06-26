@@ -26,7 +26,7 @@ export default function SplashPage() {
     <div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#0c100e] text-white">
       {/* Foto del shopping (cubre toda la pantalla en cualquier tamaño) */}
       <img
-        src={`${import.meta.env.BASE_URL}shopping.jpg`}
+        src={`${import.meta.env.BASE_URL}shopping.jpg?v=2`}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"

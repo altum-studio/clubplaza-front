@@ -155,7 +155,7 @@ export function PanelShell({
 
         {/* Acciones (mobile) — debajo del header, si hay */}
         {topbarActions && (
-          <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-white px-4 py-2.5 lg:hidden [&::-webkit-scrollbar]:hidden">
+          <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-white px-4 py-2.5 lg:hidden [&::-webkit-scrollbar]:hidden [&>*:last-child]:ml-auto">
             {topbarActions}
           </div>
         )}

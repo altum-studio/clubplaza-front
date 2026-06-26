@@ -2,27 +2,45 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>ClubPlaza</title>
-    <!-- SPA fallback para GitHub Pages (técnica spa-github-pages). Reescribe la
-         ruta a la forma /clubplaza-front/?/ruta y redirige al index, que la
-         restaura. pathSegmentsToKeep = 1 por el base /clubplaza-front/. -->
+    <!-- SPA en hosting estático (GitHub Pages): el 404.html redirige acá con la
+         ruta en el query (?/...) y este script la restaura antes de montar la app,
+         para que recargar /admin, /panel, etc. no tire 404. -->
     <script>
-      (function () {
-        var pathSegmentsToKeep = 1;
-        var l = window.location;
-        l.replace(
-          l.protocol +
-            '//' +
-            l.hostname +
-            (l.port ? ':' + l.port : '') +
-            l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') +
-            '/?/' +
-            l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-            (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-            l.hash,
-        );
-      })();
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?');
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })(window.location);
     </script>
+    <link rel="icon" type="image/svg+xml" href="/clubplaza-front/favicon.svg?v=3" />
+    <link rel="alternate icon" href="/clubplaza-front/favicon.svg?v=3" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#23753a" />
+    <meta name="description" content="ClubPlaza · Programa de beneficios de Green Plaza" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/clubplaza-front/manifest.webmanifest" />
+
+    <!-- Tipografías de marca: Montserrat (UI) + Spline Sans Mono (código de socio) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>ClubPlaza · Green Plaza</title>
+    <script type="module" crossorigin src="/clubplaza-front/assets/index-Cm_MZbbU.js"></script>
+    <link rel="stylesheet" crossorigin href="/clubplaza-front/assets/index-CU27IURU.css">
   </head>
-  <body></body>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
