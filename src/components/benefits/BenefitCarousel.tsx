@@ -88,12 +88,12 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
           onTouchEnd={() => {
             pausedRef.current = false;
           }}
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-[10%] pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-[10%] pb-1 sm:px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {promos.map((p) => (
             <article
               key={p.id}
-              className="relative flex w-[80%] flex-shrink-0 snap-center flex-col overflow-hidden rounded-2xl border border-line-soft bg-white shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
+              className="relative flex w-[80%] flex-shrink-0 snap-center flex-col overflow-hidden rounded-2xl border border-line-soft bg-white shadow-[0_4px_14px_rgba(0,0,0,0.05)] sm:w-[320px]"
             >
               <div className="h-[110px] w-full">
                 <BenefitImage

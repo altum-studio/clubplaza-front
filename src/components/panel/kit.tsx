@@ -423,10 +423,12 @@ export function Table<R extends Record<string, any>>({
   columns,
   rows,
   dense = false,
+  onRowClick,
 }: {
   columns: Column<R>[];
   rows: R[];
   dense?: boolean;
+  onRowClick?: (row: R) => void;
 }) {
   return (
     <div className="w-full overflow-hidden">
@@ -446,7 +448,11 @@ export function Table<R extends Record<string, any>>({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i}>
+            <tr
+              key={i}
+              onClick={onRowClick ? () => onRowClick(r) : undefined}
+              className={cn(onRowClick && 'cursor-pointer hover:bg-fill')}
+            >
               {columns.map((c) => (
                 <td
                   key={c.key}

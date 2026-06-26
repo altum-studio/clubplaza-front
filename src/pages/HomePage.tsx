@@ -75,7 +75,7 @@ export default function HomePage() {
   }, [promos, query]);
 
   return (
-    <AppCanvas>
+    <AppCanvas wide>
       {/* Encabezado verde: saludo + logo en blanco, y el QR (blanco con icono verde) */}
       <header
         className={`${STATUS_PAD} flex items-center justify-between gap-3 rounded-b-[22px] bg-brand px-4 pb-4`}
@@ -97,7 +97,7 @@ export default function HomePage() {
       </header>
 
       {/* Cuerpo scrolleable */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4 lg:px-8">
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : (
@@ -110,10 +110,10 @@ export default function HomePage() {
 
             {loading ? (
               <div className="-mx-4 mb-3 flex gap-3 overflow-hidden px-4">
-                <div className="w-[82%] flex-shrink-0">
+                <div className="w-[82%] flex-shrink-0 sm:w-[320px]">
                   <HeroSkeleton />
                 </div>
-                <div className="w-[82%] flex-shrink-0">
+                <div className="w-[82%] flex-shrink-0 sm:w-[320px]">
                   <HeroSkeleton />
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function HomePage() {
                   <h3 className="mb-2.5 ml-0.5 text-[15px] font-bold">
                     Resultados ({resultados.length})
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     {resultados.map((p) => (
                       <BenefitCard key={p.id} promo={p} />
                     ))}
@@ -196,14 +196,14 @@ export default function HomePage() {
                     : `Beneficios ${dia === 'hoy' ? 'de hoy' : `del ${DIAS.find((d) => d.value === dia)?.label.toLowerCase()}`}`}
                 </h3>
                 {loading ? (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                     <BenefitCardSkeleton />
                   </div>
                 ) : beneficiosFiltrados.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     {beneficiosFiltrados.map((p) => (
                       <BenefitCard key={p.id} promo={p} />
                     ))}

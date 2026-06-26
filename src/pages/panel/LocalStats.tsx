@@ -2,26 +2,23 @@
 // Panel Local · Estadísticas de canjes. 4 KPIs + evolución mensual (área) +
 // beneficio más canjeado. Métricas detrás de METRICS_SOON.
 
+import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Area, PButton, PCard, PChip, SoonBox, Stat } from '@/components/panel/kit';
+import { Area, PCard, SoonBox, Stat } from '@/components/panel/kit';
+import { MonthPicker } from '@/components/panel/MonthPicker';
 import { LOCAL_NAV, SERIE_MES } from '@/data/panelMock';
 
 export default function LocalStats() {
+  const [monthOffset, setMonthOffset] = useState(0);
+
   return (
     <PanelShell
       role="Local"
       nav={LOCAL_NAV}
-      userName="Café Central"
+      userName="Comercio"
       userRole="Comercio adherido"
       topbarTitle="Estadísticas de canjes"
-      topbarActions={
-        <>
-          <PChip icon="cal">Junio 2026</PChip>
-          <PButton icon="download" variant="outline">
-            Exportar
-          </PButton>
-        </>
-      }
+      topbarActions={<MonthPicker offset={monthOffset} onChange={setMonthOffset} />}
     >
       <div className="flex flex-col gap-4">
         {/* ── KPIs ── */}
