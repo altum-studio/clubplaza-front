@@ -147,6 +147,57 @@ para historial/métricas.
 
 ---
 
-**Prioridad:** 1 y 2 son lo que destraba la pantalla de **Validar**. El 0 (campo `codigo`) es
-requisito del 1. El 3 destraba **Historial** y el 4 las **métricas**. Apenas estén, el front se
-conecta sin cambios de diseño.
+## 6. Log de escaneos (validación de credencial QR)
+
+Decisión tomada con el front:
+- El **QR de la credencial codifica el `codigo`** del socio (no el UUID). El validador escanea o
+  tipea ese código y resuelve con el endpoint **§1**.
+- Además del canje (que es opcional / cuando se aplica un beneficio puntual), se quiere un **log
+  simple de cada escaneo** (el comercio validó una credencial), aunque no termine en canje.
+
+```
+POST /api/escaneos
+```
+- **Auth:** rol `local` (registra para **su** local; el `local_id` sale del token, no del body).
+- **Body:** `{ "codigo": "A7K2QM" }`
+- Resuelve el socio por código, registra el escaneo y devuelve si es válido + si tiene beneficios
+  activos en ese local:
+```json
+{
+  "socio": { "nombre": "María González", "activo": true },
+  "beneficios_activos": 3,
+  "escaneo_id": "uuid"
+}
+```
+- Si el socio no existe o está inactivo → error claro (`404` / `409`), pero igual se puede loguear
+  el intento si quieren.
+
+```
+GET /api/escaneos/mine?desde=&hasta=&limit=&offset=
+```
+- **Auth:** rol `local` → historial de escaneos de su local.
+
+### Tabla `escaneos`
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid | PK |
+| `socio_id` | uuid | FK al usuario (miembro) escaneado |
+| `local_id` | uuid | FK al local que escaneó |
+| `escaneado_en` | timestamptz | momento del escaneo |
+| `created_at` | timestamptz | |
+
+### RLS sugerida (`escaneos`)
+- **INSERT:** permitido si el usuario tiene rol `local` y `local_id = (su local asignado)`
+  (no puede registrar escaneos a nombre de otro local).
+- **SELECT:** el `admin` ve todo; el `local` ve solo `local_id = su local`.
+- (El `socio_id` se resuelve server-side desde el `codigo`, no lo manda el cliente como id.)
+
+> Nota: el front **no** accede a Supabase directo — todo pasa por la API Express con el Bearer
+> token. La RLS es defensa en profundidad; la autorización principal la hace la API por rol.
+
+---
+
+**Prioridad:** 0 (campo `codigo` único + en el QR) es requisito de todo. 1 + (2 ó 6) destraban
+**Validar**: §1 busca al socio y §6 registra el escaneo (o §2 si además aplican un beneficio). §3
+destraba **Historial**, §4 las **métricas**. Apenas estén, el front se conecta sin cambios de diseño.
