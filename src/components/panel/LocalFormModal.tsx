@@ -4,7 +4,7 @@
 // horarios. Al guardar/eliminar con éxito avisa con onSaved() para recargar.
 
 import { useEffect, useState } from 'react';
-import { api, humanizeError } from '@/lib/api';
+import { api, bodyTooLarge, humanizeError } from '@/lib/api';
 import type { ApiLocal, Categoria, HorarioDia } from '@/types';
 import { PanelModal } from './PanelModal';
 import { PButton, Toggle } from './kit';
@@ -59,19 +59,23 @@ export function LocalFormModal({
   const submit = async () => {
     if (!nombre.trim()) return setError('El nombre es obligatorio');
     if (!rubro) return setError('Elegí un rubro');
+    const payload = {
+      nombre: nombre.trim(),
+      nro_local: nroLocal.trim() || null,
+      rubro,
+      descripcion: descripcion.trim() || null,
+      logo_url: logoUrl || null,
+      banner_url: bannerUrl || null,
+      horarios,
+      activo,
+    };
+    if (bodyTooLarge(payload))
+      return setError(
+        'El logo o el banner son muy pesados para guardarlos así (~90 KB máx). Subí un SVG liviano (sin imágenes incrustadas) o una imagen más chica. Para archivos pesados hace falta habilitar el upload de archivos en el backend.',
+      );
     setSaving(true);
     setError(null);
     try {
-      const payload = {
-        nombre: nombre.trim(),
-        nro_local: nroLocal.trim() || null,
-        rubro,
-        descripcion: descripcion.trim() || null,
-        logo_url: logoUrl || null,
-        banner_url: bannerUrl || null,
-        horarios,
-        activo,
-      };
       if (isEdit) await api.locales.update(local!.id, payload);
       else await api.locales.create(payload);
       onSaved();

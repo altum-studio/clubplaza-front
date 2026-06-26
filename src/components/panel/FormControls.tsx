@@ -3,8 +3,9 @@
 // es solo de lectura). Inputs, select, pickers de archivo (SVG/imagen), selector
 // de días y editor de horarios.
 
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { api, humanizeError } from '@/lib/api';
 import { Icon } from './Icon';
 import { Toggle } from './kit';
 import type { HorarioDia } from '@/types';
@@ -103,7 +104,91 @@ export function SelectInput<T extends string>({
   );
 }
 
-// Picker de imagen (banner): guarda un data URL y muestra preview.
+// Picker de archivo que SUBE a /api/upload y guarda la URL devuelta.
+// (logo → SVG ≤ 512 KB; banner → PNG/JPG/WebP/SVG ≤ 2 MB.)
+function FilePicker({
+  label,
+  value,
+  onChange,
+  hint,
+  tipo,
+  accept,
+  buttonLabel,
+  round = false,
+  validate,
+}: {
+  label: string;
+  value: string; // URL
+  onChange: (v: string) => void;
+  hint?: string;
+  tipo: 'logo' | 'banner';
+  accept: string;
+  buttonLabel: string;
+  round?: boolean;
+  validate: (f: File) => string | null;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const pick = async (file?: File) => {
+    if (!file) return;
+    setErr(null);
+    const v = validate(file);
+    if (v) {
+      setErr(v);
+      return;
+    }
+    setUploading(true);
+    try {
+      onChange(await api.upload(file, tipo));
+    } catch (e) {
+      setErr(humanizeError(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Labeled label={label} hint={hint}>
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            'flex flex-shrink-0 items-center justify-center overflow-hidden border',
+            round ? 'h-16 w-16 rounded-full border-line bg-white' : 'h-16 w-28 rounded-[10px] border-dashed border-line bg-fill',
+          )}
+        >
+          {uploading ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand" />
+          ) : value ? (
+            <img src={value} alt="" className={cn('h-full w-full', round ? 'object-contain' : 'object-cover')} />
+          ) : (
+            <Icon name="upload" size={18} className="text-faint" />
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label
+            className={cn(
+              'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-graytext hover:bg-fill',
+              uploading && 'pointer-events-none opacity-60',
+            )}
+          >
+            <Icon name="upload" size={14} />
+            {uploading ? 'Subiendo…' : value ? 'Cambiar' : buttonLabel}
+            <input type="file" accept={accept} className="hidden" disabled={uploading} onChange={(e) => pick(e.target.files?.[0])} />
+          </label>
+          {value && !uploading && (
+            <button type="button" onClick={() => onChange('')} className="text-left text-[11px] font-semibold text-bad hover:underline">
+              Quitar
+            </button>
+          )}
+        </div>
+      </div>
+      {err && <p className="mt-1.5 text-[11px] font-medium text-bad">{err}</p>}
+    </Labeled>
+  );
+}
+
+// Banner: PNG/JPG/WebP/SVG hasta 2 MB.
 export function ImagePicker({
   label,
   value,
@@ -111,44 +196,29 @@ export function ImagePicker({
   hint,
 }: {
   label: string;
-  value: string; // data URL o URL
+  value: string;
   onChange: (v: string) => void;
   hint?: string;
 }) {
-  const read = (file?: File) => {
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = () => onChange(String(r.result));
-    r.readAsDataURL(file);
-  };
   return (
-    <Labeled label={label} hint={hint}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-16 w-28 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-dashed border-line bg-fill">
-          {value ? (
-            <img src={value} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <Icon name="upload" size={18} className="text-faint" />
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-graytext hover:bg-fill">
-            <Icon name="upload" size={14} />
-            {value ? 'Cambiar' : 'Subir imagen'}
-            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => read(e.target.files?.[0])} />
-          </label>
-          {value && (
-            <button type="button" onClick={() => onChange('')} className="text-left text-[11px] font-semibold text-bad hover:underline">
-              Quitar
-            </button>
-          )}
-        </div>
-      </div>
-    </Labeled>
+    <FilePicker
+      label={label}
+      value={value}
+      onChange={onChange}
+      hint={hint}
+      tipo="banner"
+      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+      buttonLabel="Subir imagen"
+      validate={(f) => {
+        if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type)) return 'Formato no válido (PNG, JPG, WebP o SVG).';
+        if (f.size > 2 * 1024 * 1024) return 'La imagen supera los 2 MB.';
+        return null;
+      }}
+    />
   );
 }
 
-// Picker de logo SVG: guarda el markup (texto) y lo muestra inline.
+// Logo: SVG únicamente, hasta 512 KB.
 export function SvgPicker({
   label,
   value,
@@ -156,42 +226,26 @@ export function SvgPicker({
   hint,
 }: {
   label: string;
-  value: string; // markup SVG
+  value: string;
   onChange: (v: string) => void;
   hint?: string;
 }) {
-  // Lee el SVG como data-URI (data:image/svg+xml;base64,…) para guardarlo en
-  // `logo_url` como string y poder mostrarlo con <img> en todos lados.
-  const read = (file?: File) => {
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = () => onChange(String(r.result));
-    r.readAsDataURL(file);
-  };
   return (
-    <Labeled label={label} hint={hint}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-white">
-          {value ? (
-            <img src={value} alt="Logo" className="h-full w-full object-contain" />
-          ) : (
-            <Icon name="upload" size={18} className="text-faint" />
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-graytext hover:bg-fill">
-            <Icon name="upload" size={14} />
-            {value ? 'Cambiar' : 'Subir SVG'}
-            <input type="file" accept="image/svg+xml,.svg" className="hidden" onChange={(e) => read(e.target.files?.[0])} />
-          </label>
-          {value && (
-            <button type="button" onClick={() => onChange('')} className="text-left text-[11px] font-semibold text-bad hover:underline">
-              Quitar
-            </button>
-          )}
-        </div>
-      </div>
-    </Labeled>
+    <FilePicker
+      label={label}
+      value={value}
+      onChange={onChange}
+      hint={hint}
+      tipo="logo"
+      accept="image/svg+xml,.svg"
+      buttonLabel="Subir SVG"
+      round
+      validate={(f) => {
+        if (!/svg/i.test(f.type) && !f.name.toLowerCase().endsWith('.svg')) return 'El logo debe ser un archivo SVG.';
+        if (f.size > 512 * 1024) return 'El logo supera los 512 KB.';
+        return null;
+      }}
+    />
   );
 }
 

@@ -42,6 +42,18 @@ export class ApiError extends Error {
   }
 }
 
+// El backend (Express) corta el body del request en ~100 KB. Como los logos y
+// banners viajan inline (data-URI), validamos el tamaño total antes de mandar
+// para no caer en un 500 opaco.
+export const MAX_BODY_BYTES = 90_000;
+export function bodyTooLarge(payload: unknown): boolean {
+  try {
+    return new Blob([JSON.stringify(payload)]).size > MAX_BODY_BYTES;
+  } catch {
+    return false;
+  }
+}
+
 // Traduce errores a un mensaje legible. Los errores de infraestructura del
 // backend (no puede hablar con su base/Supabase, timeouts, DNS) llegan como
 // "fetch failed" / 5xx y no le dicen nada al usuario: los mostramos amigable.
@@ -134,6 +146,30 @@ async function request<T>(path: string, opts: ReqOpts = {}): Promise<T> {
   return (await parse(res)) as T;
 }
 
+// Sube un archivo a POST /api/upload?tipo=logo|banner (multipart, campo `file`)
+// y devuelve la URL pública. Reintenta una vez si el token está vencido.
+async function uploadFile(file: File, tipo: 'logo' | 'banner'): Promise<string> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const doFetch = () => {
+    const headers: Record<string, string> = {};
+    const t = getAccessToken();
+    if (t) headers.Authorization = `Bearer ${t}`;
+    // Sin Content-Type: el browser pone el boundary del multipart.
+    return fetch(`${BASE}/upload?tipo=${tipo}`, { method: 'POST', headers, body: fd });
+  };
+  let res = await doFetch();
+  if (res.status === 401) {
+    if (await tryRefresh()) res = await doFetch();
+    else {
+      clearTokens();
+      onUnauthorized?.();
+    }
+  }
+  const body = await parse(res);
+  return String(body?.url ?? '');
+}
+
 // ─────────────────────── tipos de payload ───────────────────────
 export interface RegisterPayload {
   email: string;
@@ -189,6 +225,7 @@ type ProfileInput = Partial<
 
 // ─────────────────────── API ───────────────────────
 export const api = {
+  upload: (file: File, tipo: 'logo' | 'banner') => uploadFile(file, tipo),
   auth: {
     login: (email: string, password: string) =>
       request<AuthResponse>('/auth/login', { method: 'POST', body: { email, password }, auth: false }),

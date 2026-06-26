@@ -5,7 +5,7 @@
 // límite de uso y banner. El rubro se toma automáticamente del local.
 
 import { useEffect, useMemo, useState } from 'react';
-import { api, humanizeError } from '@/lib/api';
+import { api, bodyTooLarge, humanizeError } from '@/lib/api';
 import type { ApiLocal, ApiPromo, LimitePeriodo, TipoBeneficio } from '@/types';
 import { PanelModal } from './PanelModal';
 import { PButton, Toggle } from './kit';
@@ -83,22 +83,27 @@ export function BeneficioFormModal({
     if (dias.length === 0) return setError('Elegí al menos un día válido');
     if (!indefinida && (!desde || !hasta)) return setError('Completá la vigencia o marcá "indefinido"');
 
+    const base = {
+      titulo: titulo.trim(),
+      tipo,
+      valor: tipoDef?.usaValor && valor ? Number(valor) : null,
+      descripcion: descripcion.trim() || null,
+      dias,
+      vigencia_desde: indefinida ? null : desde,
+      vigencia_hasta: indefinida ? null : hasta,
+      limite_cantidad: limitePeriodo === 'ilimitado' ? null : Number(limiteCantidad) || 1,
+      limite_periodo: limitePeriodo,
+      banner_url: bannerUrl || null,
+      activa,
+    };
+    if (bodyTooLarge(mode === 'admin' && !isEdit ? { local_id: localId, ...base } : base))
+      return setError(
+        'El banner es muy pesado para guardarlo así (~90 KB máx). Usá una imagen más liviana. Para archivos pesados hace falta habilitar el upload de archivos en el backend.',
+      );
+
     setSaving(true);
     setError(null);
     try {
-      const base = {
-        titulo: titulo.trim(),
-        tipo,
-        valor: tipoDef?.usaValor && valor ? Number(valor) : null,
-        descripcion: descripcion.trim() || null,
-        dias,
-        vigencia_desde: indefinida ? null : desde,
-        vigencia_hasta: indefinida ? null : hasta,
-        limite_cantidad: limitePeriodo === 'ilimitado' ? null : Number(limiteCantidad) || 1,
-        limite_periodo: limitePeriodo,
-        banner_url: bannerUrl || null,
-        activa,
-      };
       if (isEdit) await api.promos.update(promo!.id, base);
       else if (mode === 'admin') await api.promos.create({ local_id: localId, ...base });
       else await api.promos.createMine(base);
