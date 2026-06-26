@@ -210,7 +210,9 @@ export default function LocalBeneficios() {
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <Table columns={columns} rows={rows} dense onRowClick={(p) => setSelId(p.id)} />
+                      <div className="min-w-[540px]">
+                        <Table columns={columns} rows={rows} dense onRowClick={(p) => setSelId(p.id)} />
+                      </div>
                     </div>
                   )}
                 </PCard>

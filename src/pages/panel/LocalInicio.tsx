@@ -83,7 +83,15 @@ export default function LocalInicio() {
 
               <PCard
                 title="Actividad reciente"
-                actions={<span className="text-xs font-bold text-brand">Ver todo</span>}
+                actions={
+                  <button
+                    type="button"
+                    onClick={() => navigate('/panel/historial')}
+                    className="text-xs font-bold text-brand hover:underline"
+                  >
+                    Ver todo
+                  </button>
+                }
               >
                 <PanelEmpty
                   icon="clock"

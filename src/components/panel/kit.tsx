@@ -458,7 +458,10 @@ export function Table<R extends Record<string, any>>({
                   key={c.key}
                   style={{ textAlign: c.align || 'left' }}
                   className={cn(
-                    'truncate border-b border-line-soft align-middle text-[13px]',
+                    'border-b border-line-soft align-middle text-[13px]',
+                    // Solo truncamos texto plano; las celdas con render (badges,
+                    // botones, menús) manejan su propio overflow y no deben recortarse.
+                    !c.render && 'truncate',
                     dense ? 'px-[14px] py-2.5' : 'px-4 py-[13px]',
                     c.bold ? 'font-bold' : 'font-medium',
                     c.muted ? 'text-graytext' : 'text-ink',
