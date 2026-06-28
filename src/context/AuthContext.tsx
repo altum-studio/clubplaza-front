@@ -86,8 +86,10 @@ function profileToSocio(p: Profile): Socio {
     celular: p.telefono ?? '',
     dni: p.dni ?? '',
     fecha_nacimiento: p.fecha_nacimiento ?? '',
-    numero_socio: numeroSocio(p.id),
-    token_qr: p.id,
+    // El código real viene del backend (profile.codigo). Fallback al derivado del
+    // UUID solo si una sesión vieja todavía no lo trae.
+    numero_socio: p.codigo || numeroSocio(p.id),
+    token_qr: p.codigo || p.id,
     created_at: p.created_at,
   };
 }

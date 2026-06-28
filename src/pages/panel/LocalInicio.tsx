@@ -1,24 +1,28 @@
 // pages/panel/LocalInicio.tsx
-// Panel Local (comercio adherido) · Inicio. 4 KPIs + canjes por día (Bars) y
-// actividad reciente de validaciones. Métricas detrás de METRICS_SOON.
+// Panel Local (comercio adherido) · Inicio. 4 KPIs reales + canjes por día
+// (últimos 7) y actividad reciente de validaciones, todo desde la API
+// (api.promos.mine + api.canjes.statsMine + api.canjes.mine).
 
 import { useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
-import {
-  Bars,
-  METRICS_SOON,
-  PButton,
-  PCard,
-  PChip,
-  SoonTag,
-  Stat,
-} from '@/components/panel/kit';
+import { Badge, Bars, PButton, PCard, Stat } from '@/components/panel/kit';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import { CANJES_DIA, DIAS, LOCAL_NAV } from '@/data/panelMock';
+import { LOCAL_NAV } from '@/data/panelMock';
 
-const METRICS_LABELS = ['Promedio diario', 'Mejor día', 'Ticket promedio est.'];
+const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
+  ok: { tone: 'ok', label: 'Aplicado' },
+  rechazado: { tone: 'bad', label: 'Rechazado' },
+  repetido: { tone: 'warn', label: 'Repetido' },
+};
+
+function horaLabel(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
 
 export default function LocalInicio() {
   const navigate = useNavigate();
@@ -28,7 +32,9 @@ export default function LocalInicio() {
       Promise.all([
         api.locales.mine().catch(() => null),
         api.promos.mine({ limit: 50 }),
-      ]).then(([local, promos]) => ({ local, promos })),
+        api.canjes.statsMine().catch(() => null),
+        api.canjes.mine({ limit: 6 }).catch(() => null),
+      ]).then(([local, promos, stats, recientes]) => ({ local, promos, stats, recientes })),
     [],
   );
 
@@ -46,62 +52,99 @@ export default function LocalInicio() {
       }
     >
       <DataView state={state}>
-        {(d) => (
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <Stat
-                live
-                label="Beneficios activos"
-                value={String(d.promos.data.filter((p) => p.activa).length)}
-                icon="tag"
-              />
-              <Stat live label="Beneficios totales" value={String(d.promos.count)} icon="chart" />
-              <Stat label="Canjes hoy" icon="ticket" />
-              <Stat label="Miembros alcanzados" icon="users" />
-            </div>
+        {(d) => {
+          const dias = d.stats?.canjes_ultimos_7_dias ?? [];
+          const serie = dias.map((x) => x.cantidad);
+          const labels = dias.map((x) => {
+            const dt = new Date(`${x.fecha}T00:00:00`);
+            return isNaN(dt.getTime()) ? '' : DOW[dt.getDay()];
+          });
+          const canjesHoy = serie.length ? serie[serie.length - 1] : 0;
+          const recientes = d.recientes?.data ?? [];
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-              <PCard
-                title="Canjes por día"
-                sub="Últimos 7 días"
-                actions={<PChip icon="cal">Esta semana</PChip>}
-              >
-                <Bars data={CANJES_DIA} labels={DIAS} highlight={6} h={170} />
-                {METRICS_SOON && (
-                  <div className="mt-4 flex gap-6 border-t border-line-soft pt-3.5">
-                    {METRICS_LABELS.map((label) => (
-                      <div key={label}>
-                        <div className="text-[11px] font-semibold text-mute">{label}</div>
-                        <div className="mt-1.5">
-                          <SoonTag small />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </PCard>
-
-              <PCard
-                title="Actividad reciente"
-                actions={
-                  <button
-                    type="button"
-                    onClick={() => navigate('/panel/historial')}
-                    className="text-xs font-bold text-brand hover:underline"
-                  >
-                    Ver todo
-                  </button>
-                }
-              >
-                <PanelEmpty
-                  icon="clock"
-                  title="Sin validaciones todavía"
-                  hint="Las validaciones de credenciales van a aparecer acá."
+          return (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <Stat
+                  live
+                  label="Beneficios activos"
+                  value={String(d.promos.data.filter((p) => p.activa).length)}
+                  icon="tag"
                 />
-              </PCard>
+                <Stat live label="Beneficios totales" value={String(d.promos.count)} icon="chart" />
+                <Stat
+                  live={!!d.stats}
+                  label="Canjes hoy"
+                  value={d.stats ? String(canjesHoy) : undefined}
+                  icon="ticket"
+                />
+                <Stat
+                  live={!!d.stats}
+                  label="Miembros del mes"
+                  value={d.stats ? String(d.stats.miembros_unicos_mes) : undefined}
+                  icon="users"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+                <PCard title="Canjes por día" sub="Últimos 7 días">
+                  {serie.length ? (
+                    <Bars data={serie} labels={labels} highlight={serie.length - 1} h={170} />
+                  ) : (
+                    <PanelEmpty
+                      icon="chart"
+                      title="Sin canjes todavía"
+                      hint="Cuando valides credenciales vas a ver la evolución acá."
+                    />
+                  )}
+                </PCard>
+
+                <PCard
+                  title="Actividad reciente"
+                  actions={
+                    <button
+                      type="button"
+                      onClick={() => navigate('/panel/historial')}
+                      className="text-xs font-bold text-brand hover:underline"
+                    >
+                      Ver todo
+                    </button>
+                  }
+                >
+                  {recientes.length === 0 ? (
+                    <PanelEmpty
+                      icon="clock"
+                      title="Sin validaciones todavía"
+                      hint="Las validaciones de credenciales van a aparecer acá."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {recientes.map((c, i) => {
+                        const e = ESTADO[c.estado] ?? { tone: 'mute' as const, label: c.estado };
+                        return (
+                          <div
+                            key={c.id}
+                            className={`flex items-center gap-3 py-2.5 ${i === recientes.length - 1 ? '' : 'border-b border-line-soft'}`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13px] font-bold text-ink">
+                                {`${c.usuarios?.nombre ?? ''} ${c.usuarios?.apellido ?? ''}`.trim() || '—'}
+                              </div>
+                              <div className="truncate text-[11px] text-mute">
+                                {c.promos?.titulo ?? ''} · {horaLabel(c.fecha)}
+                              </div>
+                            </div>
+                            <Badge tone={e.tone}>{e.label}</Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </PCard>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        }}
       </DataView>
     </PanelShell>
   );

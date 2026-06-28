@@ -83,6 +83,9 @@ export function BeneficioFormModal({
     if (mode === 'admin' && !localId) return setError('Elegí un local');
     if (!titulo.trim()) return setError('El título es obligatorio');
     if (!tipo) return setError('Elegí el tipo de beneficio');
+    // El backend exige `valor` para estos tipos (ver guía de integración §6).
+    if (['descuento', 'descuento_fijo', 'cuotas'].includes(tipo) && !valor)
+      return setError('Ingresá el valor (porcentaje, monto o nº de cuotas)');
     if (dias.length === 0) return setError('Elegí al menos un día válido');
     if (!indefinida && (!desde || !hasta)) return setError('Completá la vigencia o marcá "indefinido"');
 

@@ -25,11 +25,13 @@ export default function AdminDashboard() {
         api.locales.list({ limit: 5 }),
         api.promos.list({ limit: 1 }),
         api.usuarios.list({ limit: 1 }),
-      ]).then(([l, p, u]) => ({
+        api.canjes.stats().catch(() => null),
+      ]).then(([l, p, u, stats]) => ({
         locales: l,
         localesCount: l.count,
         promos: p.count,
         usuarios: u.count,
+        canjesMes: stats?.canjes_mes ?? null,
       })),
     [],
   );
@@ -54,7 +56,11 @@ export default function AdminDashboard() {
               <Stat live label="Miembros totales" value={String(d.usuarios)} icon="users" />
               <Stat live label="Locales activos" value={String(d.localesCount)} icon="store" />
               <Stat live label="Beneficios publicados" value={String(d.promos)} icon="tag" />
-              <Stat label="Canjes del mes" icon="ticket" />
+              {d.canjesMes != null ? (
+                <Stat live label="Canjes del mes" value={String(d.canjesMes)} icon="ticket" />
+              ) : (
+                <Stat label="Canjes del mes" icon="ticket" />
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">

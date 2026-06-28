@@ -11,6 +11,13 @@ import type {
   ApiLocal,
   ApiPromo,
   AuthResponse,
+  Canje,
+  CanjeHistorialItem,
+  CanjeStats,
+  Categoria,
+  EscaneoHistorialItem,
+  EscaneoResult,
+  MiembroPorCodigo,
   Paginated,
   Profile,
   Role,
@@ -239,6 +246,10 @@ export const api = {
     list: (query?: { rol?: Role; local_id?: string; limit?: number; offset?: number }) =>
       request<Paginated<Profile>>('/usuarios', { query }),
     get: (id: string) => request<Profile>(`/usuarios/${id}`),
+    // Buscar miembro por código de credencial (Panel Local/Admin). El backend
+    // normaliza a mayúsculas, igual lo mandamos en upper por las dudas.
+    byCodigo: (codigo: string) =>
+      request<MiembroPorCodigo>(`/usuarios/codigo/${encodeURIComponent(codigo.trim().toUpperCase())}`),
     create: (body: ProfileInput) => request<Profile>('/usuarios', { method: 'POST', body }),
     update: (id: string, body: ProfileInput) => request<Profile>(`/usuarios/${id}`, { method: 'PATCH', body }),
     remove: (id: string) => request<{ id: string }>(`/usuarios/${id}`, { method: 'DELETE' }),
@@ -254,7 +265,7 @@ export const api = {
     updateMine: (body: LocalInput) => request<ApiLocal>('/locales/mine/mi-local', { method: 'PATCH', body }),
   },
   promos: {
-    list: (query?: { local_id?: string; activa?: boolean; limit?: number; offset?: number }) =>
+    list: (query?: { local_id?: string; rubro?: Categoria; activa?: boolean; limit?: number; offset?: number }) =>
       request<Paginated<ApiPromo>>('/promos', { query, auth: false }),
     get: (id: string) => request<ApiPromo>(`/promos/${id}`, { auth: false }),
     create: (body: PromoInput) => request<ApiPromo>('/promos', { method: 'POST', body }),
@@ -263,5 +274,33 @@ export const api = {
     mine: (query?: { activa?: boolean; limit?: number; offset?: number }) =>
       request<Paginated<ApiPromo>>('/promos/mine/mis-promos', { query }),
     createMine: (body: PromoInput) => request<ApiPromo>('/promos/mine/mis-promos', { method: 'POST', body }),
+  },
+  // Validar credencial (registra el escaneo + lista historial del local).
+  escaneos: {
+    create: (codigo: string) =>
+      request<EscaneoResult>('/escaneos', { method: 'POST', body: { codigo: codigo.trim().toUpperCase() } }),
+    mine: (query?: { desde?: string; hasta?: string; limit?: number; offset?: number }) =>
+      request<Paginated<EscaneoHistorialItem>>('/escaneos/mine', { query }),
+  },
+  // Canjes: registrar, historial (local/admin) y métricas.
+  canjes: {
+    create: (body: { codigo?: string; usuario_id?: string; promo_id: string }) =>
+      request<Canje>('/canjes', {
+        method: 'POST',
+        body: body.codigo ? { ...body, codigo: body.codigo.trim().toUpperCase() } : body,
+      }),
+    mine: (query?: { desde?: string; hasta?: string; estado?: string; limit?: number; offset?: number }) =>
+      request<Paginated<CanjeHistorialItem>>('/canjes/mine', { query }),
+    list: (query?: {
+      local_id?: string;
+      promo_id?: string;
+      desde?: string;
+      hasta?: string;
+      estado?: string;
+      limit?: number;
+      offset?: number;
+    }) => request<Paginated<CanjeHistorialItem>>('/canjes', { query }),
+    statsMine: () => request<CanjeStats>('/canjes/stats/mine'),
+    stats: (query?: { local_id?: string }) => request<CanjeStats>('/canjes/stats', { query }),
   },
 };

@@ -108,6 +108,7 @@ export interface Profile {
   telefono: string;
   rol: Role;
   local_id: string | null; // solo rol "local"
+  codigo: string; // código corto de credencial (6 chars, ej. A7K2QM) — va en el QR
   activo: boolean;
   created_at: string;
   locales?: { id: string; nombre: string } | null; // join cuando aplica
@@ -170,6 +171,61 @@ export interface AuthResponse {
 export interface Paginated<T> {
   data: T[];
   count: number;
+}
+
+// ─────────────── Validación de credencial / canjes ───────────────
+
+export type EstadoCanje = 'ok' | 'rechazado' | 'repetido';
+
+// Miembro devuelto por GET /usuarios/codigo/:codigo (ficha para el mostrador).
+export interface MiembroPorCodigo {
+  id: string;
+  nombre: string;
+  apellido: string;
+  codigo: string;
+  dni: string;
+  activo: boolean;
+  created_at: string;
+}
+
+// Respuesta de POST /escaneos (validar credencial).
+export interface EscaneoResult {
+  socio: { nombre: string; activo: boolean };
+  beneficios_activos: number;
+  escaneo_id: string;
+}
+
+export interface Canje {
+  id: string;
+  usuario_id: string;
+  promo_id: string;
+  local_id: string;
+  estado: EstadoCanje;
+  fecha: string; // ISO timestamptz
+}
+
+// Item del historial de canjes (join con usuario + promo).
+export interface CanjeHistorialItem {
+  id: string;
+  fecha: string;
+  estado: string;
+  usuarios: { nombre: string; apellido: string; codigo: string };
+  promos: { titulo: string };
+}
+
+// Item del historial de escaneos (Supabase devuelve el join bajo `usuarios`).
+export interface EscaneoHistorialItem {
+  id: string;
+  escaneado_en: string;
+  usuarios: { nombre: string; apellido: string; codigo: string };
+}
+
+// Métricas de canjes (GET /canjes/stats[/mine]).
+export interface CanjeStats {
+  canjes_mes: number;
+  canjes_ultimos_7_dias: { fecha: string; cantidad: number }[];
+  miembros_unicos_mes: number;
+  beneficio_mas_canjeado: { promo_id: string; titulo: string; cantidad: number } | null;
 }
 
 // Datos del formulario de alta (los campos de socio deben coincidir con la tabla

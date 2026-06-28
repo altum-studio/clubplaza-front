@@ -41,6 +41,8 @@ export function PButton({
   full = false,
   className,
   onClick,
+  type = 'button',
+  disabled = false,
 }: {
   children?: ReactNode;
   variant?: PBtnVariant;
@@ -49,16 +51,20 @@ export function PButton({
   full?: boolean;
   className?: string;
   onClick?: () => void;
+  type?: 'button' | 'submit';
+  disabled?: boolean;
 }) {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'inline-flex items-center justify-center gap-[7px] whitespace-nowrap font-semibold tracking-[0.1px] transition-colors',
         PBTN_SIZE[size],
         PBTN_VARIANT[variant],
         full && 'w-full',
+        disabled && 'cursor-not-allowed opacity-50',
         className,
       )}
     >

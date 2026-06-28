@@ -1,8 +1,11 @@
 // pages/panel/LocalValidar.tsx
-// Panel Local · Validar credencial. El selector de "Beneficio a aplicar" sale de
-// los beneficios REALES del local (api.promos.mine). El escaneo de QR / búsqueda
-// de miembro y el registro del canje requieren endpoints que el backend todavía
-// no tiene (buscar miembro por código + canjes), así que esa parte queda marcada.
+// Panel Local · Validar credencial. Flujo real contra la API:
+//  1. El comercio elige el beneficio a aplicar (sus promos activas).
+//  2. Ingresa/escanea el código del miembro → POST /escaneos (valida + nº de
+//     beneficios activos) + GET /usuarios/codigo/:codigo (ficha con DNI).
+//  3. Confirma → POST /canjes { codigo, promo_id }.
+// El visor de cámara queda como placeholder; la entrada manual del código ya
+// opera el flujo completo.
 
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
@@ -11,9 +14,13 @@ import { Icon } from '@/components/panel/Icon';
 import { SelectInput } from '@/components/panel/FormControls';
 import { DataView } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
-import { api } from '@/lib/api';
+import { api, ApiError, humanizeError } from '@/lib/api';
+import type { EscaneoResult, MiembroPorCodigo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { diasLabel, limiteLabel } from '@/lib/opciones';
+
+type Lookup = { codigo: string; esc: EscaneoResult; miembro: MiembroPorCodigo | null };
+type CanjeMsg = { ok: boolean; text: string };
 
 export default function LocalValidar() {
   const state = useAsync(
@@ -26,7 +33,52 @@ export default function LocalValidar() {
 
   const [benId, setBenId] = useState('');
   const [codigo, setCodigo] = useState('');
-  const [searched, setSearched] = useState<string | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  const [lookup, setLookup] = useState<Lookup | null>(null);
+  const [lookupErr, setLookupErr] = useState<string | null>(null);
+  const [canjeando, setCanjeando] = useState(false);
+  const [canjeMsg, setCanjeMsg] = useState<CanjeMsg | null>(null);
+
+  const reset = () => {
+    setLookup(null);
+    setLookupErr(null);
+    setCanjeMsg(null);
+  };
+
+  async function buscar() {
+    const cod = codigo.trim().toUpperCase();
+    if (!cod) return;
+    setBuscando(true);
+    reset();
+    try {
+      // El escaneo valida y registra; la ficha (DNI) es complementaria y opcional.
+      const [esc, miembro] = await Promise.all([
+        api.escaneos.create(cod),
+        api.usuarios.byCodigo(cod).catch(() => null),
+      ]);
+      setLookup({ codigo: cod, esc, miembro });
+    } catch (e) {
+      // 404 "Miembro no encontrado" / 409 "El miembro está inactivo" son mensajes
+      // reales del backend; el resto se muestra amigable.
+      setLookupErr(e instanceof ApiError ? e.message : humanizeError(e));
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  async function confirmar() {
+    if (!benId || !lookup) return;
+    setCanjeando(true);
+    setCanjeMsg(null);
+    try {
+      await api.canjes.create({ codigo: lookup.codigo, promo_id: benId });
+      setCanjeMsg({ ok: true, text: 'Canje registrado. ¡Listo!' });
+    } catch (e) {
+      setCanjeMsg({ ok: false, text: e instanceof ApiError ? e.message : humanizeError(e) });
+    } finally {
+      setCanjeando(false);
+    }
+  }
 
   return (
     <PanelShell
@@ -97,7 +149,13 @@ export default function LocalValidar() {
                   </div>
 
                   {/* Entrada manual de código (REAL) */}
-                  <div className="flex gap-2.5">
+                  <form
+                    className="flex gap-2.5"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      buscar();
+                    }}
+                  >
                     <div className="flex flex-1 items-center gap-2 rounded-[10px] border border-line bg-white px-[13px]">
                       <Icon name="qr" size={17} className="text-mute" />
                       <input
@@ -107,19 +165,26 @@ export default function LocalValidar() {
                         className="h-[42px] w-full bg-transparent font-mono text-[13.5px] tracking-[1px] text-ink outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-faint"
                       />
                     </div>
-                    <PButton
-                      className="flex-shrink-0"
-                      onClick={() => setSearched(codigo.trim())}
-                    >
-                      Buscar
+                    <PButton type="submit" className="flex-shrink-0" disabled={buscando || !codigo.trim()}>
+                      {buscando ? 'Buscando…' : 'Buscar'}
                     </PButton>
-                  </div>
+                  </form>
                 </div>
               </PCard>
 
               {/* DERECHA — resultado */}
               <PCard title="Miembro" sub="Verificá identidad con el DNI antes de confirmar">
-                {!searched ? (
+                {lookupErr ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-2 rounded-[10px] bg-bad-soft px-3.5 py-3">
+                      <Icon name="x" size={18} className="mt-0.5 flex-shrink-0 text-bad" />
+                      <p className="text-[12.5px] font-semibold text-bad">{lookupErr}</p>
+                    </div>
+                    <PButton variant="soft" full onClick={reset}>
+                      Probar otro código
+                    </PButton>
+                  </div>
+                ) : !lookup ? (
                   <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-fill">
                       <Icon name="user" size={22} className="text-faint" />
@@ -130,35 +195,70 @@ export default function LocalValidar() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
+                    {/* Ficha del miembro */}
                     <div className="flex items-center justify-between rounded-[12px] bg-fill px-4 py-3">
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.4px] text-mute">
-                          Código ingresado
+                      <div className="min-w-0">
+                        <div className="truncate text-[15px] font-extrabold text-ink">
+                          {lookup.miembro
+                            ? `${lookup.miembro.nombre} ${lookup.miembro.apellido}`.trim()
+                            : lookup.esc.socio.nombre}
                         </div>
-                        <div className="font-mono text-[18px] font-bold tracking-[2px] text-ink">
-                          {searched || '—'}
+                        <div className="mt-0.5 font-mono text-[12.5px] font-bold tracking-[1.5px] text-graytext">
+                          {lookup.codigo}
+                          {lookup.miembro?.dni && (
+                            <span className="ml-2 font-sans font-normal tracking-normal text-mute">
+                              DNI {lookup.miembro.dni}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {benSel && <Badge tone="ok">{benSel.titulo}</Badge>}
+                      <Badge tone={lookup.esc.socio.activo ? 'ok' : 'mute'}>
+                        {lookup.esc.socio.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
                     </div>
 
-                    {/* Falta backend para esto */}
-                    <div className="flex items-start gap-2 rounded-[10px] bg-warn-soft px-3.5 py-3">
-                      <Icon name="clock" size={18} className="mt-0.5 flex-shrink-0 text-warn" />
-                      <p className="text-[12.5px] font-medium text-warn">
-                        Para mostrar el miembro y registrar el canje el backend necesita dos
-                        endpoints que todavía no existen: <b>buscar miembro por código</b> y{' '}
-                        <b>registrar canje</b>. Apenas estén, acá aparece el miembro y se habilita
-                        “Confirmar canje”.
-                      </p>
+                    <div className="flex items-center justify-between rounded-[10px] border border-line-soft px-4 py-2.5 text-[12.5px]">
+                      <span className="text-mute">Beneficios activos hoy</span>
+                      <span className="font-bold text-ink">{lookup.esc.beneficios_activos}</span>
                     </div>
+
+                    {benSel ? (
+                      <div className="rounded-[10px] bg-brand-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-brand">
+                        A aplicar: {benSel.titulo}
+                      </div>
+                    ) : (
+                      <div className="rounded-[10px] bg-warn-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-warn">
+                        Elegí el beneficio a aplicar (arriba) antes de confirmar.
+                      </div>
+                    )}
+
+                    {canjeMsg && (
+                      <div
+                        className={`flex items-start gap-2 rounded-[10px] px-3.5 py-3 text-[12.5px] font-semibold ${
+                          canjeMsg.ok ? 'bg-brand-soft text-brand' : 'bg-bad-soft text-bad'
+                        }`}
+                      >
+                        <Icon
+                          name={canjeMsg.ok ? 'check' : 'x'}
+                          size={18}
+                          className="mt-0.5 flex-shrink-0"
+                        />
+                        <p>{canjeMsg.text}</p>
+                      </div>
+                    )}
 
                     <div className="flex gap-2.5">
-                      <PButton variant="soft" full onClick={() => setSearched(null)}>
-                        Cancelar
+                      <PButton variant="soft" full onClick={reset}>
+                        {canjeMsg?.ok ? 'Nuevo' : 'Cancelar'}
                       </PButton>
-                      <PButton variant="primary" icon="check" full className="cursor-not-allowed opacity-50">
-                        Confirmar canje
+                      <PButton
+                        variant="primary"
+                        icon="check"
+                        full
+                        onClick={confirmar}
+                        disabled={!benId || canjeando || canjeMsg?.ok}
+                      >
+                        {canjeando ? 'Confirmando…' : 'Confirmar canje'}
                       </PButton>
                     </div>
                   </div>
