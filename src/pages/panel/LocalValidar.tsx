@@ -105,32 +105,9 @@ export default function LocalValidar() {
               {/* IZQUIERDA — beneficio + escáner/código */}
               <PCard
                 title="Validar credencial"
-                sub="Elegí el beneficio y escaneá o ingresá el código del miembro"
+                sub="Escaneá el QR o ingresá el código del miembro"
               >
                 <div className="flex flex-col gap-4">
-                  {/* Beneficio a aplicar — REAL, los beneficios activos del local */}
-                  {activos.length === 0 ? (
-                    <div className="rounded-[10px] bg-warn-soft px-3.5 py-3 text-[12.5px] font-semibold text-warn">
-                      Este local no tiene beneficios activos. Cargá uno en la sección “Beneficios”.
-                    </div>
-                  ) : (
-                    <>
-                      <SelectInput
-                        label="Beneficio a aplicar"
-                        value={benId}
-                        onChange={setBenId}
-                        options={benOptions}
-                        placeholder="Elegí el beneficio"
-                      />
-                      {benSel && (
-                        <div className="-mt-1 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11.5px] text-mute">
-                          <span>Días: {diasLabel(benSel.dias)}</span>
-                          <span>{limiteLabel(benSel.limite_cantidad, benSel.limite_periodo)}</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-
                   {/* Visor del escáner (cámara en vivo, embebida) */}
                   <QrScanner active={scanActive} onDetect={(t) => buscar(t)} />
 
@@ -167,8 +144,35 @@ export default function LocalValidar() {
                 </div>
               </PCard>
 
-              {/* DERECHA — resultado */}
-              <PCard title="Miembro" sub="Verificá identidad con el DNI antes de confirmar">
+              {/* DERECHA — beneficio a aplicar + resultado del miembro */}
+              <div className="flex flex-col gap-[18px]">
+                {/* Beneficio a aplicar */}
+                <PCard>
+                  {activos.length === 0 ? (
+                    <div className="rounded-[10px] bg-warn-soft px-3.5 py-3 text-[12.5px] font-semibold text-warn">
+                      Este local no tiene beneficios activos. Cargá uno en la sección “Beneficios”.
+                    </div>
+                  ) : (
+                    <>
+                      <SelectInput
+                        label="Beneficio a aplicar"
+                        value={benId}
+                        onChange={setBenId}
+                        options={benOptions}
+                        placeholder="Elegí el beneficio"
+                      />
+                      {benSel && (
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11.5px] text-mute">
+                          <span>Días: {diasLabel(benSel.dias)}</span>
+                          <span>{limiteLabel(benSel.limite_cantidad, benSel.limite_periodo)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </PCard>
+
+                {/* Resultado del miembro */}
+                <PCard title="Miembro" sub="Verificá identidad con el DNI antes de confirmar">
                 {lookupErr ? (
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start gap-2 rounded-[10px] bg-bad-soft px-3.5 py-3">
@@ -258,7 +262,8 @@ export default function LocalValidar() {
                     </div>
                   </div>
                 )}
-              </PCard>
+                </PCard>
+              </div>
             </div>
           );
         }}
