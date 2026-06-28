@@ -25,6 +25,11 @@ export function QrScanner({
   onDetectRef.current = onDetect;
 
   const [status, setStatus] = useState<Status>('idle');
+  // Espejamos la preview SOLO si la cámara activa es frontal (selfie / webcam),
+  // donde la vista sin espejar se siente invertida. La trasera (environment) que
+  // se usa para escanear NO se espeja. El decode no se afecta en ningún caso
+  // (jsQR lee el frame crudo del canvas, ajeno a las transformaciones CSS).
+  const [mirrored, setMirrored] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +97,9 @@ export function QrScanner({
           v.srcObject = stream;
           await v.play().catch(() => {});
         }
+        // Frontal (o webcam de escritorio, que suele reportar undefined) → espejar.
+        const facing = stream.getVideoTracks()[0]?.getSettings().facingMode;
+        setMirrored(facing !== 'environment');
         setStatus('on');
         tick();
       } catch (e) {
@@ -124,6 +132,7 @@ export function QrScanner({
         muted
         playsInline
         autoPlay
+        style={{ transform: mirrored ? 'scaleX(-1)' : undefined }}
         className={`absolute inset-0 h-full w-full object-cover transition-opacity ${
           status === 'on' ? 'opacity-100' : 'opacity-0'
         }`}
