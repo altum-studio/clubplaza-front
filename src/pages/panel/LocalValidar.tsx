@@ -16,12 +16,30 @@ import { QrScanner } from '@/components/panel/QrScanner';
 import { DataView } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api, ApiError, humanizeError } from '@/lib/api';
-import type { EscaneoResult, MiembroPorCodigo } from '@/types';
+import type { ApiPromo, EscaneoResult, MiembroPorCodigo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { diasLabel, limiteLabel } from '@/lib/opciones';
 
 type Lookup = { codigo: string; esc: EscaneoResult; miembro: MiembroPorCodigo | null };
 type CanjeMsg = { ok: boolean; text: string };
+
+// Un beneficio se puede aplicar HOY si está activo, hoy cae en sus días válidos
+// y está dentro de la vigencia. (El backend hace la validación autoritativa en el
+// canje; esto evita ofrecer en el selector algo que igual sería rechazado.)
+function disponibleHoy(p: ApiPromo): boolean {
+  if (!p.activa) return false;
+  const hoy = new Date();
+  const dias = p.dias ?? [];
+  if (dias.length > 0 && !dias.includes(hoy.getDay())) return false; // 0=Dom … 6=Sáb
+  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(
+    hoy.getDate(),
+  ).padStart(2, '0')}`;
+  const desde = p.vigencia_desde ?? p.fecha_inicio ?? '';
+  const hasta = p.vigencia_hasta ?? p.fecha_fin ?? '';
+  if (desde && hoyStr < desde) return false;
+  if (hasta && hoyStr > hasta) return false;
+  return true;
+}
 
 export default function LocalValidar() {
   const state = useAsync(
@@ -96,9 +114,9 @@ export default function LocalValidar() {
     >
       <DataView state={state}>
         {(d) => {
-          const activos = d.promos.filter((p) => p.activa);
-          const benOptions = activos.map((p) => ({ value: p.id, label: p.titulo }));
-          const benSel = activos.find((p) => p.id === benId);
+          const disponibles = d.promos.filter(disponibleHoy);
+          const benOptions = disponibles.map((p) => ({ value: p.id, label: p.titulo }));
+          const benSel = disponibles.find((p) => p.id === benId);
 
           return (
             <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2">
@@ -148,9 +166,9 @@ export default function LocalValidar() {
               <div className="flex flex-col gap-[18px]">
                 {/* Beneficio a aplicar */}
                 <PCard>
-                  {activos.length === 0 ? (
+                  {disponibles.length === 0 ? (
                     <div className="rounded-[10px] bg-warn-soft px-3.5 py-3 text-[12.5px] font-semibold text-warn">
-                      Este local no tiene beneficios activos. Cargá uno en la sección “Beneficios”.
+                      No hay beneficios disponibles para aplicar hoy (según día y vigencia).
                     </div>
                   ) : (
                     <>
