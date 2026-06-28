@@ -7,7 +7,7 @@
 // El visor de cámara queda como placeholder; la entrada manual del código ya
 // opera el flujo completo.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, PButton, PCard } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
@@ -67,6 +67,20 @@ export default function LocalValidar() {
   // La cámara escanea mientras no haya un resultado a la vista (al encontrar
   // miembro o error se pausa; vuelve a escanear al resetear).
   const scanActive = !lookup && !lookupErr && !buscando;
+
+  // Tras un canje exitoso: mostramos el "¡Listo!" un instante y reiniciamos
+  // (miembro + código + cámara) para quedar listos a escanear el próximo QR.
+  // El beneficio elegido se mantiene (suele aplicarse a varios miembros seguidos).
+  useEffect(() => {
+    if (!canjeMsg?.ok) return;
+    const t = setTimeout(() => {
+      setLookup(null);
+      setLookupErr(null);
+      setCanjeMsg(null);
+      setCodigo('');
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [canjeMsg]);
 
   async function buscar(override?: string) {
     const cod = (override ?? codigo).trim().toUpperCase();
