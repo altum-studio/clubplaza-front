@@ -12,6 +12,7 @@ import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, PButton, PCard } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
 import { SelectInput } from '@/components/panel/FormControls';
+import { QrScanner } from '@/components/panel/QrScanner';
 import { DataView } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api, ApiError, humanizeError } from '@/lib/api';
@@ -45,9 +46,14 @@ export default function LocalValidar() {
     setCanjeMsg(null);
   };
 
-  async function buscar() {
-    const cod = codigo.trim().toUpperCase();
+  // La cámara escanea mientras no haya un resultado a la vista (al encontrar
+  // miembro o error se pausa; vuelve a escanear al resetear).
+  const scanActive = !lookup && !lookupErr && !buscando;
+
+  async function buscar(override?: string) {
+    const cod = (override ?? codigo).trim().toUpperCase();
     if (!cod) return;
+    if (override) setCodigo(cod); // si vino del escáner, reflejarlo en el input
     setBuscando(true);
     reset();
     try {
@@ -125,19 +131,8 @@ export default function LocalValidar() {
                     </>
                   )}
 
-                  {/* Visor del escáner (cámara real: pendiente de integración) */}
-                  <div className="relative flex h-[260px] items-center justify-center overflow-hidden rounded-[14px] bg-brand-dark">
-                    <div className="relative h-[160px] w-[160px]">
-                      <div className="absolute left-0 top-0 h-[32px] w-[32px] border-l-[3px] border-t-[3px] border-white" />
-                      <div className="absolute right-0 top-0 h-[32px] w-[32px] border-r-[3px] border-t-[3px] border-white" />
-                      <div className="absolute bottom-0 left-0 h-[32px] w-[32px] border-b-[3px] border-l-[3px] border-white" />
-                      <div className="absolute bottom-0 right-0 h-[32px] w-[32px] border-b-[3px] border-r-[3px] border-white" />
-                      <div className="absolute left-2 right-2 top-1/2 h-[2px] bg-[#23d366] shadow-[0_0_12px_#23d366]" />
-                    </div>
-                    <div className="absolute inset-x-0 bottom-3.5 text-center text-[12.5px] text-white/80">
-                      Apuntá la cámara al QR de la credencial
-                    </div>
-                  </div>
+                  {/* Visor del escáner (cámara en vivo, embebida) */}
+                  <QrScanner active={scanActive} onDetect={(t) => buscar(t)} />
 
                   {/* Divisor */}
                   <div className="flex items-center gap-3">
