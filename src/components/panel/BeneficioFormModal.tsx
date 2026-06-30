@@ -195,11 +195,11 @@ export function BeneficioFormModal({
             <Toggle on={indefinida} />
           </button>
           {!indefinida && (
-            <div className="mt-3 flex gap-3">
-              <div className="flex-1">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="min-w-0">
                 <TextInput label="Vigente desde" value={desde} onChange={setDesde} type="date" />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0">
                 <TextInput label="Vigente hasta" value={hasta} onChange={setHasta} type="date" />
               </div>
             </div>
