@@ -19,22 +19,31 @@ const benCount = (l: ApiLocal) =>
     : (l.promos_count ?? 0);
 
 export default function AdminDashboard() {
-  const state = useAsync(
-    () =>
-      Promise.all([
-        api.locales.list({ limit: 5 }),
-        api.promos.list({ limit: 1 }),
-        api.usuarios.list({ limit: 1 }),
-        api.canjes.stats().catch(() => null),
-      ]).then(([l, p, u, stats]) => ({
-        locales: l,
-        localesCount: l.count,
-        promos: p.count,
-        usuarios: u.count,
-        canjesMes: stats?.canjes_mes ?? null,
-      })),
-    [],
-  );
+  const state = useAsync(async () => {
+    const [l, p, u, stats] = await Promise.all([
+      api.locales.list({ limit: 500 }),
+      api.promos.list({ limit: 1 }),
+      api.usuarios.list({ limit: 1 }),
+      api.canjes.stats().catch(() => null),
+    ]);
+    // Canjes del mes por local, para ordenar el ranking (si un local falla → 0).
+    const ranking = await Promise.all(
+      l.data.map((loc) =>
+        api.canjes
+          .stats({ local_id: loc.id })
+          .then((s) => ({ local: loc, canjes: s.canjes_mes }))
+          .catch(() => ({ local: loc, canjes: 0 })),
+      ),
+    );
+    ranking.sort((a, b) => b.canjes - a.canjes); // mayor cantidad de canjes primero
+    return {
+      localesCount: l.count,
+      promos: p.count,
+      usuarios: u.count,
+      canjesMes: stats?.canjes_mes ?? null,
+      ranking,
+    };
+  }, []);
 
   const [monthOffset, setMonthOffset] = useState(0);
   const [vista, setVista] = useState<'mes' | 'semana'>('mes');
@@ -88,38 +97,37 @@ export default function AdminDashboard() {
                 </div>
               </PCard>
 
-              <PCard
-                title="Top locales por canjes"
-                actions={<span className="text-xs font-bold text-brand">Ver todos</span>}
-              >
-                {d.locales.data.length === 0 ? (
+              <PCard title="Top locales por canjes" sub="Canjes del mes · ordenado de mayor a menor">
+                {d.ranking.length === 0 ? (
                   <div className="py-[11px] text-[13px] text-mute">Sin locales</div>
                 ) : (
-                  d.locales.data.slice(0, 4).map((l, i) => (
-                    <div
-                      key={l.id}
-                      className={`flex items-center gap-3 py-[11px] ${i === 3 ? '' : 'border-b border-line-soft'}`}
-                    >
+                  <div className="max-h-[280px] overflow-y-auto pr-3">
+                    {d.ranking.map((r, i) => (
                       <div
-                        className={`w-[22px] text-sm font-extrabold ${i === 0 ? 'text-brand' : 'text-faint'}`}
+                        key={r.local.id}
+                        className={`flex items-center gap-3 py-[11px] ${i === d.ranking.length - 1 ? '' : 'border-b border-line-soft'}`}
                       >
-                        {i + 1}
+                        <div
+                          className={`w-[22px] text-sm font-extrabold ${i === 0 ? 'text-brand' : 'text-faint'}`}
+                        >
+                          {i + 1}
+                        </div>
+                        {r.local.logo_url ? (
+                          <img
+                            src={r.local.logo_url}
+                            className="h-[34px] w-[34px] rounded-full border border-line object-cover"
+                          />
+                        ) : (
+                          <LogoBox size={34} />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-bold text-ink">{r.local.nombre}</div>
+                          <div className="text-[11px] text-mute">{benCount(r.local)} benef.</div>
+                        </div>
+                        <span className="text-[13px] font-extrabold text-ink">{r.canjes}</span>
                       </div>
-                      {l.logo_url ? (
-                        <img
-                          src={l.logo_url}
-                          className="h-[34px] w-[34px] rounded-full object-cover border border-line"
-                        />
-                      ) : (
-                        <LogoBox size={34} />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-bold text-ink">{l.nombre}</div>
-                        <div className="text-[11px] text-mute">{benCount(l)} benef.</div>
-                      </div>
-                      <span className="text-[11px] font-bold text-faint">Próx.</span>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </PCard>
             </div>

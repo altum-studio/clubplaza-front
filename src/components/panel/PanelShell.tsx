@@ -64,6 +64,17 @@ export function PanelShell({
     [profile?.nombre, profile?.apellido].filter(Boolean).join(' ').trim() || profile?.email || userName;
   const accountRole = profile ? ROLE_LABEL[profile.rol] : userRole;
 
+  // Iniciales para la versión más angosta (ej. "T. G."): 1ra de nombre + 1ra de
+  // apellido; si no hay perfil, cae a la 1ra letra del nombre de cuenta.
+  const accountInitials =
+    [profile?.nombre, profile?.apellido]
+      .filter(Boolean)
+      .map((s) => s!.trim()[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((c) => `${c!.toUpperCase()}.`)
+      .join(' ') || (accountName.trim()[0] ? `${accountName.trim()[0].toUpperCase()}.` : '');
+
   const handleLogout = async () => {
     await logout();
     navigate('/ingresar', { replace: true });
@@ -128,23 +139,43 @@ export function PanelShell({
       {/* ── Columna principal (lo único que scrollea es el <main>) ── */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Header verde (mobile) */}
-        <header className="flex flex-shrink-0 items-center justify-between bg-brand-dark px-4 pb-3.5 pt-[max(env(safe-area-inset-top),14px)] text-white lg:hidden">
-          <div className="flex items-center gap-2.5">
+        <header className="flex flex-shrink-0 items-center justify-between gap-2 bg-brand-dark px-4 pb-3.5 pt-[max(env(safe-area-inset-top),14px)] text-white lg:hidden">
+          <div className="flex min-w-0 items-center gap-2.5">
             <BrandIso size={24} onGreen />
-            <div>
+            <div className="min-w-0">
               <div className="text-[9.5px] font-bold uppercase tracking-[0.6px] text-white/60">
                 {role}
               </div>
-              <div className="text-[15px] font-extrabold leading-tight text-white">{topbarTitle}</div>
+              <div className="truncate text-[15px] font-extrabold leading-tight text-white">
+                {topbarTitle}
+              </div>
             </div>
           </div>
-          <Link
-            to="/beneficios"
-            aria-label="Ver app de miembro"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
-          >
-            <Icon name="eye" size={20} />
-          </Link>
+          <div className="flex flex-shrink-0 items-center gap-0.5">
+            {/* Nombre completo (tablet) / iniciales (celular angosto) */}
+            <span className="ml-1 hidden max-w-[160px] truncate text-[12px] font-semibold text-white/85 sm:inline">
+              {accountName}
+            </span>
+            <span className="ml-1 text-[12px] font-semibold text-white/85 sm:hidden">
+              {accountInitials}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+            >
+              <Icon name="logout" size={19} />
+            </button>
+            <Link
+              to="/beneficios"
+              aria-label="Ver app de miembro"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+            >
+              <Icon name="eye" size={20} />
+            </Link>
+          </div>
         </header>
 
         {/* Topbar (desktop) */}

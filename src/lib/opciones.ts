@@ -99,12 +99,21 @@ export function diasLabel(dias?: number[] | null): string {
 }
 
 // Vigencia: indefinida o rango de fechas (acepta ISO o ya formateado).
+// El backend exige vigencia_desde/hasta siempre, así que "sin vencimiento" se
+// representa con una fecha centinela bien lejana. Cualquier hasta de 2099 en
+// adelante se considera indefinido (tanto al mostrar como al re-editar).
+export const VIGENCIA_INDEF_HASTA = '2099-12-31';
+export function esVigenciaIndefinida(hasta?: string | null): boolean {
+  return !hasta || hasta >= '2099-01-01';
+}
+
 export function vigenciaLabel(opts: {
   indefinida?: boolean;
   desde?: string | null;
   hasta?: string | null;
 }): string {
-  if (opts.indefinida || (!opts.desde && !opts.hasta)) return 'Sin vencimiento (indefinido)';
+  if (opts.indefinida || (!opts.desde && !opts.hasta) || esVigenciaIndefinida(opts.hasta))
+    return 'Sin vencimiento (indefinido)';
   const d = opts.desde ? isoToDDMMAAAA(opts.desde) : '—';
   const h = opts.hasta ? isoToDDMMAAAA(opts.hasta) : '—';
   return `Del ${d} al ${h}`;

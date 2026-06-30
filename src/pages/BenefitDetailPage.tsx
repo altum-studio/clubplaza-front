@@ -31,21 +31,40 @@ export default function BenefitDetailPage() {
   const { promo, loading, error } = usePromo(id);
   const { isAuthenticated } = useAuth();
   const [credOpen, setCredOpen] = useState(false);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
 
   // Sin sesión, "Ver mi credencial" lleva a la pantalla de ingreso.
   const verCredencial = () =>
     isAuthenticated ? setCredOpen(true) : navigate('/ingresar');
 
+  const flashShare = (msg: string) => {
+    setShareMsg(msg);
+    setTimeout(() => setShareMsg(null), 2500);
+  };
+
   const onShare = async () => {
     const url = window.location.href;
+    const data = {
+      title: promo?.titulo ?? 'ClubPlaza',
+      text: promo ? `${promo.titulo} · ${promo.local_nombre} — ClubPlaza` : 'ClubPlaza',
+      url,
+    };
+    // Web Share API nativa (celular / navegadores compatibles).
     if (navigator.share) {
       try {
-        await navigator.share({ title: promo?.titulo ?? 'ClubPlaza', url });
-      } catch {
-        /* el usuario canceló */
+        await navigator.share(data);
+        return;
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return; // canceló
+        /* otra falla → caemos al copiado */
       }
-    } else {
-      await navigator.clipboard?.writeText(url);
+    }
+    // Fallback (desktop): copiar el link, con feedback visible.
+    try {
+      await navigator.clipboard.writeText(url);
+      flashShare('Link copiado al portapapeles');
+    } catch {
+      flashShare('No se pudo compartir. Copiá el link de la barra.');
     }
   };
 
@@ -169,6 +188,15 @@ export default function BenefitDetailPage() {
           Ver mi credencial
         </Button>
       </div>
+
+      {/* Feedback de compartir (fallback de copiado) */}
+      {shareMsg && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-6">
+          <div className="rounded-full bg-ink/90 px-4 py-2 text-center text-[12.5px] font-semibold text-white shadow-[0_4px_16px_rgba(0,0,0,0.25)]">
+            {shareMsg}
+          </div>
+        </div>
+      )}
 
       {/* Credencial superpuesta (sube desde abajo) */}
       <CredentialOverlay open={credOpen} onClose={() => setCredOpen(false)} />

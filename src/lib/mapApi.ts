@@ -4,6 +4,7 @@
 // front a la API sin reescribir los componentes.
 
 import type { ApiLocal, ApiPromo, Categoria, LocalDirectorio, Promo } from '@/types';
+import { esVigenciaIndefinida } from '@/lib/opciones';
 
 // El backend no guarda los "pasos" (como_usar) → usamos los genéricos con credencial.
 export const PASOS_GENERICOS = [
@@ -33,7 +34,7 @@ export function mapPromo(p: ApiPromo, loc?: { nombre: string; logo_url: string |
     valor: p.valor ?? null,
     limite_cantidad: p.limite_cantidad ?? null,
     limite_periodo: p.limite_periodo ?? undefined,
-    vigencia_indefinida: !desde && !hasta,
+    vigencia_indefinida: (!desde && !hasta) || esVigenciaIndefinida(hasta),
   };
 }
 

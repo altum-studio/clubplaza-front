@@ -11,7 +11,7 @@ import { PanelModal } from './PanelModal';
 import { PButton, Toggle } from './kit';
 import { DaysPicker, ImagePicker, SelectInput, TextArea, TextInput } from './FormControls';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
-import { LIMITE_PERIODO, TIPO_BENEFICIO } from '@/lib/opciones';
+import { LIMITE_PERIODO, TIPO_BENEFICIO, VIGENCIA_INDEF_HASTA, esVigenciaIndefinida } from '@/lib/opciones';
 
 export function BeneficioFormModal({
   open,
@@ -58,9 +58,11 @@ export function BeneficioFormModal({
     setDias(promo?.dias ?? [1, 2, 3, 4, 5]);
     const d = promo?.vigencia_desde ?? promo?.fecha_inicio ?? '';
     const h = promo?.vigencia_hasta ?? promo?.fecha_fin ?? '';
-    setDesde(d);
-    setHasta(h);
-    setIndefinida(isEdit ? !d && !h : false);
+    // Si viene con la fecha centinela (o sin fechas), arranca como "indefinido".
+    const indef = isEdit ? esVigenciaIndefinida(h) : false;
+    setIndefinida(indef);
+    setDesde(indef ? '' : d);
+    setHasta(indef ? '' : h);
     setLimiteCantidad(promo?.limite_cantidad != null ? String(promo.limite_cantidad) : '1');
     setLimitePeriodo(promo?.limite_periodo ?? 'dia');
     setBannerUrl(promo?.banner_url ?? promo?.imagen_url ?? '');
@@ -89,14 +91,21 @@ export function BeneficioFormModal({
     if (dias.length === 0) return setError('Elegí al menos un día válido');
     if (!indefinida && (!desde || !hasta)) return setError('Completá la vigencia o marcá "indefinido"');
 
+    // El backend exige vigencia siempre. "Sin vencimiento" → fecha centinela
+    // lejana (desde hoy) que el front muestra como indefinido.
+    const hoy = new Date();
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(
+      hoy.getDate(),
+    ).padStart(2, '0')}`;
+
     const base = {
       titulo: titulo.trim(),
       tipo,
       valor: tipoDef?.usaValor && valor ? Number(valor) : null,
       descripcion: descripcion.trim() || null,
       dias,
-      vigencia_desde: indefinida ? null : desde,
-      vigencia_hasta: indefinida ? null : hasta,
+      vigencia_desde: indefinida ? hoyStr : desde,
+      vigencia_hasta: indefinida ? VIGENCIA_INDEF_HASTA : hasta,
       limite_cantidad: limitePeriodo === 'ilimitado' ? null : Number(limiteCantidad) || 1,
       limite_periodo: limitePeriodo,
       banner_url: bannerUrl || null,
