@@ -219,13 +219,11 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Etiqueta flotante: sumarse a la comunidad de WhatsApp.
-          TODO: poner la URL real del canal/comunidad de Green Plaza. */}
+      {/* Etiqueta flotante: sumarse al canal de WhatsApp de la comunidad. */}
       <a
-        href="https://wa.me/"
+        href="https://whatsapp.com/channel/0029Vb8ZC3GKWEKxW7QxLN3l"
         target="_blank"
         rel="noopener noreferrer"
-        onClick={(e) => e.preventDefault()}
         aria-label="Sumate a la comunidad de WhatsApp"
         className="fixed bottom-[max(env(safe-area-inset-bottom),16px)] right-4 z-30 flex items-center gap-2 rounded-full bg-wa py-2.5 pl-3 pr-4 text-white shadow-[0_4px_12px_rgba(37,211,102,0.22)] active:scale-95 sm:absolute"
       >
