@@ -36,6 +36,7 @@ function App() {
       <Route path="/beneficios" element={<HomePage />} />
       <Route path="/beneficios/:id" element={<BenefitDetailPage />} />
       <Route path="/local/:slug" element={<LocalPage />} />
+      
 
       {/* Protegidas — requieren sesión activa */}
       <Route
