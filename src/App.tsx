@@ -6,6 +6,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import SplashPage from '@/pages/SplashPage'
 import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
+import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import HomePage from '@/pages/HomePage'
 import BenefitDetailPage from '@/pages/BenefitDetailPage'
 import LocalPage from '@/pages/LocalPage'
@@ -29,6 +31,8 @@ function App() {
       <Route path="/" element={<SplashPage />} />
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/ingresar" element={<LoginPage />} />
+      <Route path="/recuperar" element={<ForgotPasswordPage />} />
+      <Route path="/restablecer" element={<ResetPasswordPage />} />
       <Route path="/beneficios" element={<HomePage />} />
       <Route path="/beneficios/:id" element={<BenefitDetailPage />} />
       <Route path="/local/:slug" element={<LocalPage />} />

@@ -65,6 +65,14 @@ export default function LoginPage() {
           {...register('password')}
         />
 
+        <button
+          type="button"
+          onClick={() => navigate('/recuperar')}
+          className="self-end text-xs font-bold text-brand"
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+
         {/* CTA + link */}
         <div className="mt-auto pt-3.5 md:mt-8">
           <Button type="submit" disabled={isSubmitting} className="mb-3">

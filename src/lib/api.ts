@@ -239,6 +239,20 @@ export const api = {
     register: (payload: RegisterPayload) =>
       request<AuthResponse>('/auth/register', { method: 'POST', body: payload, auth: false }),
     me: () => request<{ user: { id: string; email: string }; profile: Profile }>('/auth/me'),
+    // Recuperación de contraseña. `forgotPassword` dispara el mail con el link;
+    // `resetPassword` recibe el token del link + la clave nueva. Ambos públicos.
+    forgotPassword: (email: string) =>
+      request<{ ok?: boolean; message?: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: { email: email.trim() },
+        auth: false,
+      }),
+    resetPassword: (token: string, password: string) =>
+      request<{ ok?: boolean; message?: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: { token, password },
+        auth: false,
+      }),
   },
   usuarios: {
     updateMe: (body: Pick<ProfileInput, 'nombre' | 'apellido' | 'fecha_nacimiento' | 'telefono'>) =>

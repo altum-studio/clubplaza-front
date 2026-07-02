@@ -62,3 +62,29 @@ export const loginSchema = z.object({
 });
 
 export type LoginSchema = z.infer<typeof loginSchema>;
+
+// "Olvidé mi contraseña": solo el email (mismo criterio que login/alta).
+export const forgotSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Ingresá tu email')
+    .email('Email inválido')
+    .refine((v) => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim()), {
+      message: 'Email inválido (ej: nombre@correo.com)',
+    }),
+});
+
+export type ForgotSchema = z.infer<typeof forgotSchema>;
+
+// Nueva contraseña + confirmación (desde el link del email).
+export const resetSchema = z
+  .object({
+    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    confirm: z.string().min(1, 'Repetí la contraseña'),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirm'],
+  });
+
+export type ResetSchema = z.infer<typeof resetSchema>;
