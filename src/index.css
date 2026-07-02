@@ -171,6 +171,19 @@
     justify-content: center;
     min-height: 100dvh;
   }
+  /* Cursor de "mano" en todo lo clickeable (Tailwind v4 no lo pone por defecto). */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  select,
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 @layer utilities {
