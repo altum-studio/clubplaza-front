@@ -6,7 +6,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Phone, Lock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/app-button';
 import { TextField } from '@/components/ui/TextField';
@@ -172,8 +172,17 @@ export default function RegisterPage() {
               )}
             </span>
             <span className="text-[10.5px] leading-[1.5] text-graytext">
-              Acepto los <span className="font-semibold text-brand">Términos</span> y el tratamiento
-              de mis datos por Green Plaza (Ley 25.326).
+              Acepto los{' '}
+              <Link
+                to="/terminos"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold text-brand underline"
+              >
+                Términos y la Política de Privacidad
+              </Link>{' '}
+              y el tratamiento de mis datos por Green Plaza (Ley 25.326).
             </span>
           </label>
           {errors.terminos && (

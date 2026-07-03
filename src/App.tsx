@@ -8,6 +8,7 @@ import RegisterPage from '@/pages/RegisterPage'
 import LoginPage from '@/pages/LoginPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/ResetPasswordPage'
+import TermsPage from '@/pages/TermsPage'
 import HomePage from '@/pages/HomePage'
 import BenefitDetailPage from '@/pages/BenefitDetailPage'
 import LocalPage from '@/pages/LocalPage'
@@ -33,6 +34,7 @@ function App() {
       <Route path="/ingresar" element={<LoginPage />} />
       <Route path="/recuperar" element={<ForgotPasswordPage />} />
       <Route path="/restablecer" element={<ResetPasswordPage />} />
+      <Route path="/terminos" element={<TermsPage />} />
       <Route path="/beneficios" element={<HomePage />} />
       <Route path="/beneficios/:id" element={<BenefitDetailPage />} />
       <Route path="/local/:slug" element={<LocalPage />} />
