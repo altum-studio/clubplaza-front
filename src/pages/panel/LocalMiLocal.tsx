@@ -35,7 +35,7 @@ export default function LocalMiLocal() {
     >
       <DataView state={state}>
         {(local) => (
-          <div className="flex flex-col gap-4 lg:max-w-2xl">
+          <div className="mx-auto flex w-full flex-col gap-4 lg:max-w-2xl">
             {/* Cabecera: banner + logo + nombre */}
             <PCard pad={0}>
               {local.banner_url ? (
