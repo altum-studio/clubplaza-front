@@ -242,8 +242,44 @@
     transform: translateX(-50%);
   }
 }
+/* Splash · el isotipo se dibuja en loop (línea). Path-1 = anillo, Path-2 = interior. */
+.cp-iso-p1 {
+  stroke-dasharray: 480;
+  stroke-dashoffset: 480;
+  animation: cpIsoDraw1 var(--cp-iso-speed, 4s) ease-in-out infinite;
+}
+@keyframes cpIsoDraw1 {
+  0% {
+    stroke-dashoffset: -480;
+  }
+  40% {
+    stroke-dashoffset: 0;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 480;
+  }
+}
+.cp-iso-p2 {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: cpIsoDraw2 var(--cp-iso-speed, 4s) ease-in-out calc(var(--cp-iso-speed, 4s) * 0.25) infinite;
+}
+@keyframes cpIsoDraw2 {
+  0% {
+    stroke-dashoffset: -160;
+  }
+  20% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 160;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .cp-pen {
+  .cp-pen,
+  .cp-iso-p1,
+  .cp-iso-p2 {
     animation: none;
     stroke-dashoffset: 0;
   }

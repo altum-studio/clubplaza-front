@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BrandMark } from '@/components/brand/BrandMark';
+import { IsoDrawLoader } from '@/components/brand/IsoDrawLoader';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SplashPage() {
@@ -42,7 +42,7 @@ export default function SplashPage() {
 
       {/* Contenido centrado */}
       <div className="animate-cp-fade relative flex flex-col items-center justify-center gap-6">
-        <BrandMark size={122} color="#fff" animated />
+        <IsoDrawLoader size={122} color="#fff" />
         <div className="text-[22px] leading-none tracking-[1px] text-white">
           <span className="font-extrabold">CLUB</span>
           <span className="font-light">PLAZA</span>
