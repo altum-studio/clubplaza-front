@@ -23,11 +23,14 @@ export function LocalFormModal({
   local,
   onClose,
   onSaved,
+  canDelete = true,
 }: {
   open: boolean;
   local: ApiLocal | null; // null = alta
   onClose: () => void;
   onSaved: () => void;
+  /** Muestra "Eliminar local" en edición (false para que el local no se borre a sí mismo). */
+  canDelete?: boolean;
 }) {
   const isEdit = !!local;
   const [nombre, setNombre] = useState('');
@@ -163,7 +166,7 @@ export function LocalFormModal({
           <p className="rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-bad">{error}</p>
         )}
 
-        {isEdit && (
+        {isEdit && canDelete && (
           <div className="mt-1 border-t border-line-soft pt-3.5">
             {confirmDel ? (
               <div className="flex items-center justify-between gap-3">

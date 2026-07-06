@@ -2,6 +2,8 @@
 // Panel Local · Historial de validaciones (canjes). Lista real desde
 // GET /api/canjes/mine: qué miembro usó qué beneficio, cuándo y su estado.
 
+import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, PCard, Table, type Column } from '@/components/panel/kit';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
@@ -71,6 +73,7 @@ const columns: Column<CanjeHistorialItem>[] = [
 ];
 
 export default function LocalHistorial() {
+  const navigate = useNavigate();
   const state = useAsync(() => api.canjes.mine({ limit: 100 }), []);
 
   return (
@@ -81,6 +84,14 @@ export default function LocalHistorial() {
       userRole="Comercio adherido"
       topbarTitle="Historial de validaciones"
     >
+      <button
+        type="button"
+        onClick={() => navigate('/panel')}
+        className="mb-4 inline-flex items-center gap-1 text-[13px] font-bold text-brand hover:underline"
+      >
+        <ChevronLeft size={17} /> Volver a Inicio
+      </button>
+
       <DataView state={state}>
         {(d) =>
           d.data.length === 0 ? (

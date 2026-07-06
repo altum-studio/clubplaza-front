@@ -33,7 +33,7 @@ export default function LocalInicio() {
         api.locales.mine().catch(() => null),
         api.promos.mine({ limit: 50 }),
         api.canjes.statsMine().catch(() => null),
-        api.canjes.mine({ limit: 6 }).catch(() => null),
+        api.canjes.mine({ limit: 40 }).catch(() => null),
       ]).then(([local, promos, stats, recientes]) => ({ local, promos, stats, recientes })),
     [],
   );
@@ -100,7 +100,7 @@ export default function LocalInicio() {
                 </PCard>
 
                 <PCard
-                  title="Actividad reciente"
+                  title="Actividad"
                   actions={
                     <button
                       type="button"
@@ -118,7 +118,7 @@ export default function LocalInicio() {
                       hint="Las validaciones de credenciales van a aparecer acá."
                     />
                   ) : (
-                    <div className="flex flex-col">
+                    <div className="flex max-h-[300px] flex-col overflow-y-auto pr-1">
                       {recientes.map((c, i) => {
                         const e = ESTADO[c.estado] ?? { tone: 'mute' as const, label: c.estado };
                         return (

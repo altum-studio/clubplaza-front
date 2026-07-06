@@ -17,7 +17,7 @@ export const LOCAL_NAV: NavItem[] = [
   { icon: 'qr', label: 'Validar', to: '/panel/validar' },
   { icon: 'tag', label: 'Beneficios', to: '/panel/beneficios' },
   { icon: 'chart', label: 'Stats', to: '/panel/estadisticas' },
-  { icon: 'clock', label: 'Historial', to: '/panel/historial' },
+  { icon: 'store', label: 'Mi Local', to: '/panel/mi-local' },
 ];
 
 // ── Admin ──

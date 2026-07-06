@@ -24,6 +24,7 @@ import LocalValidar from '@/pages/panel/LocalValidar'
 import LocalBeneficios from '@/pages/panel/LocalBeneficios'
 import LocalStats from '@/pages/panel/LocalStats'
 import LocalHistorial from '@/pages/panel/LocalHistorial'
+import LocalMiLocal from '@/pages/panel/LocalMiLocal'
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
       <Route path="/panel/beneficios" element={<RequireRole roles={['local', 'admin']}><LocalBeneficios /></RequireRole>} />
       <Route path="/panel/estadisticas" element={<RequireRole roles={['local', 'admin']}><LocalStats /></RequireRole>} />
       <Route path="/panel/historial" element={<RequireRole roles={['local', 'admin']}><LocalHistorial /></RequireRole>} />
+      <Route path="/panel/mi-local" element={<RequireRole roles={['local', 'admin']}><LocalMiLocal /></RequireRole>} />
 
       {/* TODO próximas etapas: /perfil (protegida) y auth independiente del panel */}
 
