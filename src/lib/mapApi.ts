@@ -32,6 +32,8 @@ export function mapPromo(p: ApiPromo, loc?: { nombre: string; logo_url: string |
     activo: p.activa,
     tipo: p.tipo ?? undefined,
     valor: p.valor ?? null,
+    precio_anterior: p.precio_anterior ?? null,
+    precio_nuevo: p.precio_nuevo ?? null,
     limite_cantidad: p.limite_cantidad ?? null,
     limite_periodo: p.limite_periodo ?? undefined,
     vigencia_indefinida: (!desde && !hasta) || esVigenciaIndefinida(hasta),

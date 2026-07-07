@@ -16,13 +16,8 @@ import { ErrorState, Skeleton } from '@/components/feedback/States';
 import { usePromo } from '@/hooks/usePromos';
 import { useAuth } from '@/hooks/useAuth';
 import { labelCategoria } from '@/lib/categorias';
-import {
-  tipoBeneficioLabel,
-  valorLabel,
-  vigenciaLabel,
-  diasLabel,
-  limiteLabel,
-} from '@/lib/opciones';
+import { tipoBeneficioLabel, vigenciaLabel, diasLabel, limiteLabel } from '@/lib/opciones';
+import { BenefitValue } from '@/components/benefits/BenefitValue';
 import { vigenteHoy } from '@/lib/utils';
 
 export default function BenefitDetailPage() {
@@ -136,7 +131,12 @@ export default function BenefitDetailPage() {
           {vigente && <BenefitBadge tone="gray">Vigente hoy</BenefitBadge>}
           {promo.tipo && (
             <span className="inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-brand">
-              {valorLabel(promo.tipo, promo.valor)}
+              <BenefitValue
+                tipo={promo.tipo}
+                valor={promo.valor}
+                precioAnterior={promo.precio_anterior}
+                precioNuevo={promo.precio_nuevo}
+              />
             </span>
           )}
         </div>

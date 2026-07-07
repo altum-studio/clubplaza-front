@@ -63,7 +63,7 @@ export function valorLabel(tipo?: TipoBeneficio | null, valor?: number | null): 
     case 'descuento':
       return `${valor}% OFF`;
     case 'descuento_fijo':
-      return `$${valor} OFF`;
+      return `$${valor}`;
     case 'cuotas':
       return `${valor} cuotas sin interés`;
     case 'combo':

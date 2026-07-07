@@ -212,6 +212,8 @@ type PromoInput = Partial<
     | 'titulo'
     | 'tipo'
     | 'valor'
+    | 'precio_anterior'
+    | 'precio_nuevo'
     | 'descripcion'
     | 'descuento'
     | 'dias'

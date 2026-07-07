@@ -43,6 +43,9 @@ export interface Promo {
   // Campos del modelo nuevo (ver backend-spec). Opcionales en el mock.
   tipo?: TipoBeneficio;
   valor?: number | null;
+  // Para tipo 'descuento_fijo': precio anterior (tachado) y nuevo.
+  precio_anterior?: number | null;
+  precio_nuevo?: number | null;
   limite_cantidad?: number | null;
   limite_periodo?: LimitePeriodo;
   vigencia_indefinida?: boolean; // si true, ignora vigente_desde/hasta
@@ -139,6 +142,9 @@ export interface ApiPromo {
   titulo: string;
   tipo?: TipoBeneficio | null;
   valor?: number | null; // significado según `tipo` (no siempre)
+  // Para tipo 'descuento_fijo': precio anterior (tachado) y precio nuevo.
+  precio_anterior?: number | null;
+  precio_nuevo?: number | null;
   descripcion: string | null;
   descuento: number | null; // DEPRECATED → usar `valor`
   dias?: number[] | null; // días válidos 0–6

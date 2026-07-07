@@ -15,7 +15,8 @@ import { api } from '@/lib/api';
 import type { ApiPromo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
-import { diasLabel, limiteLabel, tipoBeneficioLabel, valorLabel, vigenciaLabel } from '@/lib/opciones';
+import { diasLabel, limiteLabel, tipoBeneficioLabel, vigenciaLabel } from '@/lib/opciones';
+import { BenefitValue } from '@/components/benefits/BenefitValue';
 
 type Filtro = 'todos' | 'activos' | 'pausados';
 
@@ -64,7 +65,12 @@ function BenefitPreview({
         <h2 className="text-[20px] font-extrabold leading-tight text-brand">{promo.titulo}</h2>
         {promo.tipo && (
           <span className="mt-1.5 inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-[11.5px] font-bold text-brand">
-            {valorLabel(promo.tipo, promo.valor)}
+            <BenefitValue
+              tipo={promo.tipo}
+              valor={promo.valor}
+              precioAnterior={promo.precio_anterior}
+              precioNuevo={promo.precio_nuevo}
+            />
           </span>
         )}
         {promo.descripcion && (

@@ -36,6 +36,8 @@ export function BeneficioFormModal({
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState<TipoBeneficio | ''>('');
   const [valor, setValor] = useState('');
+  const [precioAnterior, setPrecioAnterior] = useState('');
+  const [precioNuevo, setPrecioNuevo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [dias, setDias] = useState<number[]>([1, 2, 3, 4, 5]);
   const [indefinida, setIndefinida] = useState(false);
@@ -54,6 +56,8 @@ export function BeneficioFormModal({
     setTitulo(promo?.titulo ?? '');
     setTipo(promo?.tipo ?? '');
     setValor(promo?.valor != null ? String(promo.valor) : '');
+    setPrecioAnterior(promo?.precio_anterior != null ? String(promo.precio_anterior) : '');
+    setPrecioNuevo(promo?.precio_nuevo != null ? String(promo.precio_nuevo) : '');
     setDescripcion(promo?.descripcion ?? '');
     setDias(promo?.dias ?? [1, 2, 3, 4, 5]);
     const d = promo?.vigencia_desde ?? promo?.fecha_inicio ?? '';
@@ -71,6 +75,7 @@ export function BeneficioFormModal({
   }, [open, promo, isEdit, lockedLocalId]);
 
   const tipoDef = TIPO_BENEFICIO.find((t) => t.value === tipo);
+  const esDescuentoFijo = tipo === 'descuento_fijo'; // usa precio anterior/nuevo
   const localOptions = useMemo(
     () => locales.map((l) => ({ value: l.id, label: l.nro_local ? `${l.nombre} · ${l.nro_local}` : l.nombre })),
     [locales],
@@ -86,8 +91,10 @@ export function BeneficioFormModal({
     if (!titulo.trim()) return setError('El título es obligatorio');
     if (!tipo) return setError('Elegí el tipo de beneficio');
     // El backend exige `valor` para estos tipos (ver guía de integración §6).
-    if (['descuento', 'descuento_fijo', 'cuotas'].includes(tipo) && !valor)
-      return setError('Ingresá el valor (porcentaje, monto o nº de cuotas)');
+    if (['descuento', 'cuotas'].includes(tipo) && !valor)
+      return setError('Ingresá el valor (porcentaje o nº de cuotas)');
+    if (esDescuentoFijo && (!precioAnterior || !precioNuevo))
+      return setError('Ingresá el precio anterior y el precio nuevo');
     if (dias.length === 0) return setError('Elegí al menos un día válido');
     if (!indefinida && (!desde || !hasta)) return setError('Completá la vigencia o marcá "indefinido"');
 
@@ -101,7 +108,15 @@ export function BeneficioFormModal({
     const base = {
       titulo: titulo.trim(),
       tipo,
-      valor: tipoDef?.usaValor && valor ? Number(valor) : null,
+      // Para 'descuento_fijo' guardamos el precio nuevo también en `valor` (compat
+      // con el backend actual) + los dos precios en sus campos.
+      valor: esDescuentoFijo
+        ? Number(precioNuevo) || null
+        : tipoDef?.usaValor && valor
+          ? Number(valor)
+          : null,
+      precio_anterior: esDescuentoFijo && precioAnterior ? Number(precioAnterior) : null,
+      precio_nuevo: esDescuentoFijo && precioNuevo ? Number(precioNuevo) : null,
       descripcion: descripcion.trim() || null,
       dias,
       vigencia_desde: indefinida ? hoyStr : desde,
@@ -174,12 +189,36 @@ export function BeneficioFormModal({
           <div className="flex-1">
             <SelectInput label="Tipo *" value={tipo} onChange={setTipo} options={TIPO_BENEFICIO} placeholder="Elegí el tipo" />
           </div>
-          {tipoDef?.usaValor && (
+          {tipoDef?.usaValor && !esDescuentoFijo && (
             <div className="w-32">
               <TextInput label="Valor" value={valor} onChange={setValor} placeholder="Ej. 20" type="number" />
             </div>
           )}
         </div>
+
+        {/* Descuento $: precio anterior (tachado) + precio nuevo */}
+        {esDescuentoFijo && (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <TextInput
+                label="Precio anterior *"
+                value={precioAnterior}
+                onChange={setPrecioAnterior}
+                placeholder="Ej. 10000"
+                type="number"
+              />
+            </div>
+            <div className="flex-1">
+              <TextInput
+                label="Precio nuevo *"
+                value={precioNuevo}
+                onChange={setPrecioNuevo}
+                placeholder="Ej. 7000"
+                type="number"
+              />
+            </div>
+          </div>
+        )}
 
         <TextArea label="Descripción" value={descripcion} onChange={setDescripcion} placeholder="Cómo se usa el beneficio" />
 
