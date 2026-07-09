@@ -329,7 +329,10 @@ export const api = {
       limit?: number;
       offset?: number;
     }) => request<Paginated<CanjeHistorialItem>>('/canjes', { query }),
-    statsMine: (query?: { local_id?: string }) => request<CanjeStats>('/canjes/stats/mine', { query }),
-    stats: (query?: { local_id?: string }) => request<CanjeStats>('/canjes/stats', { query }),
+    // mes: 'YYYY-MM' del mes a consultar (default: mes actual).
+    statsMine: (query?: { local_id?: string; mes?: string }) =>
+      request<CanjeStats>('/canjes/stats/mine', { query }),
+    stats: (query?: { local_id?: string; mes?: string }) =>
+      request<CanjeStats>('/canjes/stats', { query }),
   },
 };
