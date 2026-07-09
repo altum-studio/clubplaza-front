@@ -136,7 +136,8 @@ export function BeneficioFormModal({
     try {
       if (isEdit) await api.promos.update(promo!.id, base);
       else if (mode === 'admin') await api.promos.create({ local_id: localId, ...base });
-      else await api.promos.createMine(base);
+      // Modo local: local activo del switcher (multi-local) va en el body.
+      else await api.promos.createMine(localId ? { ...base, local_id: localId } : base);
       onSaved();
       onClose();
     } catch (e) {

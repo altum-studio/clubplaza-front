@@ -8,6 +8,7 @@ import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, Bars, PButton, PCard, Stat } from '@/components/panel/kit';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
+import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
 
@@ -27,15 +28,15 @@ function horaLabel(iso: string): string {
 export default function LocalInicio() {
   const navigate = useNavigate();
 
+  const { activeLocalId, activeLocal } = useLocalScope();
   const state = useAsync(
     () =>
       Promise.all([
-        api.locales.mine().catch(() => null),
-        api.promos.mine({ limit: 50 }),
-        api.canjes.statsMine().catch(() => null),
-        api.canjes.mine({ limit: 40 }).catch(() => null),
-      ]).then(([local, promos, stats, recientes]) => ({ local, promos, stats, recientes })),
-    [],
+        api.promos.mine({ local_id: activeLocalId ?? undefined, limit: 50 }),
+        api.canjes.statsMine({ local_id: activeLocalId ?? undefined }).catch(() => null),
+        api.canjes.mine({ local_id: activeLocalId ?? undefined, limit: 40 }).catch(() => null),
+      ]).then(([promos, stats, recientes]) => ({ promos, stats, recientes })),
+    [activeLocalId],
   );
 
   return (
@@ -44,7 +45,7 @@ export default function LocalInicio() {
       nav={LOCAL_NAV}
       userName="Café Central"
       userRole="Comercio adherido"
-      topbarTitle={`Hola, ${state.data?.local?.nombre ?? 'tu comercio'}`}
+      topbarTitle={`Hola, ${activeLocal?.nombre ?? 'tu comercio'}`}
       topbarActions={
         <PButton icon="qr" onClick={() => navigate('/panel/validar')}>
           Validar credencial

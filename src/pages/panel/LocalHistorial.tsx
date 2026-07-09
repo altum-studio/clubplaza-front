@@ -8,6 +8,7 @@ import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, PCard, Table, type Column } from '@/components/panel/kit';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
+import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import type { CanjeHistorialItem } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
@@ -74,7 +75,11 @@ const columns: Column<CanjeHistorialItem>[] = [
 
 export default function LocalHistorial() {
   const navigate = useNavigate();
-  const state = useAsync(() => api.canjes.mine({ limit: 100 }), []);
+  const { activeLocalId } = useLocalScope();
+  const state = useAsync(
+    () => api.canjes.mine({ local_id: activeLocalId ?? undefined, limit: 100 }),
+    [activeLocalId],
+  );
 
   return (
     <PanelShell

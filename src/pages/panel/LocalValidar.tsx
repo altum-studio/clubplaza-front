@@ -15,6 +15,7 @@ import { SelectInput } from '@/components/panel/FormControls';
 import { QrScanner } from '@/components/panel/QrScanner';
 import { DataView } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
+import { useLocalScope } from '@/hooks/useLocalScope';
 import { api, ApiError, humanizeError } from '@/lib/api';
 import type { ApiPromo, EscaneoResult, MiembroPorCodigo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
@@ -42,12 +43,13 @@ function disponibleHoy(p: ApiPromo): boolean {
 }
 
 export default function LocalValidar() {
+  const { activeLocalId } = useLocalScope();
   const state = useAsync(
     () =>
-      Promise.all([api.locales.mine().catch(() => null), api.promos.mine({ limit: 200 })]).then(
-        ([local, promos]) => ({ local, promos: promos.data }),
-      ),
-    [],
+      api.promos
+        .mine({ local_id: activeLocalId ?? undefined, limit: 200 })
+        .then((promos) => ({ promos: promos.data })),
+    [activeLocalId],
   );
 
   const [benId, setBenId] = useState('');
@@ -91,7 +93,7 @@ export default function LocalValidar() {
     try {
       // El escaneo valida y registra; la ficha (DNI) es complementaria y opcional.
       const [esc, miembro] = await Promise.all([
-        api.escaneos.create(cod),
+        api.escaneos.create(cod, activeLocalId ?? undefined),
         api.usuarios.byCodigo(cod).catch(() => null),
       ]);
       setLookup({ codigo: cod, esc, miembro });
@@ -109,7 +111,11 @@ export default function LocalValidar() {
     setCanjeando(true);
     setCanjeMsg(null);
     try {
-      await api.canjes.create({ codigo: lookup.codigo, promo_id: benId });
+      await api.canjes.create({
+        codigo: lookup.codigo,
+        promo_id: benId,
+        local_id: activeLocalId ?? undefined,
+      });
       setCanjeMsg({ ok: true, text: 'Canje registrado. ¡Listo!' });
     } catch (e) {
       setCanjeMsg({ ok: false, text: e instanceof ApiError ? e.message : humanizeError(e) });

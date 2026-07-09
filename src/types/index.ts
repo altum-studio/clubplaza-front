@@ -110,7 +110,8 @@ export interface Profile {
   dni: string;
   telefono: string;
   rol: Role;
-  local_id: string | null; // solo rol "local"
+  local_id: string | null; // rol "local": local principal (compat). Ver local_ids.
+  local_ids?: string[]; // rol "local": TODOS los locales que gestiona (tabla intermedia)
   codigo: string; // código corto de credencial (6 chars, ej. A7K2QM) — va en el QR
   activo: boolean;
   created_at: string;

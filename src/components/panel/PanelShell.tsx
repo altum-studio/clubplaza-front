@@ -10,7 +10,7 @@ import { BrandIso } from '@/components/brand/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { ROLE_LABEL } from '@/lib/roles';
 import { Icon, type IconName } from './Icon';
-import { Avatar } from './kit';
+import { LocalSwitcher } from './LocalSwitcher';
 
 export interface NavItem {
   icon: IconName;
@@ -64,17 +64,6 @@ export function PanelShell({
     [profile?.nombre, profile?.apellido].filter(Boolean).join(' ').trim() || profile?.email || userName;
   const accountRole = profile ? ROLE_LABEL[profile.rol] : userRole;
 
-  // Iniciales para la versión más angosta (ej. "T. G."): 1ra de nombre + 1ra de
-  // apellido; si no hay perfil, cae a la 1ra letra del nombre de cuenta.
-  const accountInitials =
-    [profile?.nombre, profile?.apellido]
-      .filter(Boolean)
-      .map((s) => s!.trim()[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((c) => `${c!.toUpperCase()}.`)
-      .join(' ') || (accountName.trim()[0] ? `${accountName.trim()[0].toUpperCase()}.` : '');
-
   const handleLogout = async () => {
     await logout();
     navigate('/ingresar', { replace: true });
@@ -119,7 +108,7 @@ export function PanelShell({
           <span className="text-[13px] font-semibold text-white/85">Ver app de miembro</span>
         </Link>
         <div className="flex items-center gap-2.5 border-t border-white/10 pt-3.5">
-          <Avatar name={accountName} size={32} tone="mute" />
+          <LocalSwitcher size={32} fallbackName={accountName} menuDir="up" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[12.5px] font-bold text-white">{accountName}</div>
             <div className="text-[11px] text-white/50">{accountRole}</div>
@@ -152,13 +141,14 @@ export function PanelShell({
             </div>
           </div>
           <div className="flex flex-shrink-0 items-center gap-0.5">
-            {/* Nombre completo (tablet) / iniciales (celular angosto) */}
+            {/* Nombre en tablet+ */}
             <span className="ml-1 hidden max-w-[160px] truncate text-[12px] font-semibold text-white/85 sm:inline">
               {accountName}
             </span>
-            <span className="ml-1 text-[12px] font-semibold text-white/85 sm:hidden">
-              {accountInitials}
-            </span>
+            {/* Logo del local activo (switcher si gestiona varios) / avatar admin */}
+            <div className="ml-1">
+              <LocalSwitcher size={30} fallbackName={accountName} menuDir="down" />
+            </div>
             <button
               type="button"
               onClick={handleLogout}

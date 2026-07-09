@@ -11,6 +11,7 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { BeneficioFormModal } from '@/components/panel/BeneficioFormModal';
 import { ConfirmDialog, RowMenu } from '@/components/panel/RowMenu';
 import { useAsync } from '@/hooks/useAsync';
+import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import type { ApiPromo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
@@ -89,12 +90,13 @@ function BenefitPreview({
 }
 
 export default function LocalBeneficios() {
+  const { activeLocalId, activeLocal } = useLocalScope();
   const state = useAsync(
     () =>
-      Promise.all([api.locales.mine().catch(() => null), api.promos.mine({ limit: 200 })]).then(
-        ([local, promos]) => ({ local, promos: promos.data }),
-      ),
-    [],
+      api.promos
+        .mine({ local_id: activeLocalId ?? undefined, limit: 200 })
+        .then((promos) => ({ promos: promos.data })),
+    [activeLocalId],
   );
 
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -134,7 +136,7 @@ export default function LocalBeneficios() {
             filtro === 'todos' ? true : filtro === 'activos' ? p.activa : !p.activa,
           );
           const sel = promos.find((p) => p.id === selId) ?? null;
-          const local = { nombre: d.local?.nombre ?? '', logo_url: d.local?.logo_url ?? null };
+          const local = { nombre: activeLocal?.nombre ?? '', logo_url: activeLocal?.logo_url ?? null };
 
           const columns: Column<ApiPromo>[] = [
             {
@@ -251,6 +253,7 @@ export default function LocalBeneficios() {
         open={modalOpen}
         promo={editing}
         mode="local"
+        lockedLocalId={activeLocalId ?? undefined}
         onClose={() => setModalOpen(false)}
         onSaved={state.reload}
       />

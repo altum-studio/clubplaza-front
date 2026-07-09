@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from '@/context/AuthContext'
+import { LocalScopeProvider } from '@/context/LocalScopeContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')!).render(
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <AuthProvider>
-        <App />
+        <LocalScopeProvider>
+          <App />
+        </LocalScopeProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

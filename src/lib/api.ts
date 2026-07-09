@@ -229,7 +229,7 @@ type PromoInput = Partial<
   >
 >;
 type ProfileInput = Partial<
-  Pick<Profile, 'nombre' | 'apellido' | 'fecha_nacimiento' | 'dni' | 'telefono' | 'rol' | 'local_id' | 'activo'>
+  Pick<Profile, 'nombre' | 'apellido' | 'fecha_nacimiento' | 'dni' | 'telefono' | 'rol' | 'local_id' | 'local_ids' | 'activo'>
 > & { email?: string; password?: string };
 
 // ─────────────────────── API ───────────────────────
@@ -279,6 +279,8 @@ export const api = {
     remove: (id: string) => request<{ id: string }>(`/locales/${id}`, { method: 'DELETE' }),
     mine: () => request<ApiLocal>('/locales/mine/mi-local'),
     updateMine: (body: LocalInput) => request<ApiLocal>('/locales/mine/mi-local', { method: 'PATCH', body }),
+    // TODOS los locales que gestiona el usuario logueado (tabla intermedia).
+    mias: () => request<ApiLocal[]>('/locales/mias'),
   },
   promos: {
     list: (query?: { local_id?: string; rubro?: Categoria; activa?: boolean; limit?: number; offset?: number }) =>
@@ -287,26 +289,37 @@ export const api = {
     create: (body: PromoInput) => request<ApiPromo>('/promos', { method: 'POST', body }),
     update: (id: string, body: PromoInput) => request<ApiPromo>(`/promos/${id}`, { method: 'PATCH', body }),
     remove: (id: string) => request<{ id: string }>(`/promos/${id}`, { method: 'DELETE' }),
-    mine: (query?: { activa?: boolean; limit?: number; offset?: number }) =>
+    // local_id: cuál de los locales que gestiona el usuario (multi-local).
+    mine: (query?: { local_id?: string; activa?: boolean; limit?: number; offset?: number }) =>
       request<Paginated<ApiPromo>>('/promos/mine/mis-promos', { query }),
     createMine: (body: PromoInput) => request<ApiPromo>('/promos/mine/mis-promos', { method: 'POST', body }),
   },
   // Validar credencial (registra el escaneo + lista historial del local).
+  // local_id: el local activo (multi-local); el escaneo/historial se atribuye a él.
   escaneos: {
-    create: (codigo: string) =>
-      request<EscaneoResult>('/escaneos', { method: 'POST', body: { codigo: codigo.trim().toUpperCase() } }),
-    mine: (query?: { desde?: string; hasta?: string; limit?: number; offset?: number }) =>
+    create: (codigo: string, local_id?: string) =>
+      request<EscaneoResult>('/escaneos', {
+        method: 'POST',
+        body: { codigo: codigo.trim().toUpperCase(), local_id },
+      }),
+    mine: (query?: { local_id?: string; desde?: string; hasta?: string; limit?: number; offset?: number }) =>
       request<Paginated<EscaneoHistorialItem>>('/escaneos/mine', { query }),
   },
   // Canjes: registrar, historial (local/admin) y métricas.
   canjes: {
-    create: (body: { codigo?: string; usuario_id?: string; promo_id: string }) =>
+    create: (body: { codigo?: string; usuario_id?: string; promo_id: string; local_id?: string }) =>
       request<Canje>('/canjes', {
         method: 'POST',
         body: body.codigo ? { ...body, codigo: body.codigo.trim().toUpperCase() } : body,
       }),
-    mine: (query?: { desde?: string; hasta?: string; estado?: string; limit?: number; offset?: number }) =>
-      request<Paginated<CanjeHistorialItem>>('/canjes/mine', { query }),
+    mine: (query?: {
+      local_id?: string;
+      desde?: string;
+      hasta?: string;
+      estado?: string;
+      limit?: number;
+      offset?: number;
+    }) => request<Paginated<CanjeHistorialItem>>('/canjes/mine', { query }),
     list: (query?: {
       local_id?: string;
       promo_id?: string;
@@ -316,7 +329,7 @@ export const api = {
       limit?: number;
       offset?: number;
     }) => request<Paginated<CanjeHistorialItem>>('/canjes', { query }),
-    statsMine: () => request<CanjeStats>('/canjes/stats/mine'),
+    statsMine: (query?: { local_id?: string }) => request<CanjeStats>('/canjes/stats/mine', { query }),
     stats: (query?: { local_id?: string }) => request<CanjeStats>('/canjes/stats', { query }),
   },
 };

@@ -9,6 +9,7 @@ import { Bars, PCard, Stat } from '@/components/panel/kit';
 import { MonthPicker } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
+import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
 
@@ -16,7 +17,11 @@ const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function LocalStats() {
   const [monthOffset, setMonthOffset] = useState(0);
-  const state = useAsync(() => api.canjes.statsMine(), []);
+  const { activeLocalId } = useLocalScope();
+  const state = useAsync(
+    () => api.canjes.statsMine({ local_id: activeLocalId ?? undefined }),
+    [activeLocalId],
+  );
 
   return (
     <PanelShell

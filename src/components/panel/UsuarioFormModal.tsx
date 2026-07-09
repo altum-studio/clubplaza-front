@@ -7,6 +7,7 @@ import { api, humanizeError } from '@/lib/api';
 import type { ApiLocal, Profile, Role } from '@/types';
 import { PanelModal } from './PanelModal';
 import { PButton, Toggle } from './kit';
+import { Icon } from './Icon';
 import { SelectInput, TextInput } from './FormControls';
 import { ROLE_LABEL } from '@/lib/roles';
 
@@ -38,7 +39,7 @@ export function UsuarioFormModal({
   const [telefono, setTelefono] = useState('');
   const [fechaNac, setFechaNac] = useState('');
   const [rol, setRol] = useState<Role>('comun');
-  const [localId, setLocalId] = useState('');
+  const [localIds, setLocalIds] = useState<string[]>([]);
   const [activo, setActivo] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,16 +55,14 @@ export function UsuarioFormModal({
     setTelefono(usuario?.telefono ?? '');
     setFechaNac(usuario?.fecha_nacimiento ?? '');
     setRol(usuario?.rol ?? 'comun');
-    setLocalId(usuario?.local_id ?? '');
+    setLocalIds(usuario?.local_ids ?? (usuario?.local_id ? [usuario.local_id] : []));
     setActivo(usuario?.activo ?? true);
     setError(null);
     setConfirmDel(false);
   }, [open, usuario]);
 
-  const localOptions = locales.map((l) => ({
-    value: l.id,
-    label: l.nro_local ? `${l.nombre} · ${l.nro_local}` : l.nombre,
-  }));
+  const toggleLocal = (id: string) =>
+    setLocalIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   const submit = async () => {
     if (!nombre.trim() || !apellido.trim()) return setError('Nombre y apellido son obligatorios');
@@ -71,7 +70,8 @@ export function UsuarioFormModal({
       if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim())) return setError('Email inválido');
       if (password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres');
     }
-    if (rol === 'local' && !localId) return setError('Asigná un local para el rol Comercio');
+    if (rol === 'local' && localIds.length === 0)
+      return setError('Asigná al menos un local al rol Comercio');
 
     setSaving(true);
     setError(null);
@@ -83,7 +83,9 @@ export function UsuarioFormModal({
         telefono: telefono.trim(),
         fecha_nacimiento: fechaNac || undefined,
         rol,
-        local_id: rol === 'local' ? localId : null,
+        // local_ids = fuente de verdad (tabla intermedia); local_id = 1º por compat.
+        local_ids: rol === 'local' ? localIds : [],
+        local_id: rol === 'local' ? (localIds[0] ?? null) : null,
       };
       if (isEdit) {
         await api.usuarios.update(usuario!.id, { ...base, activo });
@@ -162,13 +164,46 @@ export function UsuarioFormModal({
 
         <SelectInput label="Rol *" value={rol} onChange={setRol} options={ROLE_OPTIONS} />
         {rol === 'local' && (
-          <SelectInput
-            label="Local asignado *"
-            value={localId}
-            onChange={setLocalId}
-            options={localOptions}
-            placeholder="Elegí el local"
-          />
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.4px] text-mute">
+              Locales asignados *
+            </div>
+            <div className="flex max-h-52 flex-col gap-1 overflow-y-auto rounded-[10px] border border-line p-1.5">
+              {locales.length === 0 ? (
+                <div className="px-2 py-3 text-center text-[12.5px] text-mute">No hay locales.</div>
+              ) : (
+                locales.map((l) => {
+                  const on = localIds.includes(l.id);
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => toggleLocal(l.id)}
+                      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                        on ? 'bg-brand-soft' : 'hover:bg-fill'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border ${
+                          on ? 'border-brand bg-brand text-white' : 'border-line'
+                        }`}
+                      >
+                        {on && <Icon name="check" size={12} strokeWidth={3} />}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+                        {l.nombre}
+                        {l.nro_local ? ` · ${l.nro_local}` : ''}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div className="mt-1 text-[11px] text-mute">
+              {localIds.length} seleccionado{localIds.length === 1 ? '' : 's'} · si asignás más de uno,
+              el usuario puede switchear entre ellos.
+            </div>
+          </div>
         )}
 
         {isEdit && (

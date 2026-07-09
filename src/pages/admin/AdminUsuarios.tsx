@@ -66,10 +66,15 @@ export default function AdminUsuarios() {
       { key: 'rol', label: 'Rol', w: '18%', align: 'center', render: (_v, u) => rolBadge(u.rol) },
       {
         key: 'local',
-        label: 'Local',
+        label: 'Locales',
         w: '20%',
         muted: true,
-        render: (_v, u) => u.locales?.nombre ?? (u.rol === 'local' ? '— sin asignar' : '—'),
+        render: (_v, u) => {
+          if (u.rol !== 'local') return '—';
+          const n = u.local_ids?.length ?? 0;
+          if (n > 1) return `${n} locales`;
+          return u.locales?.nombre ?? '— sin asignar';
+        },
       },
       {
         key: 'activo',
