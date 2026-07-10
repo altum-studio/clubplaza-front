@@ -25,7 +25,19 @@ El endpoint se rompió al **empezar el cambio de multi-local** (ver `backend-spe
    - el join no rompa cuando un usuario **no** tiene filas en esa tabla (usar LEFT JOIN / agrupar bien).
 3. Que el endpoint siga devolviendo el shape de siempre: `{ "data": Usuario[], "count": number }`.
 
+## También rompe el REGISTRO (mismo origen)
+`POST /api/auth/register` falla con:
+
+```json
+{ "error": "No se pudo crear el perfil del usuario" }
+```
+
+Esto pasa **con cualquier email nuevo** (no es un mail puntual). El backend crea el usuario de **auth** pero **no puede insertar el perfil en la tabla `usuarios`** → mismo problema que el listado. 
+
+⚠️ **Ojo con los usuarios "huérfanos":** como el auth SÍ se crea pero el perfil NO, esos emails pueden quedar registrados en Supabase Auth **sin** fila en `usuarios`. Al arreglar el back, conviene **limpiar los auth users huérfanos** (o vas a tener mails que dicen "ya registrado" pero sin perfil).
+
 ## Impacto en la app
+- **Registro (app socio):** nadie puede crear cuenta ("No se pudo crear el perfil del usuario").
 - **Panel Admin → Usuarios:** no puede listar usuarios ("No se pudieron obtener los usuarios").
 - **Panel Admin → Dashboard:** "Miembros totales" y "Altas de miembros" salen vacíos (se calculan de este endpoint).
 
