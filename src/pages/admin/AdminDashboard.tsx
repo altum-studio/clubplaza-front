@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Area, PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
 import { MonthPicker, monthValue, monthInitial } from '@/components/panel/MonthPicker';
-import { DataView } from '@/components/panel/DataState';
+import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
 import type { ApiLocal, Profile } from '@/types';
@@ -54,13 +54,14 @@ export default function AdminDashboard() {
   const [vista, setVista] = useState<'mes' | 'semana'>('mes');
   const mes = monthValue(monthOffset);
 
-  // Base: no depende del mes (se carga una vez).
+  // Base: no depende del mes (se carga una vez). Cada fuente cae por separado,
+  // así un endpoint roto (p.ej. usuarios en 500) no tumba TODO el dashboard.
   const base = useAsync(
     () =>
       Promise.all([
-        api.locales.list({ limit: 500 }),
-        api.promos.list({ limit: 1 }),
-        api.usuarios.list({ limit: 1000 }),
+        api.locales.list({ limit: 500 }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
+        api.promos.list({ limit: 1 }).catch(() => ({ data: [], count: 0 })),
+        api.usuarios.list({ limit: 1000 }).catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => ({
         locales: l.data,
         localesCount: l.count,
@@ -133,14 +134,24 @@ export default function AdminDashboard() {
                     </div>
                   }
                 >
-                  <Area data={altas.data} h={180} />
-                  <div className="mt-1 flex justify-between">
-                    {altas.labels.map((m, i) => (
-                      <span key={i} className="text-[10.5px] font-semibold text-faint">
-                        {m}
-                      </span>
-                    ))}
-                  </div>
+                  {b.usuarios.length === 0 ? (
+                    <PanelEmpty
+                      icon="users"
+                      title="Sin datos de altas"
+                      hint="No se pudieron leer los usuarios (revisá el endpoint /api/usuarios en el backend)."
+                    />
+                  ) : (
+                    <>
+                      <Area data={altas.data} h={180} />
+                      <div className="mt-1 flex justify-between">
+                        {altas.labels.map((m, i) => (
+                          <span key={i} className="text-[10.5px] font-semibold text-faint">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </PCard>
 
                 <PCard title="Top locales por canjes" sub="Canjes del mes · ordenado de mayor a menor">
