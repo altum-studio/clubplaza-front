@@ -8,6 +8,7 @@
 // Los tokens viven en localStorage; el AuthContext los setea/limpia.
 
 import type {
+  AltaBucket,
   ApiLocal,
   ApiPromo,
   AuthResponse,
@@ -266,6 +267,9 @@ export const api = {
     // normaliza a mayúsculas, igual lo mandamos en upper por las dudas.
     byCodigo: (codigo: string) =>
       request<MiembroPorCodigo>(`/usuarios/codigo/${encodeURIComponent(codigo.trim().toUpperCase())}`),
+    // Altas de usuarios por período (para el gráfico del dashboard admin).
+    altas: (periodo: 'mes' | 'semana') =>
+      request<AltaBucket[]>('/usuarios/altas', { query: { periodo } }),
     create: (body: ProfileInput) => request<Profile>('/usuarios', { method: 'POST', body }),
     update: (id: string, body: ProfileInput) => request<Profile>(`/usuarios/${id}`, { method: 'PATCH', body }),
     remove: (id: string) => request<{ id: string }>(`/usuarios/${id}`, { method: 'DELETE' }),

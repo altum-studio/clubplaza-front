@@ -227,6 +227,13 @@ export interface EscaneoHistorialItem {
   usuarios: { nombre: string; apellido: string; codigo: string };
 }
 
+// Altas de usuarios por período (GET /usuarios/altas?periodo=mes|semana).
+// mes → 12 buckets 'YYYY-MM'; semana → 7 buckets 'YYYY-MM-DD'. Incluye ceros.
+export interface AltaBucket {
+  periodo: string;
+  count: number;
+}
+
 // Métricas de canjes (GET /canjes/stats[/mine]).
 export interface CanjeStats {
   canjes_mes: number;
