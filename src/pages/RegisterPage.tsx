@@ -3,11 +3,13 @@
 // Header verde con chevron + wordmark, título "Creá tu cuenta", formulario con
 // validación en tiempo real (react-hook-form + zod) y consentimiento Ley 25.326.
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Phone, Lock } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { TermsModal } from '@/components/legal/TermsModal';
 import { Button } from '@/components/ui/app-button';
 import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +45,7 @@ function formatFechaNac(value: string, isDeleting = false): string {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register: registerSocio } = useAuth();
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const {
     register,
@@ -90,6 +93,7 @@ export default function RegisterPage() {
   };
 
   return (
+    <>
     <AuthLayout title="Creá tu cuenta" subtitle="Es gratis y toma menos de un minuto">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-3" noValidate>
         <TextField
@@ -173,15 +177,17 @@ export default function RegisterPage() {
             </span>
             <span className="text-[10.5px] leading-[1.5] text-graytext">
               Acepto los{' '}
-              <Link
-                to="/terminos"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setTermsOpen(true);
+                }}
                 className="font-semibold text-brand underline"
               >
                 Términos y la Política de Privacidad
-              </Link>{' '}
+              </button>{' '}
               y el tratamiento de mis datos por Green Plaza (Ley 25.326).
             </span>
           </label>
@@ -210,5 +216,7 @@ export default function RegisterPage() {
         </div>
       </form>
     </AuthLayout>
+    <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
+    </>
   );
 }
