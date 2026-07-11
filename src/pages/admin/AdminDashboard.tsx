@@ -5,12 +5,13 @@
 
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Area, PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
-import { MonthPicker, monthValue, monthInitial } from '@/components/panel/MonthPicker';
+import { PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
+import { AltasChart } from '@/components/panel/AltasChart';
+import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import type { AltaBucket, ApiLocal } from '@/types';
+import type { ApiLocal } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
 const benCount = (l: ApiLocal) =>
@@ -18,14 +19,8 @@ const benCount = (l: ApiLocal) =>
     ? (l.promos[0] as { count: number }).count
     : (l.promos_count ?? 0);
 
-const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-
-// Etiqueta del eje según el bucket: mes → inicial del mes; semana → día.
-function bucketLabel(b: AltaBucket, vista: 'mes' | 'semana'): string {
-  if (vista === 'mes') return monthInitial(b.periodo);
-  const d = new Date(`${b.periodo}T00:00:00`);
-  return isNaN(d.getTime()) ? '' : DOW[d.getDay()];
-}
+// La vista mensual arranca en el mes de lanzamiento (no mostramos meses previos).
+const LAUNCH_MONTH = '2026-06';
 
 export default function AdminDashboard() {
   const [monthOffset, setMonthOffset] = useState(0);
@@ -84,6 +79,9 @@ export default function AdminDashboard() {
           const md = mesData.data;
           const ranking = md?.ranking ?? [];
           const altasData = altas.data ?? [];
+          // Mensual: desde el lanzamiento. Semanal: los 7 días tal cual.
+          const altasVista =
+            vista === 'mes' ? altasData.filter((b) => b.periodo >= LAUNCH_MONTH) : altasData;
 
           return (
             <div className="flex flex-col gap-4 lg:gap-[18px]">
@@ -100,8 +98,9 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
                 <PCard
+                  fill
                   title="Altas de miembros"
-                  sub={vista === 'mes' ? 'Nuevos registros por mes (12m)' : 'Nuevos registros por día (7d)'}
+                  sub={vista === 'mes' ? 'Nuevos registros por mes' : 'Nuevos registros por día (7d)'}
                   actions={
                     <div className="hidden gap-1.5 sm:flex">
                       <PChip active={vista === 'mes'} onClick={() => setVista('mes')}>
@@ -114,24 +113,13 @@ export default function AdminDashboard() {
                   }
                 >
                   {altas.error ? (
-                    <PanelEmpty
-                      icon="users"
-                      title="No se pudieron cargar las altas"
-                      hint={altas.error}
-                    />
+                    <PanelEmpty icon="users" title="No se pudieron cargar las altas" hint={altas.error} />
                   ) : altas.loading && altasData.length === 0 ? (
-                    <div className="py-14 text-center text-[13px] text-mute">Cargando…</div>
+                    <div className="flex flex-1 items-center justify-center py-14 text-[13px] text-mute">
+                      Cargando…
+                    </div>
                   ) : (
-                    <>
-                      <Area data={altasData.map((x) => x.count)} h={180} />
-                      <div className="mt-1 flex justify-between">
-                        {altasData.map((x, i) => (
-                          <span key={i} className="text-[10.5px] font-semibold text-faint">
-                            {bucketLabel(x, vista)}
-                          </span>
-                        ))}
-                      </div>
-                    </>
+                    <AltasChart buckets={altasVista} vista={vista} />
                   )}
                 </PCard>
 

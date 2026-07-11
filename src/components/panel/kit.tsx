@@ -145,6 +145,7 @@ export function PCard({
   sub,
   actions,
   pad = 18,
+  fill = false,
   children,
   className,
 }: {
@@ -152,6 +153,8 @@ export function PCard({
   sub?: ReactNode;
   actions?: ReactNode;
   pad?: number;
+  /** El área de contenido llena la altura de la card (flex-1). */
+  fill?: boolean;
   children?: ReactNode;
   className?: string;
 }) {
@@ -176,7 +179,11 @@ export function PCard({
           {actions}
         </div>
       )}
-      {children && <div style={{ padding: pad }}>{children}</div>}
+      {children && (
+        <div style={{ padding: pad }} className={cn(fill && 'flex min-h-0 flex-1 flex-col')}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
