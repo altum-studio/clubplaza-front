@@ -11,9 +11,8 @@ import { useId, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Icon, type IconName } from './Icon';
 
-// TODO BACKEND: cuando existan métricas reales, apagar este flag (o leerlo de
-// una feature flag remota) para mostrar números en lugar de "Próximamente".
-export const METRICS_SOON = true;
+// Ya hay métricas reales del backend → flag apagado (los charts muestran datos).
+export const METRICS_SOON = false;
 
 const BRAND = '#23753a';
 

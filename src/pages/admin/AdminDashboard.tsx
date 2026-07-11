@@ -94,7 +94,7 @@ export default function AdminDashboard() {
                 {md?.canjesMes != null ? (
                   <Stat live label="Canjes del mes" value={String(md.canjesMes)} icon="ticket" />
                 ) : (
-                  <Stat label="Canjes del mes" value={mesData.loading ? '…' : undefined} icon="ticket" />
+                  <Stat live label="Canjes del mes" value={mesData.loading ? '…' : '—'} icon="ticket" />
                 )}
               </div>
 

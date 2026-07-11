@@ -139,7 +139,12 @@ export default function AdminLocales() {
                 <Stat live label="Locales" value={String(page.count)} icon="store" />
                 <Stat live label="Activos" value={String(activos)} icon="check" />
                 <Stat live label="Inactivos" value={String(page.count - activos)} icon="store" />
-                <Stat label="Beneficios totales" icon="tag" />
+                <Stat
+                  live
+                  label="Beneficios totales"
+                  value={String(page.data.reduce((a, l) => a + benCount(l), 0))}
+                  icon="tag"
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

@@ -73,16 +73,11 @@ export default function LocalInicio() {
                   icon="tag"
                 />
                 <Stat live label="Beneficios totales" value={String(d.promos.count)} icon="chart" />
+                <Stat live label="Canjes hoy" value={d.stats ? String(canjesHoy) : '—'} icon="ticket" />
                 <Stat
-                  live={!!d.stats}
-                  label="Canjes hoy"
-                  value={d.stats ? String(canjesHoy) : undefined}
-                  icon="ticket"
-                />
-                <Stat
-                  live={!!d.stats}
+                  live
                   label="Miembros del mes"
-                  value={d.stats ? String(d.stats.miembros_unicos_mes) : undefined}
+                  value={d.stats ? String(d.stats.miembros_unicos_mes) : '—'}
                   icon="users"
                 />
               </div>
