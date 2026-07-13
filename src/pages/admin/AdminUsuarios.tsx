@@ -113,7 +113,7 @@ export default function AdminUsuarios() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar usuario…"
+              placeholder="Nombre, comercio o mail…"
               className="w-[150px] bg-transparent text-[13px] text-ink outline-none placeholder:text-faint"
             />
           </div>
@@ -127,12 +127,21 @@ export default function AdminUsuarios() {
         {(d) => {
           const q = query.trim().toLowerCase();
           const count = (r: Role) => d.usuarios.filter((u) => u.rol === r).length;
+          const localNames = new Map(d.locales.map((l) => [l.id, l.nombre]));
+          // Comercios asociados a un usuario (local principal + tabla intermedia),
+          // para poder buscar también por el nombre del comercio.
+          const comercioOf = (u: Profile) =>
+            [u.locales?.nombre, ...(u.local_ids ?? []).map((id) => localNames.get(id))]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
           const rows = d.usuarios.filter((u) => {
             const okFiltro = filtro === 'todos' || u.rol === filtro;
             const okQuery =
               !q ||
               `${u.nombre} ${u.apellido}`.toLowerCase().includes(q) ||
-              u.email.toLowerCase().includes(q);
+              u.email.toLowerCase().includes(q) ||
+              comercioOf(u).includes(q);
             return okFiltro && okQuery;
           });
 

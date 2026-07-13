@@ -6,10 +6,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BenefitImage } from './BenefitImage';
-import { BenefitBadge } from './BenefitBadge';
 import { LocalLogo } from './LocalLogo';
 import { Button } from '@/components/ui/app-button';
-import { labelCategoria } from '@/lib/categorias';
 import type { Promo } from '@/types';
 
 const AUTOPLAY_MS = 4500;
@@ -102,10 +100,6 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
                   fallbackLabel={p.local_nombre}
                 />
               </div>
-              {/* Badge sobre la imagen */}
-              <span className="absolute left-2.5 top-2.5">
-                <BenefitBadge>{labelCategoria(p.categoria)}</BenefitBadge>
-              </span>
               {/* Logo del local montado en el borde inferior de la imagen */}
               <LocalLogo
                 src={p.local_logo_url}

@@ -4,8 +4,6 @@
 
 import { Link } from 'react-router-dom';
 import type { Promo } from '@/types';
-import { labelCategoria } from '@/lib/categorias';
-import { BenefitBadge } from './BenefitBadge';
 import { BenefitImage } from './BenefitImage';
 import { LocalLogo } from './LocalLogo';
 
@@ -23,9 +21,6 @@ export function BenefitCard({ promo }: { promo: Promo }) {
             fallbackLabel={promo.local_nombre}
           />
         </div>
-        <span className="absolute left-2 top-2">
-          <BenefitBadge>{labelCategoria(promo.categoria)}</BenefitBadge>
-        </span>
         {/* Logo del local montado en el borde inferior de la imagen */}
         <LocalLogo
           src={promo.local_logo_url}

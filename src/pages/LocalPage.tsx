@@ -71,7 +71,7 @@ export default function LocalPage() {
               {local?.nombre ?? 'Local'}
             </h1>
             {local?.descripcion && (
-              <p className="truncate text-[12px] text-white/80">{local.descripcion}</p>
+              <p className="text-[12px] leading-snug text-white/80">{local.descripcion}</p>
             )}
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
               {local && (
