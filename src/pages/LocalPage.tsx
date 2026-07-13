@@ -124,7 +124,7 @@ export default function LocalPage() {
           </div>
         ) : delLocal.length === 0 ? (
           <p className="px-2 py-10 text-center text-[13px] text-mute">
-            No encontramos beneficios de este local.
+            No hay beneficios en este local por el momento.
           </p>
         ) : (
           <>
