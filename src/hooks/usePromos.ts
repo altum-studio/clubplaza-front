@@ -1,25 +1,36 @@
 // hooks/usePromos.ts
-// TEMP (preview): beneficios HARDCODEADOS desde MOCK_PROMOS para ver cómo se veía
-// la app antes de conectar al back. Para volver a la API real, revertir este
-// archivo (ver git: la versión con `api.promos.*` + mapPromo).
+// Lista y detalle de beneficios desde la API real (/api/promos). Mapea ApiPromo
+// → Promo (forma que usan las pantallas) y joinea el nombre/logo del local
+// (la lista de promos no los trae embebidos).
 
 import { useEffect, useState } from 'react';
 import type { Promo } from '@/types';
-import { MOCK_PROMOS } from '@/data/mock';
+import { api, humanizeError } from '@/lib/api';
+import { mapPromo } from '@/lib/mapApi';
 
 export function usePromos() {
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 350)); // simula latencia para ver el skeleton
-      if (cancel) return;
-      setPromos(MOCK_PROMOS.filter((p) => p.activo));
-      setLoading(false);
+      setError(null);
+      try {
+        const [p, l] = await Promise.all([
+          api.promos.list({ activa: true, limit: 500 }),
+          api.locales.list({ limit: 500 }),
+        ]);
+        if (cancel) return;
+        const locMap = new Map(l.data.map((x) => [x.id, { nombre: x.nombre, logo_url: x.logo_url }]));
+        setPromos(p.data.map((pr) => mapPromo(pr, locMap.get(pr.local_id))));
+      } catch (e) {
+        if (!cancel) setError(humanizeError(e));
+      } finally {
+        if (!cancel) setLoading(false);
+      }
     })();
     return () => {
       cancel = true;
@@ -44,12 +55,25 @@ export function usePromo(id: string | undefined) {
     (async () => {
       setLoading(true);
       setError(null);
-      await new Promise((r) => setTimeout(r, 300));
-      if (cancel) return;
-      const found = MOCK_PROMOS.find((p) => p.id === id) ?? null;
-      setPromo(found);
-      if (!found) setError('No encontramos ese beneficio');
-      setLoading(false);
+      try {
+        const p = await api.promos.get(id);
+        let loc: { nombre: string; logo_url: string | null } | undefined;
+        try {
+          const l = await api.locales.get(p.local_id);
+          loc = { nombre: l.nombre, logo_url: l.logo_url };
+        } catch {
+          /* el local no está disponible: el beneficio igual se muestra */
+        }
+        if (cancel) return;
+        setPromo(mapPromo(p, loc));
+      } catch (e) {
+        if (!cancel) {
+          setPromo(null);
+          setError(humanizeError(e));
+        }
+      } finally {
+        if (!cancel) setLoading(false);
+      }
     })();
     return () => {
       cancel = true;
