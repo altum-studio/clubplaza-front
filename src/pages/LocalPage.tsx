@@ -33,16 +33,17 @@ export default function LocalPage() {
 
   return (
     <AppCanvas wide>
-      {/* Banner (imagen real si existe; si no, degradé de marca como fallback) */}
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
+      {/* Banner 1200x600 (2:1): se muestra completo, sin recortar */}
       <div className="relative">
         {hasBanner ? (
           <img
             src={local!.banner_url}
             alt={local?.nombre ?? 'Local'}
-            className="h-[120px] w-full object-cover"
+            className="aspect-[2/1] w-full object-cover"
           />
         ) : (
-          <div className="h-[120px] w-full bg-gradient-to-br from-brand to-brand-dark" />
+          <div className="aspect-[2/1] w-full bg-gradient-to-br from-brand to-brand-dark" />
         )}
 
         {/* Botón Volver, siempre accesible sobre el banner */}
@@ -57,7 +58,7 @@ export default function LocalPage() {
       </div>
 
       {/* Header verde con info del local */}
-      <header className="-mt-4 rounded-b-[22px] rounded-t-[22px] bg-brand px-4 pb-5 pt-4">
+      <header className="-mt-4 rounded-b-[22px] rounded-t-[22px] bg-brand px-4 pb-5 pt-6">
         <div className="flex items-center gap-3.5">
           <LocalLogo
             src={local?.logo_url}
@@ -91,8 +92,8 @@ export default function LocalPage() {
 
       {/* Horarios */}
       {local?.horarios && (
-        <div className="px-4 pt-4 lg:px-8">
-          <div className="rounded-2xl border border-line-soft p-4 lg:max-w-xl">
+        <div className="px-4 pt-4">
+          <div className="rounded-2xl border border-line-soft p-4">
             <h2 className="mb-2.5 text-[15px] font-bold">Horarios</h2>
             <ul className="space-y-1.5">
               {DIAS_ORDEN.map((d) => {
@@ -113,11 +114,11 @@ export default function LocalPage() {
       )}
 
       {/* Beneficios del local */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4 lg:px-8">
+      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <BenefitCardSkeleton />
             <BenefitCardSkeleton />
           </div>
@@ -128,13 +129,14 @@ export default function LocalPage() {
         ) : (
           <>
             <h2 className="mb-2.5 ml-0.5 text-[15px] font-bold">Beneficios</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {delLocal.map((p) => (
                 <BenefitCard key={p.id} promo={p} />
               ))}
             </div>
           </>
         )}
+      </div>
       </div>
     </AppCanvas>
   );
