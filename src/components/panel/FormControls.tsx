@@ -327,7 +327,17 @@ export function HorariosEditor({ value, onChange }: { value: HorarioDia[]; onCha
               )}
               <button
                 type="button"
-                onClick={() => update(d, { cerrado: !h.cerrado, rangos: h.cerrado ? [['10:00', '21:00']] : [] })}
+                onClick={() =>
+                  update(
+                    d,
+                    // Al cerrar conservamos los rangos (quedan ocultos, manda el
+                    // flag `cerrado`) para poder restaurarlos al reabrir. Solo
+                    // usamos el default si el día nunca tuvo horario cargado.
+                    h.cerrado
+                      ? { cerrado: false, rangos: h.rangos.length ? h.rangos : [['10:00', '21:00']] }
+                      : { cerrado: true },
+                  )
+                }
                 className="flex items-center gap-2"
                 aria-label={h.cerrado ? 'Abrir' : 'Cerrar'}
               >

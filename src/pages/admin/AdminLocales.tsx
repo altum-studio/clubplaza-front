@@ -14,15 +14,23 @@ import { api } from '@/lib/api';
 import type { ApiLocal } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
-const benCount = (l: ApiLocal) =>
-  Array.isArray(l.promos) && l.promos[0] && 'count' in l.promos[0]
-    ? (l.promos[0] as { count: number }).count
-    : (l.promos_count ?? 0);
-
 type Filtro = 'todos' | 'activos' | 'inactivos';
+type LocalRow = ApiLocal & { __benef: number };
 
 export default function AdminLocales() {
-  const state = useAsync(() => api.locales.list({ limit: 50 }), []);
+  // El backend no incluye el conteo de beneficios por local → lo calculamos
+  // trayendo la lista de promos y contando por local_id.
+  const state = useAsync(
+    () =>
+      Promise.all([api.locales.list({ limit: 50 }), api.promos.list({ limit: 500 })]).then(
+        ([l, p]) => {
+          const benef = new Map<string, number>();
+          for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
+          return { locales: l.data, count: l.count, benef, totalBenef: p.count };
+        },
+      ),
+    [],
+  );
   const [query, setQuery] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
 
@@ -40,7 +48,7 @@ export default function AdminLocales() {
     setModalOpen(true);
   };
 
-  const columns = useMemo<Column<ApiLocal>[]>(
+  const columns = useMemo<Column<LocalRow>[]>(
     () => [
       {
         key: 'nombre',
@@ -62,7 +70,7 @@ export default function AdminLocales() {
           </div>
         ),
       },
-      { key: 'bene', label: 'Beneficios', w: '14%', align: 'center', bold: true, render: (_v, r) => benCount(r) },
+      { key: 'bene', label: 'Beneficios', w: '14%', align: 'center', bold: true, render: (_v, r) => r.__benef },
       {
         key: 'canjes',
         label: 'Canjes',
@@ -126,12 +134,14 @@ export default function AdminLocales() {
       <DataView state={state}>
         {(page) => {
           const q = query.trim().toLowerCase();
-          const rows = page.data.filter((l) => {
-            const okQuery = !q || l.nombre.toLowerCase().includes(q);
-            const okFiltro = filtro === 'todos' || (filtro === 'activos' ? l.activo : !l.activo);
-            return okQuery && okFiltro;
-          });
-          const activos = page.data.filter((l) => l.activo).length;
+          const rows: LocalRow[] = page.locales
+            .filter((l) => {
+              const okQuery = !q || l.nombre.toLowerCase().includes(q);
+              const okFiltro = filtro === 'todos' || (filtro === 'activos' ? l.activo : !l.activo);
+              return okQuery && okFiltro;
+            })
+            .map((l) => ({ ...l, __benef: page.benef.get(l.id) ?? 0 }));
+          const activos = page.locales.filter((l) => l.activo).length;
 
           return (
             <div className="flex flex-col gap-4">
@@ -139,12 +149,7 @@ export default function AdminLocales() {
                 <Stat live label="Locales" value={String(page.count)} icon="store" />
                 <Stat live label="Activos" value={String(activos)} icon="check" />
                 <Stat live label="Inactivos" value={String(page.count - activos)} icon="store" />
-                <Stat
-                  live
-                  label="Beneficios totales"
-                  value={String(page.data.reduce((a, l) => a + benCount(l), 0))}
-                  icon="tag"
-                />
+                <Stat live label="Beneficios totales" value={String(page.totalBenef)} icon="tag" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -166,14 +171,14 @@ export default function AdminLocales() {
               {rows.length === 0 ? (
                 <PanelEmpty
                   icon="store"
-                  title={page.data.length === 0 ? 'No hay locales todavía' : 'Sin resultados'}
+                  title={page.locales.length === 0 ? 'No hay locales todavía' : 'Sin resultados'}
                   hint={
-                    page.data.length === 0
+                    page.locales.length === 0
                       ? 'Cargá el primero con “Alta de local”.'
                       : 'Probá con otro nombre o filtro.'
                   }
                   action={
-                    page.data.length === 0 ? (
+                    page.locales.length === 0 ? (
                       <PButton icon="plus" onClick={openAlta}>
                         Alta de local
                       </PButton>
