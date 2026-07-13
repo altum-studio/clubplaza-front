@@ -34,16 +34,16 @@ export default function LocalPage() {
   return (
     <AppCanvas wide>
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-      {/* Banner 1200x600 (2:1): se muestra completo, sin recortar */}
+      {/* Banner (altura fija, un poco más alto que antes; recorta el 1200x600) */}
       <div className="relative">
         {hasBanner ? (
           <img
             src={local!.banner_url}
             alt={local?.nombre ?? 'Local'}
-            className="aspect-[2/1] w-full object-cover"
+            className="h-[165px] w-full object-cover"
           />
         ) : (
-          <div className="aspect-[2/1] w-full bg-gradient-to-br from-brand to-brand-dark" />
+          <div className="h-[165px] w-full bg-gradient-to-br from-brand to-brand-dark" />
         )}
 
         {/* Botón Volver, siempre accesible sobre el banner */}
