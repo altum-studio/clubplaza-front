@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
+import { Icon } from '@/components/panel/Icon';
 import { AltasChart } from '@/components/panel/AltasChart';
 import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
@@ -22,9 +23,28 @@ const benCount = (l: ApiLocal) =>
 // La vista mensual arranca en el mes de lanzamiento (no mostramos meses previos).
 const LAUNCH_MONTH = '2026-06';
 
+// Enumera 'YYYY-MM' desde `from` hasta `to` inclusive (serie de canjes por mes).
+function monthsRange(from: string, to: string): string[] {
+  const out: string[] = [];
+  let y = Number(from.slice(0, 4));
+  let m = Number(from.slice(5, 7));
+  const ty = Number(to.slice(0, 4));
+  const tm = Number(to.slice(5, 7));
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`);
+    if (++m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return out;
+}
+
 export default function AdminDashboard() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [vista, setVista] = useState<'mes' | 'semana'>('mes');
+  // Métrica del gráfico principal: se alterna con la flecha del título.
+  const [metric, setMetric] = useState<'altas' | 'canjes'>('altas');
   const mes = monthValue(monthOffset);
 
   // Base: totales (cada fuente cae por separado, así un endpoint roto no tumba todo).
@@ -45,6 +65,25 @@ export default function AdminDashboard() {
 
   // Altas de miembros (endpoint dedicado): cambia con el toggle mes/semana.
   const altas = useAsync(() => api.usuarios.altas(vista), [vista]);
+
+  // Serie de canjes en el MISMO formato que altas, para el toggle del gráfico.
+  // Semana → últimos 7 días (canjes_ultimos_7_dias); Mes → total de cada mes
+  // desde el lanzamiento (una llamada a stats por mes). No usa el backend nuevo.
+  const canjesSerie = useAsync(async () => {
+    if (vista === 'semana') {
+      const s = await api.canjes.stats({});
+      return s.canjes_ultimos_7_dias.map((d) => ({ periodo: d.fecha, count: d.cantidad }));
+    }
+    const months = monthsRange(LAUNCH_MONTH, monthValue(0));
+    return Promise.all(
+      months.map((m) =>
+        api.canjes
+          .stats({ mes: m })
+          .then((s) => ({ periodo: m, count: s.canjes_mes }))
+          .catch(() => ({ periodo: m, count: 0 })),
+      ),
+    );
+  }, [vista]);
 
   // Del mes: canjes globales + ranking por local (refetch al cambiar el mes).
   const mesData = useAsync(async () => {
@@ -82,6 +121,13 @@ export default function AdminDashboard() {
           // Mensual: desde el lanzamiento. Semanal: los 7 días tal cual.
           const altasVista =
             vista === 'mes' ? altasData.filter((b) => b.periodo >= LAUNCH_MONTH) : altasData;
+          const canjesData = canjesSerie.data ?? [];
+          const canjesVista =
+            vista === 'mes' ? canjesData.filter((b) => b.periodo >= LAUNCH_MONTH) : canjesData;
+          // El gráfico principal muestra altas o canjes según el toggle.
+          const esAltas = metric === 'altas';
+          const chartState = esAltas ? altas : canjesSerie;
+          const chartData = esAltas ? altasVista : canjesVista;
 
           return (
             <div className="flex flex-col gap-4 lg:gap-[18px]">
@@ -99,8 +145,29 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
                 <PCard
                   fill
-                  title="Altas de miembros"
-                  sub={vista === 'mes' ? 'Nuevos registros por mes' : 'Nuevos registros por día (7d)'}
+                  title={
+                    <button
+                      type="button"
+                      onClick={() => setMetric((m) => (m === 'altas' ? 'canjes' : 'altas'))}
+                      className="group -my-1 flex cursor-pointer items-center gap-1.5"
+                      aria-label={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
+                      title={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
+                    >
+                      <span>{esAltas ? 'Altas de miembros' : 'Canjes'}</span>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-fill text-mute transition-colors group-hover:bg-brand/10 group-hover:text-brand">
+                        <Icon name="chevR" size={15} />
+                      </span>
+                    </button>
+                  }
+                  sub={
+                    esAltas
+                      ? vista === 'mes'
+                        ? 'Nuevos registros por mes'
+                        : 'Nuevos registros por día (7d)'
+                      : vista === 'mes'
+                        ? 'Canjes por mes'
+                        : 'Canjes por día (7d)'
+                  }
                   actions={
                     <div className="hidden gap-1.5 sm:flex">
                       <PChip active={vista === 'mes'} onClick={() => setVista('mes')}>
@@ -112,14 +179,18 @@ export default function AdminDashboard() {
                     </div>
                   }
                 >
-                  {altas.error ? (
-                    <PanelEmpty icon="users" title="No se pudieron cargar las altas" hint={altas.error} />
-                  ) : altas.loading && altasData.length === 0 ? (
+                  {chartState.error ? (
+                    <PanelEmpty
+                      icon={esAltas ? 'users' : 'ticket'}
+                      title={esAltas ? 'No se pudieron cargar las altas' : 'No se pudieron cargar los canjes'}
+                      hint={chartState.error}
+                    />
+                  ) : chartState.loading && chartData.length === 0 ? (
                     <div className="flex flex-1 items-center justify-center py-14 text-[13px] text-mute">
                       Cargando…
                     </div>
                   ) : (
-                    <AltasChart buckets={altasVista} vista={vista} />
+                    <AltasChart buckets={chartData} vista={vista} />
                   )}
                 </PCard>
 
