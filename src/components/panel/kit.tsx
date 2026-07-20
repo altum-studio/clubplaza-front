@@ -7,7 +7,7 @@
 // se muestran en gris con sello "Próximamente" (decisión de producto: en la
 // primera entrega las métricas son simulación, no datos reales).
 
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Icon, type IconName } from './Icon';
 
@@ -220,6 +220,52 @@ export function SoonBox({ h = 150, label = 'Próximamente' }: { h?: number; labe
 }
 
 // ─────────────────────────── KPI / stat card ───────────────────────────
+// Si el valor es un número entero (los KPI mandan String(n)) devuelve el número;
+// si es '—', '…' o cualquier otra cosa, devuelve null y no se anima.
+function asNumber(value: ReactNode): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) return Number(value.trim());
+  return null;
+}
+
+const COUNT_MS = 900;
+
+// Cuenta de 0 hasta `target` con ease-out cúbico. Respeta prefers-reduced-motion.
+function useCountUp(target: number | null): number {
+  const [n, setN] = useState(0);
+
+  useEffect(() => {
+    if (target === null) return;
+    const sinMovimiento =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (sinMovimiento || target === 0) {
+      setN(target);
+      return;
+    }
+    setN(0);
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / COUNT_MS);
+      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+
+  return n;
+}
+
+// Valor del KPI: anima de 0 al número cuando el dato llega. Lo no numérico
+// ('—' cuando no hay dato, '…' mientras carga) se muestra tal cual.
+function StatValue({ value }: { value: ReactNode }) {
+  const target = asNumber(value);
+  const n = useCountUp(target);
+  return <>{target === null ? value : n}</>;
+}
+
 export function Stat({
   label,
   value,
@@ -269,7 +315,9 @@ export function Stat({
         )}
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-[30px] font-extrabold tracking-[-0.5px] text-ink">{value}</span>
+        <span className="text-[30px] font-extrabold tracking-[-0.5px] text-ink">
+          <StatValue value={value} />
+        </span>
         {unit && <span className="text-sm font-semibold text-mute">{unit}</span>}
       </div>
       {(delta || spark) && (
