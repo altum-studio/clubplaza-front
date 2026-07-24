@@ -3,7 +3,7 @@
 // de beneficios) y la grilla de sus beneficios. Los datos salen de las promos
 // (mock) filtradas por local.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { AppCanvas } from '@/components/ui/AppCanvas';
@@ -30,6 +30,17 @@ export default function LocalPage() {
   );
 
   const hasBanner = !!local?.banner_url;
+
+  // Descripción: recortada a 2 renglones con "Ver más" para desplegar todo.
+  // El botón aparece solo si el texto realmente excede esos renglones.
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descOverflows, setDescOverflows] = useState(false);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const el = descRef.current;
+    if (!el || descExpanded) return;
+    setDescOverflows(el.scrollHeight > el.clientHeight + 1);
+  }, [local?.descripcion, descExpanded]);
 
   return (
     <AppCanvas wide>
@@ -73,7 +84,23 @@ export default function LocalPage() {
               {local?.nombre ?? 'Local'}
             </h1>
             {local?.descripcion && (
-              <p className="text-[12px] leading-snug text-white/80">{local.descripcion}</p>
+              <div className="mt-0.5">
+                <p
+                  ref={descRef}
+                  className={`text-[12px] leading-snug text-white/80 ${descExpanded ? '' : 'line-clamp-2'}`}
+                >
+                  {local.descripcion}
+                </p>
+                {(descOverflows || descExpanded) && (
+                  <button
+                    type="button"
+                    onClick={() => setDescExpanded((v) => !v)}
+                    className="mt-0.5 cursor-pointer text-[11px] font-bold text-white underline underline-offset-2"
+                  >
+                    {descExpanded ? 'Ver menos' : 'Ver más'}
+                  </button>
+                )}
+              </div>
             )}
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
               {local && (
