@@ -33,7 +33,9 @@ export default function LocalPage() {
 
   return (
     <AppCanvas wide>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
+      {/* La página entera scrollea como una sola (no solo los beneficios). */}
+      <div className="h-full w-full overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-2xl flex-col">
       {/* Banner (altura fija, un poco más alto que antes; recorta el 1200x600) */}
       <div className="relative">
         {hasBanner ? (
@@ -114,7 +116,7 @@ export default function LocalPage() {
       )}
 
       {/* Beneficios del local */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
+      <div className="px-4 pb-8 pt-4">
         {error ? (
           <ErrorState message={error} onRetry={() => navigate(0)} />
         ) : loading ? (
@@ -137,6 +139,7 @@ export default function LocalPage() {
           </>
         )}
       </div>
+        </div>
       </div>
     </AppCanvas>
   );
