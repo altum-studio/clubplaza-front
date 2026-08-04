@@ -83,6 +83,9 @@ export type Role = 'comun' | 'local' | 'admin';
 export type TipoBeneficio =
   | '2x1'
   | '3x2'
+  | '5x4'
+  | '7x6'
+  | '10x12'
   | 'descuento'
   | 'descuento_fijo'
   | 'cuotas'
