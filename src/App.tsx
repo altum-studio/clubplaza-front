@@ -13,6 +13,7 @@ import HomePage from '@/pages/HomePage'
 import BenefitDetailPage from '@/pages/BenefitDetailPage'
 import LocalPage from '@/pages/LocalPage'
 import CredentialPage from '@/pages/CredentialPage'
+import PuntosPage from '@/pages/PuntosPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RequireRole } from '@/components/auth/RequireRole'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
@@ -47,6 +48,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CredentialPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/puntos"
+        element={
+          <ProtectedRoute>
+            <PuntosPage />
           </ProtectedRoute>
         }
       />

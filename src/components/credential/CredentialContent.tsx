@@ -8,6 +8,7 @@ import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
+import { PointsModule } from '@/components/puntos/PointsModule';
 
 export const CRED_GRADIENT = 'linear-gradient(160deg, #23753a 0%, #17502a 100%)';
 
@@ -66,6 +67,11 @@ export function CredentialContent() {
             {socio.numero_socio}
           </p>
         </div>
+      </div>
+
+      {/* Módulo de puntos (debajo del código, sin competir con el QR) */}
+      <div className="mb-3">
+        <PointsModule />
       </div>
 
       {/* Pie: instrucción */}

@@ -136,6 +136,10 @@
   --color-fill-deep: #dde4df;
   --color-screen: #fbfcfb;
   --color-wa: #25d366;
+  /* Sistema de puntos: labels/textos sobre fondo verde + fondo de pantalla. */
+  --color-moss: #5ca872;
+  --color-lgreen: #cfe6d6;
+  --color-cream: #f7f4ec;
   --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
   --animate-cp-fade: cpFade 0.6s ease-out both;
 
