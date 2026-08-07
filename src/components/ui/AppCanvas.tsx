@@ -18,10 +18,12 @@ interface AppCanvasProps {
   dark?: boolean;
   /** Ensancha la columna en desktop (para pantallas con grilla). */
   wide?: boolean;
+  /** Full bleed: la columna llena toda la pantalla (sin ancho máximo ni marco). */
+  fullBleed?: boolean;
   className?: string;
 }
 
-export function AppCanvas({ children, bg, dark = false, wide = false, className }: AppCanvasProps) {
+export function AppCanvas({ children, bg, dark = false, wide = false, fullBleed = false, className }: AppCanvasProps) {
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden">
       {/* Barra de preview FIJA (solo admin/local viendo la app de miembro) */}
@@ -29,8 +31,10 @@ export function AppCanvas({ children, bg, dark = false, wide = false, className 
       <div className="flex w-full min-h-0 flex-1 justify-center">
         <div
           className={cn(
-            'relative flex h-full w-full flex-col overflow-hidden border-line-soft sm:border-x',
-            wide ? 'max-w-[520px] lg:max-w-[1040px]' : 'max-w-[520px]',
+            'relative flex h-full w-full flex-col overflow-hidden',
+            fullBleed
+              ? 'max-w-none'
+              : cn('border-line-soft sm:border-x', wide ? 'max-w-[520px] lg:max-w-[1040px]' : 'max-w-[520px]'),
             dark ? 'text-white' : 'text-ink',
             className,
           )}

@@ -75,7 +75,7 @@ export default function HomePage() {
   }, [promos, query]);
 
   return (
-    <AppCanvas wide>
+    <AppCanvas fullBleed>
       {/* Encabezado verde: saludo + logo en blanco, y el QR (blanco con icono verde) */}
       <header
         className={`${STATUS_PAD} flex items-center justify-between gap-3 rounded-b-[22px] bg-brand px-4 pb-4`}
