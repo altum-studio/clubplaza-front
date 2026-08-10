@@ -17,7 +17,7 @@ export const TIPO_BENEFICIO: { value: TipoBeneficio; label: string; usaValor: bo
   { value: '3x2', label: '3x2', usaValor: false },
   { value: '5x4', label: '5x4', usaValor: false },
   { value: '7x6', label: '7x6', usaValor: false },
-  { value: '10x12', label: '10x12', usaValor: false },
+  { value: '12x10', label: '12x10', usaValor: false },
   { value: 'descuento', label: 'Descuento %', usaValor: true },
   { value: 'descuento_fijo', label: 'Descuento $', usaValor: true },
   { value: 'cuotas', label: 'Cuotas sin interés', usaValor: true },

@@ -85,7 +85,7 @@ export type TipoBeneficio =
   | '3x2'
   | '5x4'
   | '7x6'
-  | '10x12'
+  | '12x10'
   | 'descuento'
   | 'descuento_fijo'
   | 'cuotas'
