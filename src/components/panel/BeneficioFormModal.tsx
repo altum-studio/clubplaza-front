@@ -8,10 +8,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, bodyTooLarge, humanizeError } from '@/lib/api';
 import type { ApiLocal, ApiPromo, LimitePeriodo, TipoBeneficio } from '@/types';
 import { PanelModal } from './PanelModal';
+import { AlertModal } from './AlertModal';
 import { PButton, Toggle } from './kit';
 import { DaysPicker, ImagePicker, SelectInput, TextArea, TextInput } from './FormControls';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
 import { LIMITE_PERIODO, TIPO_BENEFICIO, VIGENCIA_INDEF_HASTA, esVigenciaIndefinida } from '@/lib/opciones';
+
+// Fecha de hoy en formato ISO (yyyy-mm-dd), en la zona horaria local.
+const hoyISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export function BeneficioFormModal({
   open,
@@ -63,12 +70,14 @@ export function BeneficioFormModal({
     const d = promo?.vigencia_desde ?? promo?.fecha_inicio ?? '';
     const h = promo?.vigencia_hasta ?? promo?.fecha_fin ?? '';
     // Si viene con la fecha centinela (o sin fechas), arranca como "indefinido".
-    const indef = isEdit ? esVigenciaIndefinida(h) : false;
+    // Beneficio nuevo: por default "sin vencimiento" activo.
+    const indef = isEdit ? esVigenciaIndefinida(h) : true;
     setIndefinida(indef);
     setDesde(indef ? '' : d);
     setHasta(indef ? '' : h);
     setLimiteCantidad(promo?.limite_cantidad != null ? String(promo.limite_cantidad) : '1');
-    setLimitePeriodo(promo?.limite_periodo ?? 'dia');
+    // Beneficio nuevo: por default "Sin límite de uso".
+    setLimitePeriodo(promo?.limite_periodo ?? 'ilimitado');
     setBannerUrl(promo?.banner_url ?? promo?.imagen_url ?? '');
     setActiva(promo?.activa ?? true);
     setError(null);
@@ -148,6 +157,7 @@ export function BeneficioFormModal({
   };
 
   return (
+    <>
     <PanelModal
       open={open}
       title={isEdit ? 'Editar beneficio' : 'Cargar beneficio'}
@@ -227,7 +237,16 @@ export function BeneficioFormModal({
 
         {/* Vigencia: fecha o indefinido */}
         <div className="rounded-[10px] border border-line p-3">
-          <button type="button" onClick={() => setIndefinida((v) => !v)} className="flex w-full items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              const next = !indefinida;
+              setIndefinida(next);
+              // Al desactivar "sin vencimiento", la vigencia arranca hoy.
+              if (!next && !desde) setDesde(hoyISO());
+            }}
+            className="flex w-full items-center justify-between"
+          >
             <div className="text-left">
               <div className="text-[13px] font-bold text-ink">Sin vencimiento (indefinido)</div>
               <div className="text-[11.5px] text-mute">El beneficio no caduca por fecha</div>
@@ -272,8 +291,16 @@ export function BeneficioFormModal({
           <Toggle on={activa} />
         </button>
 
-        {error && <p className="rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-bad">{error}</p>}
       </div>
     </PanelModal>
+
+    {/* Cartel flotante de error (oscurece el fondo, se cierra con la cruz) */}
+    <AlertModal
+      open={!!error}
+      title={isEdit ? 'No se pudo guardar' : 'No se pudo cargar el beneficio'}
+      message={error}
+      onClose={() => setError(null)}
+    />
+    </>
   );
 }

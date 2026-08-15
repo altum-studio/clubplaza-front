@@ -138,8 +138,18 @@ export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: V
 
           {hover != null && buckets[hover] && (
             <div
-              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-center shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
-              style={{ left: x(hover), top: y(buckets[hover].count) - 10 }}
+              // Si el punto está cerca del techo no hay lugar arriba: mostramos el
+              // tooltip por debajo del punto para que no quede tapado/cortado.
+              className={`pointer-events-none absolute z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-center shadow-[0_6px_20px_rgba(0,0,0,0.25)] ${
+                y(buckets[hover].count) >= 54 ? '-translate-y-full' : ''
+              }`}
+              style={{
+                left: x(hover),
+                top:
+                  y(buckets[hover].count) >= 54
+                    ? y(buckets[hover].count) - 10
+                    : y(buckets[hover].count) + 14,
+              }}
             >
               <div className="text-[14px] font-extrabold leading-none text-white">{buckets[hover].count}</div>
               <div className="mt-1 text-[10px] leading-none text-white/60">{fullLabel(buckets[hover], vista)}</div>

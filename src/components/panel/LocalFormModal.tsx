@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { api, bodyTooLarge, humanizeError } from '@/lib/api';
 import type { ApiLocal, Categoria, HorarioDia } from '@/types';
 import { PanelModal } from './PanelModal';
+import { AlertModal } from './AlertModal';
 import { PButton, Toggle } from './kit';
 import {
   HorariosEditor,
@@ -106,6 +107,7 @@ export function LocalFormModal({
   };
 
   return (
+    <>
     <PanelModal
       open={open}
       title={isEdit ? 'Editar local' : 'Alta de local'}
@@ -162,10 +164,6 @@ export function LocalFormModal({
           <Toggle on={activo} />
         </button>
 
-        {error && (
-          <p className="rounded-[10px] bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-semibold text-bad">{error}</p>
-        )}
-
         {isEdit && canDelete && (
           <div className="mt-1 border-t border-line-soft pt-3.5">
             {confirmDel ? (
@@ -189,5 +187,14 @@ export function LocalFormModal({
         )}
       </div>
     </PanelModal>
+
+    {/* Cartel flotante de error (oscurece el fondo, se cierra con la cruz) */}
+    <AlertModal
+      open={!!error}
+      title={isEdit ? 'No se pudo guardar' : 'No se pudo dar de alta el local'}
+      message={error}
+      onClose={() => setError(null)}
+    />
+    </>
   );
 }
