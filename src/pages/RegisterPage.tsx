@@ -140,9 +140,16 @@ export default function RegisterPage() {
           type="email"
           placeholder="vos@email.com"
           autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
           icon={<Mail size={16} />}
           error={errors.email?.message}
           {...register('email')}
+          onChange={(e) => {
+            // El email siempre en minúscula (aunque escriban/peguen en mayúscula).
+            e.target.value = e.target.value.toLowerCase();
+            register('email').onChange(e);
+          }}
         />
         <TextField
           label="CONTRASEÑA"

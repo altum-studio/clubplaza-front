@@ -4,7 +4,7 @@
 // "Más beneficios" + barra de WhatsApp al pie. Datos desde usePromos() (mock).
 // Sin banner Mundialistas y sin bottom nav (la variante B no los incluye).
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, X } from 'lucide-react';
 import { AppCanvas, STATUS_PAD } from '@/components/ui/AppCanvas';
@@ -22,6 +22,20 @@ import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
 import type { Categoria, Promo } from '@/types';
+
+// Mezcla al azar (Fisher-Yates) sin mutar el original.
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Cada cuánto se re-mezclan los "beneficios del día" (así ninguna marca queda
+// siempre última).
+const RESHUFFLE_MS = 45000;
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -42,12 +56,22 @@ export default function HomePage() {
   const primerNombre = socio?.nombre?.trim().split(/\s+/)[0] ?? '';
   const buscando = query.trim() !== '';
 
+  // Reordena los beneficios del día cada tanto (no por marca) para que roten.
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setShuffleSeed((s) => s + 1), RESHUFFLE_MS);
+    return () => clearInterval(id);
+  }, []);
+
   // Carrusel "BENEFICIO DEL DÍA": SOLO lo vigente HOY (cada beneficio tiene sus
   // días). Es INDEPENDIENTE de los filtros de Rubro/Fecha (esos afinan la grilla).
+  // El orden es ALEATORIO (no agrupado por marca) y se re-mezcla cada tanto.
   const beneficiosHoy = useMemo(() => {
     const hoy = new Date().getDay();
-    return promos.filter((p) => p.dias.includes(hoy));
-  }, [promos]);
+    return shuffle(promos.filter((p) => p.dias.includes(hoy)));
+    // shuffleSeed fuerza el re-mezclado periódico.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promos, shuffleSeed]);
 
   // Grilla de abajo: TODOS los beneficios (para leer todo). Se afina con los
   // filtros: sin fecha específica muestra todos; con fecha, los de ese día.
