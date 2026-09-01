@@ -3,7 +3,7 @@
 // es solo de lectura). Inputs, select, pickers de archivo (SVG/imagen), selector
 // de días y editor de horarios.
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { api, humanizeError } from '@/lib/api';
 import { Icon } from './Icon';
@@ -150,14 +150,54 @@ function FilePicker({
     }
   };
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const openPicker = () => inputRef.current?.click();
+
+  const onDrop = (e: DragEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (!uploading) pick(e.dataTransfer.files?.[0]);
+  };
+  const onPaste = (e: ClipboardEvent<HTMLButtonElement>) => {
+    const f = e.clipboardData.files?.[0];
+    if (f && !uploading) {
+      e.preventDefault();
+      pick(f);
+    }
+  };
+
   return (
     <Labeled label={label} hint={hint}>
+      {/* Un solo input oculto, compartido por el recuadro y el botón. */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => pick(e.target.files?.[0])}
+      />
       <div className="flex items-start gap-3">
         <div className="flex flex-shrink-0 flex-col items-center gap-1">
-          <div
+          {/* Recuadro = zona para arrastrar/soltar, pegar (Ctrl/Cmd+V) o hacer clic. */}
+          <button
+            type="button"
+            onClick={openPicker}
+            onPaste={onPaste}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (!uploading) setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            disabled={uploading}
+            aria-label={buttonLabel}
             className={cn(
-              'flex items-center justify-center overflow-hidden border',
-              round ? 'h-16 w-16 rounded-full border-line bg-white' : 'h-16 w-28 rounded-[10px] border-dashed border-line bg-fill',
+              'flex items-center justify-center overflow-hidden border transition-colors',
+              round ? 'h-16 w-16 rounded-full' : 'h-16 w-28 rounded-[10px] border-dashed',
+              dragOver ? 'border-brand bg-brand-soft' : round ? 'border-line bg-white' : 'border-line bg-fill',
+              !uploading && 'cursor-pointer hover:border-brand/60',
             )}
           >
             {uploading ? (
@@ -165,9 +205,9 @@ function FilePicker({
             ) : value ? (
               <img src={value} alt="" className={cn('h-full w-full', round ? 'object-contain' : 'object-cover')} />
             ) : (
-              <Icon name="upload" size={18} className="text-faint" />
+              <Icon name="upload" size={18} className={dragOver ? 'text-brand' : 'text-faint'} />
             )}
-          </div>
+          </button>
           {spec && (
             <span className="block max-w-[7.5rem] text-center text-[10px] font-medium leading-tight text-mute">
               {spec}
@@ -175,7 +215,10 @@ function FilePicker({
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label
+          <button
+            type="button"
+            onClick={openPicker}
+            disabled={uploading}
             className={cn(
               'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-graytext hover:bg-fill',
               uploading && 'pointer-events-none opacity-60',
@@ -183,8 +226,8 @@ function FilePicker({
           >
             <Icon name="upload" size={14} />
             {uploading ? 'Subiendo…' : value ? 'Cambiar' : buttonLabel}
-            <input type="file" accept={accept} className="hidden" disabled={uploading} onChange={(e) => pick(e.target.files?.[0])} />
-          </label>
+          </button>
+          <span className="text-[10.5px] leading-tight text-mute">Arrastrá, pegá o hacé clic</span>
           {value && !uploading && (
             <button type="button" onClick={() => onChange('')} className="text-left text-[11px] font-semibold text-bad hover:underline">
               Quitar
