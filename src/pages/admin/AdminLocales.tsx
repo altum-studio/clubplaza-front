@@ -22,13 +22,21 @@ export default function AdminLocales() {
   // trayendo la lista de promos y contando por local_id.
   const state = useAsync(
     () =>
-      Promise.all([api.locales.list({ limit: 50 }), api.promos.list({ limit: 500 })]).then(
-        ([l, p]) => {
-          const benef = new Map<string, number>();
-          for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
-          return { locales: l.data, count: l.count, benef, totalBenef: p.count };
-        },
-      ),
+      // El admin ve TODOS los locales: activos e inactivos. El backend por
+      // defecto lista solo activos, así que pedimos ambos y los mergeamos.
+      // (Desactivar un local no lo borra; solo lo oculta a los miembros.)
+      Promise.all([
+        api.locales.list({ activo: true, limit: 50 }),
+        api.locales.list({ activo: false, limit: 50 }),
+        api.promos.list({ limit: 500 }),
+      ]).then(([act, inact, p]) => {
+        const byId = new Map<string, ApiLocal>();
+        for (const l of [...act.data, ...inact.data]) byId.set(l.id, l);
+        const locales = [...byId.values()];
+        const benef = new Map<string, number>();
+        for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
+        return { locales, count: locales.length, benef, totalBenef: p.count };
+      }),
     [],
   );
   const [query, setQuery] = useState('');
