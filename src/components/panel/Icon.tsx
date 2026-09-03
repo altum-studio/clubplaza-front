@@ -16,6 +16,7 @@ import {
   Download,
   Eye,
   Filter,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -77,6 +78,7 @@ const ICONS = {
   ticket: Ticket,
   sliders: SlidersHorizontal,
   flash: Zap,
+  help: HelpCircle,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

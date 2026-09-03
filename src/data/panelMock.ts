@@ -18,6 +18,7 @@ export const LOCAL_NAV: NavItem[] = [
   { icon: 'tag', label: 'Beneficios', to: '/panel/beneficios' },
   { icon: 'chart', label: 'Stats', to: '/panel/estadisticas' },
   { icon: 'store', label: 'Mi Local', to: '/panel/mi-local' },
+  { icon: 'help', label: 'Ayuda', to: '/panel/ayuda' },
 ];
 
 // ── Admin ──
