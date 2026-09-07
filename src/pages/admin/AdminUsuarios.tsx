@@ -10,7 +10,7 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { UsuarioFormModal } from '@/components/panel/UsuarioFormModal';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import type { Profile, Role } from '@/types';
+import type { ApiLocal, Profile, Role } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 import { ROLE_LABEL } from '@/lib/roles';
 
@@ -25,9 +25,17 @@ type Filtro = 'todos' | Role;
 export default function AdminUsuarios() {
   const state = useAsync(
     () =>
-      Promise.all([api.usuarios.list({ limit: 200 }), api.locales.list({ limit: 200 })]).then(
-        ([u, l]) => ({ usuarios: u.data, total: u.count, locales: l.data }),
-      ),
+      // Traemos activos e inactivos: al asignar locales a un usuario también se
+      // pueden elegir los inactivos (el backend por defecto lista solo activos).
+      Promise.all([
+        api.usuarios.list({ limit: 200 }),
+        api.locales.list({ activo: true, limit: 200 }),
+        api.locales.list({ activo: false, limit: 200 }),
+      ]).then(([u, act, inact]) => {
+        const byId = new Map<string, ApiLocal>();
+        for (const l of [...act.data, ...inact.data]) byId.set(l.id, l);
+        return { usuarios: u.data, total: u.count, locales: [...byId.values()] };
+      }),
     [],
   );
 

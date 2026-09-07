@@ -174,6 +174,7 @@ export function UsuarioFormModal({
               ) : (
                 locales.map((l) => {
                   const on = localIds.includes(l.id);
+                  const est = l.estado ?? (l.activo ? 'disponible' : 'inactivo');
                   return (
                     <button
                       key={l.id}
@@ -194,6 +195,15 @@ export function UsuarioFormModal({
                         {l.nombre}
                         {l.nro_local ? ` · ${l.nro_local}` : ''}
                       </span>
+                      {est !== 'disponible' && (
+                        <span
+                          className={`flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                            est === 'proximamente' ? 'bg-soon-soft text-soon' : 'bg-fill text-mute'
+                          }`}
+                        >
+                          {est === 'proximamente' ? 'Próx.' : 'Inactivo'}
+                        </span>
+                      )}
                     </button>
                   );
                 })
