@@ -200,22 +200,11 @@ export default function AdminDashboard() {
 
           return (
             <div className="flex flex-col gap-4 lg:gap-[18px]">
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {/* Totales globales: NO dependen del mes seleccionado. */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Stat live label="Miembros totales" value={String(b.miembrosCount)} icon="users" />
-                <Stat live label="Locales activos" value={String(b.localesCount)} icon="store" />
-                <Stat live label="Beneficios publicados" value={String(b.promos)} icon="tag" />
-                {md?.canjesMes != null ? (
-                  <Stat live label="Canjes del mes" value={String(md.canjesMes)} icon="ticket" />
-                ) : (
-                  <Stat live label="Canjes del mes" value={mesData.loading ? '…' : '—'} icon="ticket" />
-                )}
-              </div>
-
-              {/* Selector de mes: acá abajo, porque solo afecta a los canjes del
-                  mes y al ranking de locales (no a los totales de arriba). */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[12.5px] font-semibold text-graytext">Mes:</span>
-                <MonthPicker offset={monthOffset} onChange={setMonthOffset} />
+                <Stat live label="Locales activos totales" value={String(b.localesCount)} icon="store" />
+                <Stat live label="Beneficios publicados totales" value={String(b.promos)} icon="tag" />
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
@@ -312,41 +301,54 @@ export default function AdminDashboard() {
                   )}
                 </PCard>
 
-                <PCard title="Top locales por canjes" sub="Canjes del mes · ordenado de mayor a menor">
-                  {mesData.loading ? (
-                    <div className="py-[11px] text-[13px] text-mute">Cargando…</div>
-                  ) : ranking.length === 0 ? (
-                    <div className="py-[11px] text-[13px] text-mute">Sin locales</div>
+                {/* Bloque "Del mes": TODO lo de adentro depende del selector de mes
+                    (canjes del mes + ranking de locales). Por eso el selector vive acá. */}
+                <div className="flex flex-col gap-3 rounded-[16px] border border-dashed border-line bg-fill/60 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                    <span className="text-[12.5px] font-bold text-graytext">Del mes</span>
+                    <MonthPicker offset={monthOffset} onChange={setMonthOffset} />
+                  </div>
+                  {md?.canjesMes != null ? (
+                    <Stat live label="Canjes del mes" value={String(md.canjesMes)} icon="ticket" />
                   ) : (
-                    <div className="max-h-[280px] overflow-y-auto pr-3">
-                      {ranking.map((r, i) => (
-                        <div
-                          key={r.local.id}
-                          className={`flex items-center gap-3 py-[11px] ${i === ranking.length - 1 ? '' : 'border-b border-line-soft'}`}
-                        >
-                          <div
-                            className={`w-[22px] text-sm font-extrabold ${i === 0 ? 'text-brand' : 'text-faint'}`}
-                          >
-                            {i + 1}
-                          </div>
-                          {r.local.logo_url ? (
-                            <img
-                              src={r.local.logo_url}
-                              className="h-[34px] w-[34px] rounded-full border border-line object-cover"
-                            />
-                          ) : (
-                            <LogoBox size={34} />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[13px] font-bold text-ink">{r.local.nombre}</div>
-                            <div className="text-[11px] text-mute">{b.benef.get(r.local.id) ?? 0} benef.</div>
-                          </div>
-                          <span className="text-[13px] font-extrabold text-ink">{r.canjes}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <Stat live label="Canjes del mes" value={mesData.loading ? '…' : '—'} icon="ticket" />
                   )}
-                </PCard>
+                  <PCard title="Top locales por canjes" sub="Ordenado de mayor a menor">
+                    {mesData.loading ? (
+                      <div className="py-[11px] text-[13px] text-mute">Cargando…</div>
+                    ) : ranking.length === 0 ? (
+                      <div className="py-[11px] text-[13px] text-mute">Sin locales</div>
+                    ) : (
+                      <div className="max-h-[280px] overflow-y-auto pr-3">
+                        {ranking.map((r, i) => (
+                          <div
+                            key={r.local.id}
+                            className={`flex items-center gap-3 py-[11px] ${i === ranking.length - 1 ? '' : 'border-b border-line-soft'}`}
+                          >
+                            <div
+                              className={`w-[22px] text-sm font-extrabold ${i === 0 ? 'text-brand' : 'text-faint'}`}
+                            >
+                              {i + 1}
+                            </div>
+                            {r.local.logo_url ? (
+                              <img
+                                src={r.local.logo_url}
+                                className="h-[34px] w-[34px] rounded-full border border-line object-cover"
+                              />
+                            ) : (
+                              <LogoBox size={34} />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13px] font-bold text-ink">{r.local.nombre}</div>
+                              <div className="text-[11px] text-mute">{b.benef.get(r.local.id) ?? 0} benef.</div>
+                            </div>
+                            <span className="text-[13px] font-extrabold text-ink">{r.canjes}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </PCard>
+                </div>
               </div>
             </div>
           );
