@@ -25,10 +25,11 @@ type Filtro = 'todos' | Role;
 export default function AdminUsuarios() {
   const state = useAsync(
     () =>
-      // Traemos activos e inactivos: al asignar locales a un usuario también se
-      // pueden elegir los inactivos (el backend por defecto lista solo activos).
+      // Usuarios: TODOS (listAll pagina; con limit fijo quedaban usuarios afuera
+      // de la tabla). Locales: activos e inactivos, porque al asignar locales a
+      // un usuario también se pueden elegir los inactivos.
       Promise.all([
-        api.usuarios.list({ limit: 200 }),
+        api.usuarios.listAll(),
         api.locales.list({ activo: true, limit: 200 }),
         api.locales.list({ activo: false, limit: 200 }),
       ]).then(([u, act, inact]) => {
