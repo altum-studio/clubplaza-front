@@ -96,6 +96,7 @@ export default function AdminBeneficios() {
               {d.locales.map((l, i) => {
                 const promos = byLocal.get(l.id) ?? [];
                 const isOpen = expanded.has(l.id);
+                const est = l.estado ?? (l.activo ? 'disponible' : 'inactivo');
                 return (
                   <div key={l.id} className={i === d.locales.length - 1 ? '' : 'border-b border-line-soft'}>
                     {/* Fila del local (clickeable para desplegar sus beneficios) */}
@@ -111,13 +112,23 @@ export default function AdminBeneficios() {
                         <LogoBox size={36} />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13.5px] font-bold text-ink">{l.nombre}</div>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-[13.5px] font-bold text-ink">{l.nombre}</span>
+                          {est === 'proximamente' && (
+                            <span
+                              className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-soon text-white"
+                              title="Próximamente"
+                            >
+                              <Icon name="clock" size={11} />
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11.5px] text-mute">
                           {promos.length === 1 ? '1 beneficio' : `${promos.length} beneficios`}
                           {l.nro_local ? ` · ${l.nro_local}` : ''}
                         </div>
                       </div>
-                      {!l.activo && (
+                      {est === 'inactivo' && (
                         <Badge tone="mute" dot={false}>
                           Inactivo
                         </Badge>
