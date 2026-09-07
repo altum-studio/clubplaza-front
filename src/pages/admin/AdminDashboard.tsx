@@ -78,7 +78,10 @@ export default function AdminDashboard() {
         for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
         return {
           locales: l.data,
-          localesCount: l.count,
+          // "Activos" = estado disponible. `activo` también es true para los
+          // "próximamente" (todavía no abrieron), por eso no sirve para contar.
+          localesCount: l.data.filter((x) => (x.estado ?? (x.activo ? 'disponible' : 'inactivo')) === 'disponible')
+            .length,
           promos: p.count,
           // "Miembros" = solo rol comun (el count del endpoint incluye comercios y admins).
           miembrosCount: u.data.filter((x) => x.rol === 'comun').length,
