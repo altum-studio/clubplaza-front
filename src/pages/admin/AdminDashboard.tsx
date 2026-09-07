@@ -12,7 +12,7 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import type { AltaBucket, ApiLocal, ApiPromo } from '@/types';
+import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
 // La vista mensual arranca en el mes de lanzamiento (no mostramos meses previos).
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
       Promise.all([
         api.locales.list({ limit: 500 }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
         api.promos.list({ limit: 500 }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
-        api.usuarios.list({ limit: 1 }).catch(() => ({ data: [], count: 0 })),
+        api.usuarios.listAll().catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
         // El backend no manda el conteo de beneficios por local → lo calculamos.
         const benef = new Map<string, number>();
@@ -80,7 +80,8 @@ export default function AdminDashboard() {
           locales: l.data,
           localesCount: l.count,
           promos: p.count,
-          usuariosCount: u.count,
+          // "Miembros" = solo rol comun (el count del endpoint incluye comercios y admins).
+          miembrosCount: u.data.filter((x) => x.rol === 'comun').length,
           benef,
         };
       }),
@@ -181,7 +182,7 @@ export default function AdminDashboard() {
           return (
             <div className="flex flex-col gap-4 lg:gap-[18px]">
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Stat live label="Miembros totales" value={String(b.usuariosCount)} icon="users" />
+                <Stat live label="Miembros totales" value={String(b.miembrosCount)} icon="users" />
                 <Stat live label="Locales activos" value={String(b.localesCount)} icon="store" />
                 <Stat live label="Beneficios publicados" value={String(b.promos)} icon="tag" />
                 {md?.canjesMes != null ? (

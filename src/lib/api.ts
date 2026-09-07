@@ -263,6 +263,23 @@ export const api = {
       request<Profile>('/usuarios/me', { method: 'PATCH', body }),
     list: (query?: { rol?: Role; local_id?: string; limit?: number; offset?: number }) =>
       request<Paginated<Profile>>('/usuarios', { query }),
+    // TODOS los usuarios (el backend pagina: default 50). Pide una página grande
+    // y, solo si el backend capeó el limit, sigue con offset hasta llegar a
+    // `count`. Si el backend ignora offset (devuelve lo mismo), corta.
+    listAll: async (): Promise<Paginated<Profile>> => {
+      const PAGE = 500;
+      const first = await request<Paginated<Profile>>('/usuarios', { query: { limit: PAGE } });
+      const byId = new Map(first.data.map((u) => [u.id, u]));
+      let offset = first.data.length;
+      while (byId.size < first.count && offset > 0) {
+        const page = await request<Paginated<Profile>>('/usuarios', { query: { limit: PAGE, offset } });
+        const antes = byId.size;
+        for (const u of page.data) byId.set(u.id, u);
+        if (byId.size === antes) break;
+        offset += page.data.length;
+      }
+      return { data: [...byId.values()], count: first.count };
+    },
     get: (id: string) => request<Profile>(`/usuarios/${id}`),
     // Buscar miembro por código de credencial (Panel Local/Admin). El backend
     // normaliza a mayúsculas, igual lo mandamos en upper por las dudas.
