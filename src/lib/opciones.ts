@@ -2,7 +2,7 @@
 // Listas predefinidas (tipos de beneficio, períodos de límite, días, rubros)
 // y helpers de etiqueta para mostrar los campos del modelo nuevo.
 
-import type { Categoria, HorarioDia, LimitePeriodo, TipoBeneficio } from '@/types';
+import type { ApiPromo, Categoria, HorarioDia, LimitePeriodo, TipoBeneficio } from '@/types';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
 import { isoToDDMMAAAA } from '@/lib/utils';
 
@@ -108,6 +108,30 @@ export function diasLabel(dias?: number[] | null): string {
 export const VIGENCIA_INDEF_HASTA = '2099-12-31';
 export function esVigenciaIndefinida(hasta?: string | null): boolean {
   return !hasta || hasta >= '2099-01-01';
+}
+
+type PromoVigencia = Pick<ApiPromo, 'vigencia_desde' | 'vigencia_hasta' | 'fecha_inicio' | 'fecha_fin'>;
+
+// Rango de vigencia de una promo como 'YYYY-MM-DD' ('' = sin ese límite).
+// Cae a los campos viejos (fecha_inicio/fecha_fin) si los nuevos no vienen.
+export function rangoVigencia(p: PromoVigencia): { desde: string; hasta: string } {
+  return {
+    desde: (p.vigencia_desde ?? p.fecha_inicio ?? '').slice(0, 10),
+    hasta: (p.vigencia_hasta ?? p.fecha_fin ?? '').slice(0, 10),
+  };
+}
+
+// ¿La promo está vigente el día `hoy` ('YYYY-MM-DD')? El centinela 2099 de
+// "sin vencimiento" queda vigente solo con la comparación, sin caso especial.
+export function promoVigente(p: PromoVigencia, hoy: string): boolean {
+  const { desde, hasta } = rangoVigencia(p);
+  return (!desde || desde <= hoy) && (!hasta || hoy <= hasta);
+}
+
+// ¿La promo ya venció antes de `hoy`?
+export function promoVencida(p: PromoVigencia, hoy: string): boolean {
+  const { hasta } = rangoVigencia(p);
+  return !!hasta && hasta < hoy;
 }
 
 export function vigenciaLabel(opts: {

@@ -12,6 +12,8 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
+import { hoyAR } from '@/lib/fechas';
+import { promoVigente } from '@/lib/opciones';
 import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
@@ -73,6 +75,7 @@ export default function AdminDashboard() {
         api.promos.list({ limit: 500 }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
         api.usuarios.listAll().catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
+        const hoy = hoyAR();
         // El backend no manda el conteo de beneficios por local → lo calculamos.
         const benef = new Map<string, number>();
         for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
@@ -82,7 +85,8 @@ export default function AdminDashboard() {
           // "próximamente" (todavía no abrieron), por eso no sirve para contar.
           localesCount: l.data.filter((x) => (x.estado ?? (x.activo ? 'disponible' : 'inactivo')) === 'disponible')
             .length,
-          promos: p.count,
+          // "Publicados" = activa y vigente HOY (el count del endpoint incluye vencidas).
+          promos: p.data.filter((pr) => pr.activa && promoVigente(pr, hoy)).length,
           // "Miembros" = solo rol comun (el count del endpoint incluye comercios y admins).
           miembrosCount: u.data.filter((x) => x.rol === 'comun').length,
           benef,
