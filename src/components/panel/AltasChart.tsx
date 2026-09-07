@@ -30,7 +30,18 @@ function fullLabel(b: AltaBucket, vista: Vista): string {
   return `${DOW[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: Vista }) {
+// `parcial`: el último bucket es el período EN CURSO (mes/día de hoy, incompleto).
+// Se dibuja distinto (tramo punteado, área con trama, punto hueco punteado) para
+// que no se lea como un derrumbe frente a los períodos cerrados.
+export function AltasChart({
+  buckets,
+  vista,
+  parcial = false,
+}: {
+  buckets: AltaBucket[];
+  vista: Vista;
+  parcial?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 600, h: 240 });
   const [hover, setHover] = useState<number | null>(null);
@@ -58,8 +69,17 @@ export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: V
   const x = (i: number) => stepW / 2 + i * stepW;
   const ticks = [...new Set([0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(niceMax * f)))];
 
-  const linePts = buckets.map((b, i) => `${x(i)},${y(b.count)}`).join(' ');
-  const areaPts = n ? `${x(0)},${padT + chartH} ${linePts} ${x(n - 1)},${padT + chartH}` : '';
+  const base = padT + chartH;
+  const pts = buckets.map((b, i) => [x(i), y(b.count)] as const);
+  // Puntos "cerrados": todos, salvo el último si está en curso.
+  const cerrados = parcial ? pts.slice(0, Math.max(0, n - 1)) : pts;
+  const linePts = cerrados.map((p) => p.join(',')).join(' ');
+  const areaPts = cerrados.length
+    ? `${cerrados[0][0]},${base} ${linePts} ${cerrados[cerrados.length - 1][0]},${base}`
+    : '';
+  // Tramo parcial: del último punto cerrado al punto en curso.
+  const tramoParcial = parcial && n >= 2 ? ([pts[n - 2], pts[n - 1]] as const) : null;
+  const esParcial = (i: number) => parcial && i === n - 1;
 
   return (
     <div className="flex h-full w-full" style={{ minHeight: 180 }}>
@@ -85,21 +105,45 @@ export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: V
                 <stop offset="0%" stopColor={BRAND} stopOpacity="0.18" />
                 <stop offset="100%" stopColor={BRAND} stopOpacity="0" />
               </linearGradient>
+              {/* Trama diagonal para el área del período en curso */}
+              <pattern id="altasHatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="6" stroke={BRAND} strokeOpacity="0.22" strokeWidth="1.5" />
+              </pattern>
             </defs>
             {ticks.map((t) => (
               <line key={t} x1={0} x2={W} y1={y(t)} y2={y(t)} stroke="#eef1ee" strokeWidth={1} />
             ))}
             {n > 0 && (
               <>
-                <polygon points={areaPts} fill="url(#altasGrad)" />
-                <polyline
-                  points={linePts}
-                  fill="none"
-                  stroke={BRAND}
-                  strokeWidth={2.4}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                {cerrados.length >= 2 && <polygon points={areaPts} fill="url(#altasGrad)" />}
+                {cerrados.length >= 2 && (
+                  <polyline
+                    points={linePts}
+                    fill="none"
+                    stroke={BRAND}
+                    strokeWidth={2.4}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+                {tramoParcial && (
+                  <>
+                    <polygon
+                      points={`${tramoParcial[0][0]},${base} ${tramoParcial[0].join(',')} ${tramoParcial[1].join(',')} ${tramoParcial[1][0]},${base}`}
+                      fill="url(#altasHatch)"
+                    />
+                    <line
+                      x1={tramoParcial[0][0]}
+                      y1={tramoParcial[0][1]}
+                      x2={tramoParcial[1][0]}
+                      y2={tramoParcial[1][1]}
+                      stroke={BRAND}
+                      strokeWidth={2.4}
+                      strokeLinecap="round"
+                      strokeDasharray="5 5"
+                    />
+                  </>
+                )}
                 {hover != null && (
                   <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + chartH} stroke={BRAND} strokeOpacity={0.2} strokeWidth={1} />
                 )}
@@ -112,6 +156,7 @@ export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: V
                     fill="#fff"
                     stroke={BRAND}
                     strokeWidth={2}
+                    strokeDasharray={esParcial(i) ? '2.5 2.5' : undefined}
                   />
                 ))}
                 {buckets.map((b, i) => (
@@ -152,7 +197,10 @@ export function AltasChart({ buckets, vista }: { buckets: AltaBucket[]; vista: V
               }}
             >
               <div className="text-[14px] font-extrabold leading-none text-white">{buckets[hover].count}</div>
-              <div className="mt-1 text-[10px] leading-none text-white/60">{fullLabel(buckets[hover], vista)}</div>
+              <div className="mt-1 text-[10px] leading-none text-white/60">
+                {fullLabel(buckets[hover], vista)}
+                {esParcial(hover) ? ' · parcial' : ''}
+              </div>
             </div>
           )}
         </div>

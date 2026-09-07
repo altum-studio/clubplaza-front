@@ -12,7 +12,7 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import { hoyAR } from '@/lib/fechas';
+import { ddmm, hoyAR } from '@/lib/fechas';
 import { promoVigente } from '@/lib/opciones';
 import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
@@ -185,6 +185,18 @@ export default function AdminDashboard() {
           const esAltas = metric === 'altas';
           const chartState = esAltas ? altas : canjesSerie;
           const chartData = esAltas ? altasVista : canjesVista;
+          // Período en curso: el último bucket es el mes/día de HOY (solo pasa en
+          // la ventana actual). Se marca como parcial en el gráfico y el subtítulo.
+          const hoy = hoyAR();
+          const ultimo = chartData[chartData.length - 1]?.periodo;
+          const ultimoParcial = !!ultimo && (vista === 'mes' ? ultimo === hoy.slice(0, 7) : ultimo === hoy);
+          const subBase = esAltas
+            ? vista === 'mes'
+              ? 'Nuevos usuarios por mes'
+              : 'Nuevos usuarios por día'
+            : vista === 'mes'
+              ? 'Canjes por mes'
+              : 'Canjes por día';
 
           return (
             <div className="flex flex-col gap-4 lg:gap-[18px]">
@@ -225,15 +237,7 @@ export default function AdminDashboard() {
                       </span>
                     </button>
                   }
-                  sub={
-                    esAltas
-                      ? vista === 'mes'
-                        ? 'Nuevos usuarios por mes'
-                        : 'Nuevos usuarios por día'
-                      : vista === 'mes'
-                        ? 'Canjes por mes'
-                        : 'Canjes por día'
-                  }
+                  sub={subBase + (ultimoParcial ? ` · último período parcial · al ${ddmm(hoy)}` : '')}
                   actions={
                     <div className="flex flex-shrink-0 gap-1.5">
                       <PChip
@@ -304,7 +308,7 @@ export default function AdminDashboard() {
                       Cargando…
                     </div>
                   ) : (
-                    <AltasChart buckets={chartData} vista={vista} />
+                    <AltasChart buckets={chartData} vista={vista} parcial={ultimoParcial} />
                   )}
                 </PCard>
 
