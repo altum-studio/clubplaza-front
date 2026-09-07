@@ -11,11 +11,15 @@ import { LocalFormModal } from '@/components/panel/LocalFormModal';
 import { ConfirmDialog, RowMenu } from '@/components/panel/RowMenu';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import type { ApiLocal } from '@/types';
+import type { ApiLocal, LocalEstado } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
-type Filtro = 'todos' | 'activos' | 'inactivos';
+type Filtro = 'todos' | 'activos' | 'proximamente' | 'inactivos';
 type LocalRow = ApiLocal & { __benef: number };
+
+// Estado del local: usa `estado` (backend nuevo); si no viene, deriva de `activo`.
+const estadoDe = (l: { estado?: LocalEstado; activo: boolean }): LocalEstado =>
+  l.estado ?? (l.activo ? 'disponible' : 'inactivo');
 
 export default function AdminLocales() {
   // El backend no incluye el conteo de beneficios por local → lo calculamos
@@ -92,8 +96,16 @@ export default function AdminLocales() {
         label: 'Estado',
         w: '18%',
         align: 'center',
-        render: (_v, r) =>
-          r.activo ? <Badge tone="ok">Activo</Badge> : <Badge tone="mute">Inactivo</Badge>,
+        render: (_v, r) => {
+          const e = estadoDe(r);
+          return e === 'proximamente' ? (
+            <Badge tone="soon">Próximamente</Badge>
+          ) : e === 'disponible' ? (
+            <Badge tone="ok">Activo</Badge>
+          ) : (
+            <Badge tone="mute">Inactivo</Badge>
+          );
+        },
       },
       {
         key: 'acc',
@@ -142,21 +154,28 @@ export default function AdminLocales() {
       <DataView state={state}>
         {(page) => {
           const q = query.trim().toLowerCase();
+          const estFiltro: Record<Exclude<Filtro, 'todos'>, LocalEstado> = {
+            activos: 'disponible',
+            proximamente: 'proximamente',
+            inactivos: 'inactivo',
+          };
           const rows: LocalRow[] = page.locales
             .filter((l) => {
               const okQuery = !q || l.nombre.toLowerCase().includes(q);
-              const okFiltro = filtro === 'todos' || (filtro === 'activos' ? l.activo : !l.activo);
+              const okFiltro = filtro === 'todos' || estadoDe(l) === estFiltro[filtro];
               return okQuery && okFiltro;
             })
             .map((l) => ({ ...l, __benef: page.benef.get(l.id) ?? 0 }));
-          const activos = page.locales.filter((l) => l.activo).length;
+          const nDisponible = page.locales.filter((l) => estadoDe(l) === 'disponible').length;
+          const nProximo = page.locales.filter((l) => estadoDe(l) === 'proximamente').length;
+          const nInactivo = page.locales.filter((l) => estadoDe(l) === 'inactivo').length;
 
           return (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Stat live label="Locales" value={String(page.count)} icon="store" />
-                <Stat live label="Activos" value={String(activos)} icon="check" />
-                <Stat live label="Inactivos" value={String(page.count - activos)} icon="store" />
+                <Stat live label="Activos" value={String(nDisponible)} icon="check" />
+                <Stat live label="Inactivos" value={String(nInactivo)} icon="store" />
                 <Stat live label="Beneficios totales" value={String(page.totalBenef)} icon="tag" />
               </div>
 
@@ -165,10 +184,17 @@ export default function AdminLocales() {
                   Todos · {page.count}
                 </PChip>
                 <PChip active={filtro === 'activos'} onClick={() => setFiltro('activos')}>
-                  Activos · {activos}
+                  Activos · {nDisponible}
+                </PChip>
+                <PChip
+                  active={filtro === 'proximamente'}
+                  onClick={() => setFiltro('proximamente')}
+                  className={filtro === 'proximamente' ? 'border-transparent bg-soon text-white' : 'border-soon/50 text-soon'}
+                >
+                  Próximamente · {nProximo}
                 </PChip>
                 <PChip active={filtro === 'inactivos'} onClick={() => setFiltro('inactivos')}>
-                  Baja · {page.count - activos}
+                  Inactivos · {nInactivo}
                 </PChip>
                 <div className="hidden flex-1 lg:block" />
                 <PButton variant="outline" icon="plus" onClick={openAlta}>

@@ -12,16 +12,30 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import type { ApiLocal } from '@/types';
+import type { AltaBucket, ApiLocal, ApiPromo } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
-
-const benCount = (l: ApiLocal) =>
-  Array.isArray(l.promos) && l.promos[0] && 'count' in l.promos[0]
-    ? (l.promos[0] as { count: number }).count
-    : (l.promos_count ?? 0);
 
 // La vista mensual arranca en el mes de lanzamiento (no mostramos meses previos).
 const LAUNCH_MONTH = '2026-06';
+
+// Cuántos meses se muestran por "ventana" en la vista Mes (navegable hacia atrás).
+const MESES_VISTA = 6;
+const MES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const mesCorto = (ym: string) => `${MES_ABBR[Number(ym.slice(5, 7)) - 1] ?? ''} '${ym.slice(2, 4)}`;
+
+// Rango [desde, hasta] (YYYY-MM-DD) de la ventana de 7 días `back` semanas atrás
+// (back=0 = últimos 7 días, terminando hoy). Incluye un label corto DD/M – DD/M.
+function weekRange(back: number): { desde: string; hasta: string; label: string } {
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
+  end.setDate(end.getDate() - back * 7);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  const label = `${start.getDate()}/${start.getMonth() + 1} – ${end.getDate()}/${end.getMonth() + 1}`;
+  return { desde: iso(start), hasta: iso(end), label };
+}
 
 // Enumera 'YYYY-MM' desde `from` hasta `to` inclusive (serie de canjes por mes).
 function monthsRange(from: string, to: string): string[] {
@@ -45,6 +59,10 @@ export default function AdminDashboard() {
   const [vista, setVista] = useState<'mes' | 'semana'>('mes');
   // Métrica del gráfico principal: se alterna con la flecha del título.
   const [metric, setMetric] = useState<'altas' | 'canjes'>('altas');
+  // Navegación de semanas en la vista "Semana" (0 = semana actual, +1 = anterior…).
+  const [semanaBack, setSemanaBack] = useState(0);
+  // Navegación de meses en la vista "Mes" (0 = ventana actual, +1 = ventana anterior).
+  const [mesBack, setMesBack] = useState(0);
   const mes = monthValue(monthOffset);
 
   // Base: totales (cada fuente cae por separado, así un endpoint roto no tumba todo).
@@ -52,27 +70,47 @@ export default function AdminDashboard() {
     () =>
       Promise.all([
         api.locales.list({ limit: 500 }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
-        api.promos.list({ limit: 1 }).catch(() => ({ data: [], count: 0 })),
+        api.promos.list({ limit: 500 }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
         api.usuarios.list({ limit: 1 }).catch(() => ({ data: [], count: 0 })),
-      ]).then(([l, p, u]) => ({
-        locales: l.data,
-        localesCount: l.count,
-        promos: p.count,
-        usuariosCount: u.count,
-      })),
+      ]).then(([l, p, u]) => {
+        // El backend no manda el conteo de beneficios por local → lo calculamos.
+        const benef = new Map<string, number>();
+        for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
+        return {
+          locales: l.data,
+          localesCount: l.count,
+          promos: p.count,
+          usuariosCount: u.count,
+          benef,
+        };
+      }),
     [],
   );
 
-  // Altas de miembros (endpoint dedicado): cambia con el toggle mes/semana.
-  const altas = useAsync(() => api.usuarios.altas(vista), [vista]);
+  // Altas de miembros: mes = 12 meses; semana = ventana de 7 días navegable.
+  // La semana actual usa el endpoint de siempre (funciona hoy); las anteriores
+  // piden datos por rango (necesita backend — ver spec; fallback a vacío).
+  const altas = useAsync(() => {
+    if (vista === 'mes') return api.usuarios.altas('mes');
+    if (semanaBack === 0) return api.usuarios.altas('semana');
+    const { desde, hasta } = weekRange(semanaBack);
+    return api.usuarios.altasRango(desde, hasta).catch(() => [] as AltaBucket[]);
+  }, [vista, semanaBack]);
 
   // Serie de canjes en el MISMO formato que altas, para el toggle del gráfico.
   // Semana → últimos 7 días (canjes_ultimos_7_dias); Mes → total de cada mes
   // desde el lanzamiento (una llamada a stats por mes). No usa el backend nuevo.
   const canjesSerie = useAsync(async () => {
     if (vista === 'semana') {
-      const s = await api.canjes.stats({});
-      return s.canjes_ultimos_7_dias.map((d) => ({ periodo: d.fecha, count: d.cantidad }));
+      if (semanaBack === 0) {
+        const s = await api.canjes.stats({});
+        return s.canjes_ultimos_7_dias.map((d) => ({ periodo: d.fecha, count: d.cantidad }));
+      }
+      const { desde, hasta } = weekRange(semanaBack);
+      return api.canjes
+        .serie(desde, hasta)
+        .then((rows) => rows.map((d) => ({ periodo: d.fecha, count: d.cantidad })))
+        .catch(() => [] as { periodo: string; count: number }[]);
     }
     const months = monthsRange(LAUNCH_MONTH, monthValue(0));
     return Promise.all(
@@ -83,7 +121,7 @@ export default function AdminDashboard() {
           .catch(() => ({ periodo: m, count: 0 })),
       ),
     );
-  }, [vista]);
+  }, [vista, semanaBack]);
 
   // Del mes: canjes globales + ranking por local (refetch al cambiar el mes).
   const mesData = useAsync(async () => {
@@ -111,19 +149,30 @@ export default function AdminDashboard() {
       userName="Ana Ruiz"
       userRole="Administradora"
       topbarTitle="Dashboard general"
-      topbarActions={<MonthPicker offset={monthOffset} onChange={setMonthOffset} />}
     >
       <DataView state={base}>
         {(b) => {
           const md = mesData.data;
           const ranking = md?.ranking ?? [];
           const altasData = altas.data ?? [];
-          // Mensual: desde el lanzamiento. Semanal: los 7 días tal cual.
-          const altasVista =
-            vista === 'mes' ? altasData.filter((b) => b.periodo >= LAUNCH_MONTH) : altasData;
           const canjesData = canjesSerie.data ?? [];
+          // Vista Mes: ventana de MESES_VISTA meses, navegable hacia atrás con ‹ ›.
+          const allMonths = monthsRange(LAUNCH_MONTH, monthValue(0));
+          const mesEnd = allMonths.length - mesBack * MESES_VISTA;
+          const mesStartIdx = Math.max(0, mesEnd - MESES_VISTA);
+          const windowMonths = allMonths.slice(mesStartIdx, mesEnd);
+          const hayMesesPrevios = mesStartIdx > 0;
+          const altasMap = new Map(altasData.map((b) => [b.periodo, b.count]));
+          const canjesMap = new Map(canjesData.map((b) => [b.periodo, b.count]));
+          // Mensual: la ventana (rellenando 0 los meses sin dato). Semanal: tal cual.
+          const altasVista =
+            vista === 'mes'
+              ? windowMonths.map((m) => ({ periodo: m, count: altasMap.get(m) ?? 0 }))
+              : altasData;
           const canjesVista =
-            vista === 'mes' ? canjesData.filter((b) => b.periodo >= LAUNCH_MONTH) : canjesData;
+            vista === 'mes'
+              ? windowMonths.map((m) => ({ periodo: m, count: canjesMap.get(m) ?? 0 }))
+              : canjesData;
           // El gráfico principal muestra altas o canjes según el toggle.
           const esAltas = metric === 'altas';
           const chartState = esAltas ? altas : canjesSerie;
@@ -140,6 +189,13 @@ export default function AdminDashboard() {
                 ) : (
                   <Stat live label="Canjes del mes" value={mesData.loading ? '…' : '—'} icon="ticket" />
                 )}
+              </div>
+
+              {/* Selector de mes: acá abajo, porque solo afecta a los canjes del
+                  mes y al ranking de locales (no a los totales de arriba). */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[12.5px] font-semibold text-graytext">Mes:</span>
+                <MonthPicker offset={monthOffset} onChange={setMonthOffset} />
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
@@ -163,22 +219,70 @@ export default function AdminDashboard() {
                     esAltas
                       ? vista === 'mes'
                         ? 'Nuevos registros por mes'
-                        : 'Nuevos registros por día (7d)'
+                        : 'Nuevos registros por día'
                       : vista === 'mes'
                         ? 'Canjes por mes'
-                        : 'Canjes por día (7d)'
+                        : 'Canjes por día'
                   }
                   actions={
-                    <div className="hidden gap-1.5 sm:flex">
-                      <PChip active={vista === 'mes'} onClick={() => setVista('mes')}>
+                    <div className="flex flex-shrink-0 gap-1.5">
+                      <PChip
+                        active={vista === 'mes'}
+                        onClick={() => {
+                          setVista('mes');
+                          setMesBack(0);
+                        }}
+                      >
                         Mes
                       </PChip>
-                      <PChip active={vista === 'semana'} onClick={() => setVista('semana')}>
+                      <PChip
+                        active={vista === 'semana'}
+                        onClick={() => {
+                          setVista('semana');
+                          setSemanaBack(0);
+                        }}
+                      >
                         Semana
                       </PChip>
                     </div>
                   }
                 >
+                  {/* Navegador de período: semanas (vista Semana) o meses (vista Mes) */}
+                  <div className="mb-2.5 flex items-center justify-between rounded-lg bg-fill px-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        vista === 'semana' ? setSemanaBack((w) => w + 1) : setMesBack((w) => w + 1)
+                      }
+                      disabled={vista === 'mes' && !hayMesesPrevios}
+                      aria-label={vista === 'semana' ? 'Semana anterior' : 'Meses anteriores'}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-graytext hover:bg-white disabled:opacity-30"
+                    >
+                      <Icon name="chevL" size={15} />
+                    </button>
+                    <span className="text-[12px] font-semibold text-graytext">
+                      {vista === 'semana'
+                        ? semanaBack === 0
+                          ? 'Últimos 7 días'
+                          : weekRange(semanaBack).label
+                        : mesBack === 0
+                          ? `Últimos ${windowMonths.length} meses`
+                          : `${mesCorto(windowMonths[0])} – ${mesCorto(windowMonths[windowMonths.length - 1])}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        vista === 'semana'
+                          ? setSemanaBack((w) => Math.max(0, w - 1))
+                          : setMesBack((w) => Math.max(0, w - 1))
+                      }
+                      disabled={(vista === 'semana' ? semanaBack : mesBack) === 0}
+                      aria-label={vista === 'semana' ? 'Semana siguiente' : 'Meses siguientes'}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-graytext hover:bg-white disabled:opacity-30"
+                    >
+                      <Icon name="chevR" size={15} />
+                    </button>
+                  </div>
                   {chartState.error ? (
                     <PanelEmpty
                       icon={esAltas ? 'users' : 'ticket'}
@@ -221,7 +325,7 @@ export default function AdminDashboard() {
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-[13px] font-bold text-ink">{r.local.nombre}</div>
-                            <div className="text-[11px] text-mute">{benCount(r.local)} benef.</div>
+                            <div className="text-[11px] text-mute">{b.benef.get(r.local.id) ?? 0} benef.</div>
                           </div>
                           <span className="text-[13px] font-extrabold text-ink">{r.canjes}</span>
                         </div>

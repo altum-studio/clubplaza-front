@@ -5,12 +5,15 @@
 
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Clock } from 'lucide-react';
 import { LocalLogo } from './LocalLogo';
-import { slugify } from '@/lib/utils';
+import { slugify, cn } from '@/lib/utils';
+import type { LocalEstado } from '@/types';
 
 interface Local {
   nombre: string;
   logo: string;
+  estado?: LocalEstado;
 }
 
 const SPEED = 0.12; // px por frame del auto-scroll
@@ -79,15 +82,29 @@ export function LocalsMarquee({ locales }: { locales: Local[] }) {
           <Link
             key={`${l.nombre}-${i}`}
             to={`/local/${slugify(l.nombre)}`}
-            aria-label={`Ver ${l.nombre}`}
-            className="shrink-0 active:scale-95"
+            aria-label={l.estado === 'proximamente' ? `${l.nombre} · Próximamente` : `Ver ${l.nombre}`}
+            className="group relative flex shrink-0 active:scale-95"
           >
             <LocalLogo
               src={l.logo}
               name={l.nombre}
               size={64}
-              className="shadow-sm ring-1 ring-line-soft"
+              className={cn(
+                'shadow-sm ring-1 ring-line-soft',
+                // Próximamente: en B/N; al pasar el mouse se revela a color.
+                l.estado === 'proximamente' && 'grayscale transition duration-200 group-hover:grayscale-0',
+              )}
             />
+            {/* Relojito centrado (solo el ícono, sin fondo); se oculta en hover. */}
+            {l.estado === 'proximamente' && (
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">
+                <Clock
+                  size={24}
+                  strokeWidth={2.5}
+                  className="text-graytext drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]"
+                />
+              </span>
+            )}
           </Link>
         ))}
       </div>

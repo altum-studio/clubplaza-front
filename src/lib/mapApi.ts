@@ -49,5 +49,6 @@ export function mapLocalDir(l: ApiLocal): LocalDirectorio {
     descripcion: l.descripcion ?? undefined,
     banner_url: l.banner_url ?? undefined,
     horarios: l.horarios ?? undefined,
+    estado: l.estado,
   };
 }

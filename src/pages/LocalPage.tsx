@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Clock } from 'lucide-react';
 import { AppCanvas } from '@/components/ui/AppCanvas';
 import { LocalLogo } from '@/components/benefits/LocalLogo';
 import { BenefitCard } from '@/components/benefits/BenefitCard';
@@ -30,6 +30,7 @@ export default function LocalPage() {
   );
 
   const hasBanner = !!local?.banner_url;
+  const esProximamente = local?.estado === 'proximamente';
 
   // Descripción: recortada a 2 renglones con "Ver más" para desplegar todo.
   // El botón aparece solo si el texto realmente excede esos renglones.
@@ -111,13 +112,34 @@ export default function LocalPage() {
               {local && (
                 <span className="text-[12px] text-white/85">Local {local.nro_local}</span>
               )}
-              <span className="text-[12px] text-white/85">
-                {delLocal.length === 1 ? '1 beneficio' : `${delLocal.length} beneficios`}
-              </span>
+              {esProximamente ? (
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white">
+                  Próximamente
+                </span>
+              ) : (
+                <span className="text-[12px] text-white/85">
+                  {delLocal.length === 1 ? '1 beneficio' : `${delLocal.length} beneficios`}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </header>
+
+      {esProximamente ? (
+        <div className="px-4 pb-12 pt-8">
+          <div className="rounded-2xl border border-line-soft bg-fill p-8 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-graytext shadow-sm">
+              <Clock size={24} />
+            </div>
+            <h2 className="text-[18px] font-extrabold text-ink">Próximamente</h2>
+            <p className="mx-auto mt-1.5 max-w-xs text-[13px] leading-relaxed text-graytext">
+              Este local se suma pronto a ClubPlaza. En breve vas a poder ver sus beneficios acá.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
 
       {/* Horarios */}
       {local?.horarios && (
@@ -166,6 +188,8 @@ export default function LocalPage() {
           </>
         )}
       </div>
+      </>
+      )}
         </div>
       </div>
     </AppCanvas>

@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, bodyTooLarge, humanizeError } from '@/lib/api';
-import type { ApiLocal, Categoria, HorarioDia } from '@/types';
+import type { ApiLocal, Categoria, HorarioDia, LocalEstado } from '@/types';
 import { PanelModal } from './PanelModal';
 import { AlertModal } from './AlertModal';
 import { PButton, Toggle } from './kit';
@@ -42,6 +42,7 @@ export function LocalFormModal({
   const [bannerUrl, setBannerUrl] = useState('');
   const [horarios, setHorarios] = useState<HorarioDia[]>(DEFAULT_HORARIOS);
   const [activo, setActivo] = useState(true);
+  const [proximamente, setProximamente] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -55,7 +56,10 @@ export function LocalFormModal({
     setLogoUrl(local?.logo_url ?? '');
     setBannerUrl(local?.banner_url ?? '');
     setHorarios(local?.horarios ?? DEFAULT_HORARIOS);
-    setActivo(local?.activo ?? true);
+    // Estado: preferimos `estado` (nuevo); si no viene, derivamos de `activo`.
+    const est = local?.estado;
+    setActivo(est ? est !== 'inactivo' : (local?.activo ?? true));
+    setProximamente(est === 'proximamente');
     setError(null);
     setConfirmDel(false);
   }, [open, local]);
@@ -72,6 +76,9 @@ export function LocalFormModal({
       banner_url: bannerUrl || null,
       horarios,
       activo,
+      // 3 estados a partir de los dos switches: inactivo manda; si está activo,
+      // "próximamente" o "disponible".
+      estado: (!activo ? 'inactivo' : proximamente ? 'proximamente' : 'disponible') as LocalEstado,
     };
     if (bodyTooLarge(payload))
       return setError(
@@ -162,6 +169,19 @@ export function LocalFormModal({
             <div className="text-[11.5px] text-mute">Visible para los miembros</div>
           </div>
           <Toggle on={activo} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => activo && setProximamente((p) => !p)}
+          disabled={!activo}
+          className="flex items-center justify-between rounded-[10px] bg-fill px-3.5 py-3 text-left disabled:opacity-50"
+        >
+          <div>
+            <div className="text-[13px] font-bold text-ink">Próximamente</div>
+            <div className="text-[11.5px] text-mute">Se muestra como “Próximamente”, sin beneficios aún</div>
+          </div>
+          <Toggle on={proximamente} />
         </button>
 
         {isEdit && canDelete && (

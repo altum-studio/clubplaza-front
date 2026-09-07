@@ -69,6 +69,7 @@ export interface LocalDirectorio {
   descripcion?: string;
   banner_url?: string;
   horarios?: HorarioDia[];
+  estado?: LocalEstado; // disponible | proximamente | inactivo
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +122,9 @@ export interface Profile {
   locales?: { id: string; nombre: string } | null; // join cuando aplica
 }
 
+// Estado de publicación de un local (backend: columna `estado`).
+export type LocalEstado = 'disponible' | 'proximamente' | 'inactivo';
+
 export interface ApiLocal {
   id: string;
   nombre: string;
@@ -133,6 +137,7 @@ export interface ApiLocal {
   banner_url?: string | null;
   horarios?: HorarioDia[] | null;
   activo: boolean;
+  estado?: LocalEstado; // disponible | proximamente | inactivo
   created_at: string;
   // en listado viene como [{ count }]; en detalle como Promo[].
   promos?: { count: number }[] | ApiPromo[];

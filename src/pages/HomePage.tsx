@@ -18,6 +18,7 @@ import { CredentialOverlay } from '@/components/credential/CredentialOverlay';
 import { BenefitCardSkeleton, ErrorState, Skeleton } from '@/components/feedback/States';
 import { useLocalesDir } from '@/hooks/useLocales';
 import { usePromos } from '@/hooks/usePromos';
+import { slugify } from '@/lib/utils';
 import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
@@ -63,40 +64,52 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, []);
 
+  // Directorio de locales (API) para el marquee de logos (todo el shopping).
+  const { locales: dir } = useLocalesDir();
+  const locales = useMemo(
+    () => dir.map((l) => ({ nombre: l.nombre, logo: l.logo_url, estado: l.estado })),
+    [dir],
+  );
+  // Locales "próximamente": no muestran beneficios en ningún lado.
+  const proximamenteSlugs = useMemo(
+    () => new Set(dir.filter((l) => l.estado === 'proximamente').map((l) => slugify(l.nombre))),
+    [dir],
+  );
+  const promosVisibles = useMemo(
+    () => promos.filter((p) => !proximamenteSlugs.has(slugify(p.local_nombre))),
+    [promos, proximamenteSlugs],
+  );
+
   // Carrusel "BENEFICIO DEL DÍA": SOLO lo vigente HOY (cada beneficio tiene sus
   // días). Es INDEPENDIENTE de los filtros de Rubro/Fecha (esos afinan la grilla).
   // El orden es ALEATORIO (no agrupado por marca) y se re-mezcla cada tanto.
   const beneficiosHoy = useMemo(() => {
     const hoy = new Date().getDay();
-    return shuffle(promos.filter((p) => p.dias.includes(hoy)));
+    return shuffle(promosVisibles.filter((p) => p.dias.includes(hoy)));
     // shuffleSeed fuerza el re-mezclado periódico.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promos, shuffleSeed]);
+  }, [promosVisibles, shuffleSeed]);
 
   // Grilla de abajo: TODOS los beneficios (para leer todo). Se afina con los
   // filtros: sin fecha específica muestra todos; con fecha, los de ese día.
   const beneficiosFiltrados = useMemo(() => {
     const porRubro = (p: Promo) => rubro === 'todos' || p.categoria === rubro;
-    if (dia === 'todos') return promos.filter(porRubro);
+    if (dia === 'todos') return promosVisibles.filter(porRubro);
     const d = dia === 'hoy' ? new Date().getDay() : dia;
-    return promos.filter((p) => p.dias.includes(d) && porRubro(p));
-  }, [promos, rubro, dia]);
+    return promosVisibles.filter((p) => p.dias.includes(d) && porRubro(p));
+  }, [promosVisibles, rubro, dia]);
 
-  // Directorio de locales (API) para el marquee de logos (todo el shopping).
-  const { locales: dir } = useLocalesDir();
-  const locales = useMemo(() => dir.map((l) => ({ nombre: l.nombre, logo: l.logo_url })), [dir]);
-
-  // Búsqueda: sobre TODAS las promos (título, descripción y local).
+  // Búsqueda: sobre las promos visibles (título, descripción y local).
   const resultados = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return promos.filter(
+    return promosVisibles.filter(
       (p) =>
         p.titulo.toLowerCase().includes(q) ||
         p.descripcion.toLowerCase().includes(q) ||
         p.local_nombre.toLowerCase().includes(q),
     );
-  }, [promos, query]);
+  }, [promosVisibles, query]);
 
   return (
     <AppCanvas fullBleed>

@@ -9,6 +9,9 @@ const MES_NOMBRES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
+// Mes más largo: fija el ancho del selector para que no salte al navegar.
+const MES_MAS_LARGO = MES_NOMBRES.reduce((a, b) => (b.length > a.length ? b : a), '');
+
 // Año/mes (mes 0-indexado) del mes actual desplazado `offset` meses.
 function monthDate(offset: number): { year: number; month: number } {
   const now = new Date();
@@ -45,8 +48,16 @@ export function MonthPicker({ offset, onChange }: { offset: number; onChange: (o
         <Icon name="chevL" size={15} />
       </button>
       <span className="flex items-center gap-1.5 px-1 text-[12.5px] font-semibold text-graytext">
-        <Icon name="cal" size={14} className="text-mute" />
-        {monthLabel(offset)}
+        <Icon name="cal" size={14} className="flex-shrink-0 text-mute" />
+        {/* Ancho fijo = mes más largo; el texto real va centrado encima. */}
+        <span className="relative inline-flex justify-center">
+          <span className="invisible whitespace-nowrap" aria-hidden="true">
+            {MES_MAS_LARGO} 0000
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center whitespace-nowrap">
+            {monthLabel(offset)}
+          </span>
+        </span>
       </span>
       <button
         type="button"

@@ -74,13 +74,14 @@ export function PButton({
 }
 
 // ─────────────────────────── badges / chips ───────────────────────────
-type Tone = 'ok' | 'warn' | 'info' | 'bad' | 'mute';
+type Tone = 'ok' | 'warn' | 'info' | 'bad' | 'mute' | 'soon';
 const TONE: Record<Tone, string> = {
   ok: 'bg-brand-soft text-brand',
   warn: 'bg-warn-soft text-warn',
   info: 'bg-info-soft text-info',
   bad: 'bg-bad-soft text-bad',
   mute: 'bg-fill text-graytext',
+  soon: 'bg-soon-soft text-soon',
 };
 export function Badge({
   children,
