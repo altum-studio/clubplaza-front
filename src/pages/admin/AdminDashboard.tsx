@@ -1,7 +1,7 @@
 // pages/admin/AdminDashboard.tsx
-// Panel Admin · Dashboard general. KPIs reales, "Altas de miembros" desde
-// GET /api/usuarios/altas (mes/semana) y "Top locales por canjes". El selector
-// de mes actualiza los canjes del mes y el ranking (?mes= en el backend).
+// Panel Admin · Dashboard general. KPIs reales, "Altas de usuarios" desde
+// GET /api/usuarios/altas (mes/semana; suma todos los roles) y "Top locales por
+// canjes". El selector de mes actualiza los canjes del mes y el ranking (?mes=).
 
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
     [],
   );
 
-  // Altas de miembros: mes = 12 meses; semana = ventana de 7 días navegable.
+  // Altas de usuarios: mes = 12 meses; semana = ventana de 7 días navegable.
   // La semana actual usa el endpoint de siempre (funciona hoy); las anteriores
   // piden datos por rango (necesita backend — ver spec; fallback a vacío).
   const altas = useAsync(() => {
@@ -214,10 +214,12 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={() => setMetric((m) => (m === 'altas' ? 'canjes' : 'altas'))}
                       className="group -my-1 flex cursor-pointer items-center gap-1.5"
-                      aria-label={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
-                      title={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
+                      aria-label={esAltas ? 'Ver canjes' : 'Ver altas de usuarios'}
+                      title={esAltas ? 'Ver canjes' : 'Ver altas de usuarios'}
                     >
-                      <span>{esAltas ? 'Altas de miembros' : 'Canjes'}</span>
+                      {/* "usuarios" (no "miembros"): la serie de /usuarios/altas suma
+                          todos los roles y el endpoint no filtra por rol. */}
+                      <span>{esAltas ? 'Altas de usuarios' : 'Canjes'}</span>
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-fill text-mute transition-colors group-hover:bg-brand/10 group-hover:text-brand">
                         <Icon name="chevR" size={15} />
                       </span>
@@ -226,8 +228,8 @@ export default function AdminDashboard() {
                   sub={
                     esAltas
                       ? vista === 'mes'
-                        ? 'Nuevos registros por mes'
-                        : 'Nuevos registros por día'
+                        ? 'Nuevos usuarios por mes'
+                        : 'Nuevos usuarios por día'
                       : vista === 'mes'
                         ? 'Canjes por mes'
                         : 'Canjes por día'
