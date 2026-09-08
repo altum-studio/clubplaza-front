@@ -164,9 +164,18 @@ export default function AdminDashboard() {
           const ranking = md?.ranking ?? [];
           const altasData = altas.data ?? [];
           const canjesData = canjesSerie.data ?? [];
+          // El gráfico principal muestra altas o canjes según el toggle.
+          const esAltas = metric === 'altas';
           // Vista Mes: ventana de MESES_VISTA meses, navegable hacia atrás con ‹ ›.
-          const allMonths = monthsRange(LAUNCH_MONTH, monthValue(0));
-          const mesEnd = allMonths.length - mesBack * MESES_VISTA;
+          // Altas: TODOS los meses que devuelve la API (12). Canjes: desde el
+          // lanzamiento (una llamada a stats por mes; no pedimos meses extra).
+          const mesesAltas = [...new Set(altasData.map((b) => b.periodo))].sort();
+          const allMonths =
+            esAltas && vista === 'mes' && mesesAltas.length > 0 ? mesesAltas : monthsRange(LAUNCH_MONTH, monthValue(0));
+          // Clamp: al cambiar de métrica la cantidad de ventanas puede achicarse.
+          const mesBackMax = Math.max(0, Math.ceil(allMonths.length / MESES_VISTA) - 1);
+          const mesBackEf = Math.min(mesBack, mesBackMax);
+          const mesEnd = allMonths.length - mesBackEf * MESES_VISTA;
           const mesStartIdx = Math.max(0, mesEnd - MESES_VISTA);
           const windowMonths = allMonths.slice(mesStartIdx, mesEnd);
           const hayMesesPrevios = mesStartIdx > 0;
@@ -181,8 +190,6 @@ export default function AdminDashboard() {
             vista === 'mes'
               ? windowMonths.map((m) => ({ periodo: m, count: canjesMap.get(m) ?? 0 }))
               : canjesData;
-          // El gráfico principal muestra altas o canjes según el toggle.
-          const esAltas = metric === 'altas';
           const chartState = esAltas ? altas : canjesSerie;
           const chartData = esAltas ? altasVista : canjesVista;
           // Período en curso: el último bucket es el mes/día de HOY (solo pasa en
@@ -255,7 +262,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() =>
-                        vista === 'semana' ? setSemanaBack((w) => w + 1) : setMesBack((w) => w + 1)
+                        vista === 'semana' ? setSemanaBack((w) => w + 1) : setMesBack(mesBackEf + 1)
                       }
                       disabled={vista === 'mes' && !hayMesesPrevios}
                       aria-label={vista === 'semana' ? 'Semana anterior' : 'Meses anteriores'}
@@ -268,7 +275,7 @@ export default function AdminDashboard() {
                         ? semanaBack === 0
                           ? 'Últimos 7 días'
                           : weekRange(semanaBack).label
-                        : mesBack === 0
+                        : mesBackEf === 0
                           ? `Últimos ${windowMonths.length} meses`
                           : `${mesCorto(windowMonths[0])} – ${mesCorto(windowMonths[windowMonths.length - 1])}`}
                     </span>
@@ -277,9 +284,9 @@ export default function AdminDashboard() {
                       onClick={() =>
                         vista === 'semana'
                           ? setSemanaBack((w) => Math.max(0, w - 1))
-                          : setMesBack((w) => Math.max(0, w - 1))
+                          : setMesBack(Math.max(0, mesBackEf - 1))
                       }
-                      disabled={(vista === 'semana' ? semanaBack : mesBack) === 0}
+                      disabled={(vista === 'semana' ? semanaBack : mesBackEf) === 0}
                       aria-label={vista === 'semana' ? 'Semana siguiente' : 'Meses siguientes'}
                       className="flex h-6 w-6 items-center justify-center rounded-md text-graytext hover:bg-white disabled:opacity-30"
                     >
@@ -296,6 +303,10 @@ export default function AdminDashboard() {
                     <div className="flex flex-1 items-center justify-center py-14 text-[13px] text-mute">
                       Cargando…
                     </div>
+                  ) : vista === 'semana' && semanaBack > 0 && chartData.length === 0 ? (
+                    // Semana anterior sin datos (el rango depende del backend): estado
+                    // vacío explícito en vez de un gráfico en blanco.
+                    <PanelEmpty icon="cal" title="Sin datos para esta semana" hint="No hay registros disponibles en este rango." />
                   ) : (
                     <AltasChart buckets={chartData} vista={vista} parcial={ultimoParcial} />
                   )}
