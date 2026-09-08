@@ -3,7 +3,7 @@
 // iniciales). Si el usuario gestiona >1 local, es clickeable y abre un menú con
 // el logo de cada local para switchear. Admin / sin locales → avatar de iniciales.
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { Avatar, LogoBox } from './kit';
 import { Icon } from './Icon';
@@ -30,12 +30,20 @@ export function LocalSwitcher({
   size?: number;
   fallbackName?: string;
   menuDir?: 'up' | 'down';
-  /** Borde del avatar al que se ancla el menú. En la barra superior (avatar a la
-   *  derecha de la pantalla) va 'right' para que se expanda hacia la izquierda. */
+  /** 'left': menú anclado al avatar (sidebar). 'right': menú alineado al borde
+   *  DERECHO DE LA PANTALLA, debajo del avatar (barra superior en móvil). */
   align?: 'left' | 'right';
 }) {
   const { misLocales, activeLocal, activeLocalId, setActiveLocalId } = useLocalScope();
   const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [menuTop, setMenuTop] = useState(0);
+  const toggle = () => {
+    // Para align='right' el menú es fixed: su top sale de la posición del avatar.
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setMenuTop(r.bottom + 8);
+    setOpen((o) => !o);
+  };
 
   // Admin / rol sin locales → avatar de iniciales de siempre.
   if (misLocales.length === 0) {
@@ -61,8 +69,9 @@ export function LocalSwitcher({
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         aria-label="Cambiar de local"
         title="Cambiar de local"
         className="inline-flex"
@@ -73,9 +82,12 @@ export function LocalSwitcher({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className={`absolute z-50 w-60 max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-line bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.18)] ${
-              align === 'right' ? 'right-0' : 'left-0'
-            } ${menuDir === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+            className={`z-50 w-60 max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-line bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.18)] ${
+              align === 'right'
+                ? 'fixed right-3'
+                : `absolute left-0 ${menuDir === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`
+            }`}
+            style={align === 'right' ? { top: menuTop } : undefined}
           >
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.6px] text-mute">
               Cambiar de local
