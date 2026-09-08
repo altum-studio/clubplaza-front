@@ -218,29 +218,29 @@ export default function AdminDashboard() {
 
               {/* Aviso de vencimientos (solo si hay algo que avisar). */}
               {(b.vencidos > 0 || b.porVencer > 0) && (
-                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px]">
+                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px] transition-colors hover:bg-warn/30">
                   {b.vencidos > 0 && (
                     <Link
                       to="/admin/beneficios?resaltar=vencidos"
-                      className="group -mx-2 flex items-center gap-2 rounded-lg px-2 py-1 text-ink transition-colors hover:bg-warn/20"
+                      className="flex items-center gap-2 py-0.5 text-ink"
                     >
                       <Icon name="clock" size={14} className="flex-shrink-0 text-bad" />
                       <span>
                         <b>{b.vencidos}</b> {b.vencidos === 1 ? 'beneficio vencido sigue publicado' : 'beneficios vencidos siguen publicados'}
                       </span>
-                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                      <Icon name="chevR" size={14} className="text-mute" />
                     </Link>
                   )}
                   {b.porVencer > 0 && (
                     <Link
                       to="/admin/beneficios?resaltar=por-vencer"
-                      className="group -mx-2 flex items-center gap-2 rounded-lg px-2 py-1 text-ink transition-colors hover:bg-warn/20"
+                      className="flex items-center gap-2 py-0.5 text-ink"
                     >
                       <Icon name="cal" size={14} className="flex-shrink-0 text-warn" />
                       <span>
                         <b>{b.porVencer}</b> {b.porVencer === 1 ? 'beneficio vence' : 'beneficios vencen'} en los próximos 30 días
                       </span>
-                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                      <Icon name="chevR" size={14} className="text-mute" />
                     </Link>
                   )}
                 </div>
