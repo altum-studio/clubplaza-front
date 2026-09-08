@@ -4,6 +4,7 @@
 // canjes". El selector de mes actualiza los canjes del mes y el ranking (?mes=).
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { PChip, PCard, Stat, LogoBox } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
@@ -12,8 +13,8 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import { ddmm, hoyAR } from '@/lib/fechas';
-import { promoVigente } from '@/lib/opciones';
+import { ddmm, hoyAR, sumarDias } from '@/lib/fechas';
+import { promoVencida, promoVigente, rangoVigencia } from '@/lib/opciones';
 import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
@@ -76,10 +77,20 @@ export default function AdminDashboard() {
         api.usuarios.listAll().catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
         const hoy = hoyAR();
+        const en30 = sumarDias(hoy, 30);
         // El backend no manda el conteo de beneficios por local → lo calculamos.
         const benef = new Map<string, number>();
         for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
+        // Vencimientos (aviso): publicados pero vencidos, y los que vencen en 30 días.
+        const activas = p.data.filter((pr) => pr.activa);
+        const vencidos = activas.filter((pr) => promoVencida(pr, hoy)).length;
+        const porVencer = activas.filter((pr) => {
+          const { hasta } = rangoVigencia(pr);
+          return !!hasta && hoy <= hasta && hasta <= en30;
+        }).length;
         return {
+          vencidos,
+          porVencer,
           locales: l.data,
           // "Activos" = estado disponible. `activo` también es true para los
           // "próximamente" (todavía no abrieron), por eso no sirve para contar.
@@ -213,6 +224,30 @@ export default function AdminDashboard() {
                 <Stat live label="Locales activos totales" value={String(b.localesCount)} icon="store" />
                 <Stat live label="Beneficios publicados totales" value={String(b.promos)} icon="tag" />
               </div>
+
+              {/* Aviso de vencimientos (solo si hay algo que avisar). */}
+              {(b.vencidos > 0 || b.porVencer > 0) && (
+                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px]">
+                  {b.vencidos > 0 && (
+                    <Link to="/admin/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                      <Icon name="clock" size={14} className="flex-shrink-0 text-bad" />
+                      <span>
+                        <b>{b.vencidos}</b> {b.vencidos === 1 ? 'beneficio vencido sigue publicado' : 'beneficios vencidos siguen publicados'}
+                      </span>
+                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                    </Link>
+                  )}
+                  {b.porVencer > 0 && (
+                    <Link to="/admin/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                      <Icon name="cal" size={14} className="flex-shrink-0 text-warn" />
+                      <span>
+                        <b>{b.porVencer}</b> {b.porVencer === 1 ? 'beneficio vence' : 'beneficios vencen'} en los próximos 30 días
+                      </span>
+                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                    </Link>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
                 <PCard
