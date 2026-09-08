@@ -83,7 +83,7 @@ const FAQS: Faq[] = [
   },
   {
     q: '¿Los canjes se cuentan solos?',
-    a: 'Sí. Cada validación que hacés queda registrada y suma automáticamente en tus estadísticas e historial.',
+    a: 'Sí. Cada validación que hacés desde este panel queda registrada y suma en tus estadísticas e historial.',
   },
   {
     q: '¿Puedo limitar cuántas veces se usa un beneficio?',
