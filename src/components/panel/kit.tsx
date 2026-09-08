@@ -7,7 +7,7 @@
 // se muestran en gris con sello "Próximamente" (decisión de producto: en la
 // primera entrega las métricas son simulación, no datos reales).
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Icon, type IconName } from './Icon';
 
@@ -270,10 +270,30 @@ function StatValue({ value }: { value: ReactNode }) {
 // ⓘ junto al label de un KPI: tooltip con una descripción breve. Aparece con
 // hover (desktop) y con tap (móvil); se cierra tocando afuera o con Escape.
 export function InfoTip({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false); // desktop
+  const [pinned, setPinned] = useState(false); // móvil (tap)
+  const visible = hover || pinned;
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tipRef = useRef<HTMLSpanElement>(null);
+
+  // El tooltip es `fixed` (respecto a la ventana) y se ubica debajo del icono,
+  // centrado, pero SIEMPRE dentro de la pantalla: si el KPI está en un borde,
+  // se corre lo necesario. Se posiciona tocando el DOM (sin estado) para no
+  // re-renderizar.
+  useLayoutEffect(() => {
+    const b = btnRef.current?.getBoundingClientRect();
+    const tip = tipRef.current;
+    if (!visible || !b || !tip) return;
+    const margen = 8;
+    const w = tip.offsetWidth;
+    const left = Math.max(margen, Math.min(b.left + b.width / 2 - w / 2, window.innerWidth - w - margen));
+    tip.style.left = `${left}px`;
+    tip.style.top = `${b.bottom + 6}px`;
+  }, [visible, text]);
+
   useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
+    if (!pinned) return;
+    const close = () => setPinned(false);
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
     document.addEventListener('click', close);
     document.addEventListener('keydown', onKey);
@@ -281,31 +301,35 @@ export function InfoTip({ text }: { text: string }) {
       document.removeEventListener('click', close);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [pinned]);
+
   return (
-    <span className="group relative inline-flex">
+    <>
       <button
+        ref={btnRef}
         type="button"
         aria-label="Qué significa"
-        aria-expanded={open}
+        aria-expanded={visible}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
         onClick={(e) => {
           e.stopPropagation();
-          setOpen((o) => !o);
+          setPinned((o) => !o);
         }}
         className="inline-flex h-4 w-4 items-center justify-center rounded-full text-faint transition-colors hover:text-graytext"
       >
         <Icon name="info" size={14} strokeWidth={2} />
       </button>
-      <span
-        role="tooltip"
-        className={cn(
-          'pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-ink px-2.5 py-1.5 text-left text-[11.5px] font-medium normal-case leading-snug tracking-normal text-white shadow-[0_6px_20px_rgba(0,0,0,0.25)] transition-opacity',
-          open ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-        )}
-      >
-        {text}
-      </span>
-    </span>
+      {visible && (
+        <span
+          ref={tipRef}
+          role="tooltip"
+          className="pointer-events-none fixed z-50 w-max max-w-[min(260px,calc(100vw-16px))] rounded-lg bg-ink px-2.5 py-1.5 text-left text-[11.5px] font-medium normal-case leading-snug tracking-normal text-white shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
+        >
+          {text}
+        </span>
+      )}
+    </>
   );
 }
 
