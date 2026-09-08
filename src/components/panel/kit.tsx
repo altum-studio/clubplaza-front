@@ -353,12 +353,18 @@ export function Stat({
   return (
     <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(20,40,25,0.04)]">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-graytext">
+        {/* El ⓘ va en el flujo del texto (pegado a la última palabra), así no se
+            separa del label cuando este ocupa dos líneas. */}
+        <span className="min-w-0 text-[12.5px] font-semibold leading-snug text-graytext">
           {label}
-          {info && <InfoTip text={info} />}
+          {info && (
+            <span className="ml-1.5 inline-flex align-[-3px]">
+              <InfoTip text={info} />
+            </span>
+          )}
         </span>
         {icon && (
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand-soft">
+          <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-lg bg-brand-soft">
             <Icon name={icon} size={17} className="text-brand" />
           </span>
         )}
