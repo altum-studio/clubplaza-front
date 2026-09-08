@@ -224,6 +224,7 @@ export interface CanjeHistorialItem {
   id: string;
   fecha: string;
   estado: string;
+  promo_id?: string; // no verificado en la API: el front cae al título si no viene
   usuarios: { nombre: string; apellido: string; codigo: string };
   promos: { titulo: string };
 }

@@ -93,9 +93,20 @@ export default function LocalBeneficios() {
   const { activeLocalId, activeLocal } = useLocalScope();
   const state = useAsync(
     () =>
-      api.promos
-        .mine({ local_id: activeLocalId ?? undefined, limit: 200 })
-        .then((promos) => ({ promos: promos.data })),
+      Promise.all([
+        api.promos.mine({ local_id: activeLocalId ?? undefined, limit: 200 }),
+        // Canjes del local para la columna "Canjes" (el listado de promos no trae el conteo).
+        api.canjes.mine({ local_id: activeLocalId ?? undefined, limit: 500 }).catch(() => null),
+      ]).then(([promos, canjes]) => {
+        // Canjes 'ok' por beneficio. Clave: promo_id si la API lo manda; si no, el título.
+        const porPromo = new Map<string, number>();
+        for (const c of canjes?.data ?? []) {
+          if (c.estado !== 'ok') continue;
+          const k = c.promo_id ?? `t:${c.promos?.titulo ?? ''}`;
+          porPromo.set(k, (porPromo.get(k) ?? 0) + 1);
+        }
+        return { promos: promos.data, porPromo, canjesOk: canjes != null };
+      }),
     [activeLocalId],
   );
 
@@ -136,6 +147,7 @@ export default function LocalBeneficios() {
             filtro === 'todos' ? true : filtro === 'activos' ? p.activa : !p.activa,
           );
           const sel = promos.find((p) => p.id === selId) ?? null;
+          const canjesDe = (p: ApiPromo) => d.porPromo.get(p.id) ?? d.porPromo.get(`t:${p.titulo}`) ?? 0;
           const local = { nombre: activeLocal?.nombre ?? '', logo_url: activeLocal?.logo_url ?? null };
 
           const columns: Column<ApiPromo>[] = [
@@ -156,7 +168,14 @@ export default function LocalBeneficios() {
               w: '16%',
               align: 'center',
               bold: true,
-              render: () => <span className="font-bold text-faint">—</span>,
+              render: (_v, p) =>
+                d.canjesOk ? (
+                  <span className={canjesDe(p) ? 'font-bold text-ink' : 'font-bold text-faint'}>{canjesDe(p)}</span>
+                ) : (
+                  <span className="font-bold text-faint" title="No se pudieron cargar los canjes">
+                    —
+                  </span>
+                ),
             },
             {
               key: 'estado',
