@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       Promise.all([
         api.locales.list({ limit: 500 }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
         api.promos.list({ limit: 500 }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
-        api.usuarios.listAll().catch(() => ({ data: [] as Profile[], count: 0 })),
+        api.usuarios.list({ limit: 1 }).catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
         const hoy = hoyAR();
         const en30 = sumarDias(hoy, 30);
@@ -93,8 +93,8 @@ export default function AdminDashboard() {
             .length,
           // "Publicados" = activa y vigente HOY (el count del endpoint incluye vencidas).
           promos: p.data.filter((pr) => pr.activa && promoVigente(pr, hoy)).length,
-          // "Miembros" = solo rol comun (el count del endpoint incluye comercios y admins).
-          miembrosCount: u.data.filter((x) => x.rol === 'comun').length,
+          // Total de usuarios de todos los roles (el desglose por rol vive en Usuarios).
+          miembrosCount: u.count,
           benef,
         };
       }),
