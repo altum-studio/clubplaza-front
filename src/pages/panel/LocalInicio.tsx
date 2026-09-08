@@ -55,12 +55,13 @@ export default function LocalInicio() {
     >
       <DataView state={state}>
         {(d) => {
+          const hoy = hoyAR();
           const dias = d.stats?.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((x) => x.cantidad);
           const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
-          const canjesHoy = serie.length ? serie[serie.length - 1] : 0;
+          // "Canjes hoy": el bucket cuya fecha es HOY (Argentina), no el último por posición.
+          const canjesHoy = dias.find((x) => x.fecha.slice(0, 10) === hoy)?.cantidad ?? 0;
           const recientes = d.recientes?.data ?? [];
-          const hoy = hoyAR();
           // Vigente (definición canónica): activa + dentro de vigencia + hoy es día válido.
           const vigentes = d.promos.data.filter((p) => promoVigenteHoy(p, hoy, diaSemanaAR())).length;
           // Publicados: activos y no vencidos (vigentes hoy o algún día de la semana).
