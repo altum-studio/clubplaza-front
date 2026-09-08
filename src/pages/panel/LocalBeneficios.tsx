@@ -16,10 +16,33 @@ import { api } from '@/lib/api';
 import type { ApiPromo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
-import { diasLabel, limiteLabel, tipoBeneficioLabel, vigenciaLabel } from '@/lib/opciones';
+import {
+  ESTADO_PROMO_LABEL,
+  type EstadoPromo,
+  diasLabel,
+  estadoPromo,
+  limiteLabel,
+  tipoBeneficioLabel,
+  vigenciaLabel,
+} from '@/lib/opciones';
+import { hoyAR } from '@/lib/fechas';
 import { BenefitValue } from '@/components/benefits/BenefitValue';
 
-type Filtro = 'todos' | 'activos' | 'pausados';
+// Filtros = estados canónicos (estadoPromo) + "todos".
+type Filtro = 'todos' | EstadoPromo;
+const FILTROS: { value: Filtro; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'activo', label: 'Activos' },
+  { value: 'programado', label: 'Programados' },
+  { value: 'pausado', label: 'Pausados' },
+  { value: 'vencido', label: 'Vencidos' },
+];
+const ESTADO_TONE: Record<EstadoPromo, 'ok' | 'mute' | 'soon' | 'info'> = {
+  activo: 'ok',
+  pausado: 'mute',
+  vencido: 'soon',
+  programado: 'info',
+};
 
 // ── Preview: cómo ve el beneficio el miembro en la app ──
 function PreviewRow({ label, value }: { label: string; value: string }) {
@@ -82,7 +105,7 @@ function BenefitPreview({
           <PreviewRow label="Días válidos" value={diasLabel(promo.dias)} />
           <PreviewRow label="Vigencia" value={vigenciaLabel({ desde, hasta })} />
           <PreviewRow label="Límite de uso" value={limiteLabel(promo.limite_cantidad, promo.limite_periodo)} />
-          <PreviewRow label="Estado" value={promo.activa ? 'Activo' : 'Pausado'} />
+          <PreviewRow label="Estado" value={ESTADO_PROMO_LABEL[estadoPromo(promo, hoyAR())]} />
         </div>
       </div>
     </div>
@@ -141,11 +164,10 @@ export default function LocalBeneficios() {
       <DataView state={state}>
         {(d) => {
           const promos = d.promos;
-          const activos = promos.filter((p) => p.activa).length;
-          const pausados = promos.length - activos;
-          const rows = promos.filter((p) =>
-            filtro === 'todos' ? true : filtro === 'activos' ? p.activa : !p.activa,
-          );
+          const hoy = hoyAR();
+          const estadoDe = (p: ApiPromo) => estadoPromo(p, hoy);
+          const cuenta = (f: Filtro) => (f === 'todos' ? promos.length : promos.filter((p) => estadoDe(p) === f).length);
+          const rows = promos.filter((p) => filtro === 'todos' || estadoDe(p) === filtro);
           const sel = promos.find((p) => p.id === selId) ?? null;
           const canjesDe = (p: ApiPromo) => d.porPromo.get(p.id) ?? d.porPromo.get(`t:${p.titulo}`) ?? 0;
           const local = { nombre: activeLocal?.nombre ?? '', logo_url: activeLocal?.logo_url ?? null };
@@ -182,8 +204,10 @@ export default function LocalBeneficios() {
               label: 'Estado',
               w: '20%',
               align: 'center',
-              render: (_v, p) =>
-                p.activa ? <Badge tone="ok">Activo</Badge> : <Badge tone="mute">Pausado</Badge>,
+              render: (_v, p) => {
+                const e = estadoDe(p);
+                return <Badge tone={ESTADO_TONE[e]}>{ESTADO_PROMO_LABEL[e]}</Badge>;
+              },
             },
             {
               key: 'acc',
@@ -208,15 +232,11 @@ export default function LocalBeneficios() {
               {/* ── Lista ── */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap gap-2">
-                  <PChip active={filtro === 'todos'} onClick={() => setFiltro('todos')}>
-                    Todos · {promos.length}
-                  </PChip>
-                  <PChip active={filtro === 'activos'} onClick={() => setFiltro('activos')}>
-                    Activos · {activos}
-                  </PChip>
-                  <PChip active={filtro === 'pausados'} onClick={() => setFiltro('pausados')}>
-                    Pausados · {pausados}
-                  </PChip>
+                  {FILTROS.filter((f) => f.value !== 'programado' || cuenta('programado') > 0).map((f) => (
+                    <PChip key={f.value} active={filtro === f.value} onClick={() => setFiltro(f.value)}>
+                      {f.label} · {cuenta(f.value)}
+                    </PChip>
+                  ))}
                 </div>
 
                 <PCard pad={0}>
@@ -233,7 +253,7 @@ export default function LocalBeneficios() {
                     />
                   ) : rows.length === 0 ? (
                     <div className="p-8 text-center text-[13px] text-mute">
-                      No hay beneficios {filtro === 'activos' ? 'activos' : 'pausados'}.
+                      No hay beneficios {FILTROS.find((f) => f.value === filtro)?.label.toLowerCase() ?? ''}.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
