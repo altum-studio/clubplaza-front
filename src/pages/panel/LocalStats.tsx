@@ -6,13 +6,13 @@
 import { useState } from 'react';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Bars, PCard, Stat } from '@/components/panel/kit';
-import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
+import { MonthPicker, monthLabel, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diaSemanaDe } from '@/lib/fechas';
+import { diaSemanaDe, hoyAR } from '@/lib/fechas';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
@@ -38,8 +38,20 @@ export default function LocalStats() {
         {(s) => {
           const dias = s.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((d) => d.cantidad);
-          const labels = dias.map((d) => DOW[diaSemanaDe(d.fecha)] ?? '');
-          const total7 = serie.reduce((a, b) => a + b, 0);
+          // Con ?mes= el backend manda TODOS los días del mes en este campo (no 7).
+          // Título y eje se adaptan: mes entero → día del mes (1, 5, 10…); 7 días → Lun, Mar…
+          const esMesEntero = dias.length > 7;
+          const labels = dias.map((d) => {
+            if (!esMesEntero) return DOW[diaSemanaDe(d.fecha)] ?? '';
+            const n = Number(d.fecha.slice(8, 10));
+            return n === 1 || n % 5 === 0 ? String(n) : '';
+          });
+          const hoy = hoyAR();
+          // "Últimos 7 días" = los 7 últimos días hasta hoy dentro de la serie (no el mes entero).
+          const total7 = dias
+            .filter((d) => d.fecha.slice(0, 10) <= hoy)
+            .slice(-7)
+            .reduce((a, d) => a + d.cantidad, 0);
           const porMiembro = s.miembros_unicos_mes ? s.canjes_mes / s.miembros_unicos_mes : 0;
 
           return (
@@ -59,7 +71,7 @@ export default function LocalStats() {
 
               {/* ── Gráficos ── */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
-                <PCard title="Canjes por día" sub="Últimos 7 días">
+                <PCard title="Canjes por día" sub={esMesEntero ? monthLabel(monthOffset) : 'Últimos 7 días'}>
                   {serie.length ? (
                     <Bars data={serie} labels={labels} highlight={serie.length - 1} h={210} />
                   ) : (
