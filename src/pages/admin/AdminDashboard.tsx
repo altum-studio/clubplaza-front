@@ -14,7 +14,7 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
 import { ddmm, hoyAR, sumarDias } from '@/lib/fechas';
-import { promoVencida, promoVigente, rangoVigencia } from '@/lib/opciones';
+import { promoPorVencer, promoVencida, promoVigente } from '@/lib/opciones';
 import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 
@@ -72,17 +72,13 @@ export default function AdminDashboard() {
         api.usuarios.list({ limit: 1 }).catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
         const hoy = hoyAR();
-        const en30 = sumarDias(hoy, 30);
         // El backend no manda el conteo de beneficios por local → lo calculamos.
         const benef = new Map<string, number>();
         for (const pr of p.data) benef.set(pr.local_id, (benef.get(pr.local_id) ?? 0) + 1);
         // Vencimientos (aviso): publicados pero vencidos, y los que vencen en 30 días.
         const activas = p.data.filter((pr) => pr.activa);
         const vencidos = activas.filter((pr) => promoVencida(pr, hoy)).length;
-        const porVencer = activas.filter((pr) => {
-          const { hasta } = rangoVigencia(pr);
-          return !!hasta && hoy <= hasta && hasta <= en30;
-        }).length;
+        const porVencer = activas.filter((pr) => promoPorVencer(pr, hoy)).length;
         return {
           vencidos,
           porVencer,
@@ -224,7 +220,10 @@ export default function AdminDashboard() {
               {(b.vencidos > 0 || b.porVencer > 0) && (
                 <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px]">
                   {b.vencidos > 0 && (
-                    <Link to="/admin/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                    <Link
+                      to="/admin/beneficios?resaltar=vencidos"
+                      className="group -mx-2 flex items-center gap-2 rounded-lg px-2 py-1 text-ink transition-colors hover:bg-warn/20"
+                    >
                       <Icon name="clock" size={14} className="flex-shrink-0 text-bad" />
                       <span>
                         <b>{b.vencidos}</b> {b.vencidos === 1 ? 'beneficio vencido sigue publicado' : 'beneficios vencidos siguen publicados'}
@@ -233,7 +232,10 @@ export default function AdminDashboard() {
                     </Link>
                   )}
                   {b.porVencer > 0 && (
-                    <Link to="/admin/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                    <Link
+                      to="/admin/beneficios?resaltar=por-vencer"
+                      className="group -mx-2 flex items-center gap-2 rounded-lg px-2 py-1 text-ink transition-colors hover:bg-warn/20"
+                    >
                       <Icon name="cal" size={14} className="flex-shrink-0 text-warn" />
                       <span>
                         <b>{b.porVencer}</b> {b.porVencer === 1 ? 'beneficio vence' : 'beneficios vencen'} en los próximos 30 días

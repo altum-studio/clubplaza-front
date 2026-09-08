@@ -493,11 +493,14 @@ export function Table<R extends Record<string, any>>({
   rows,
   dense = false,
   onRowClick,
+  rowClassName,
 }: {
   columns: Column<R>[];
   rows: R[];
   dense?: boolean;
   onRowClick?: (row: R) => void;
+  /** Clases extra por fila (p. ej. resaltar filas que cumplen una condición). */
+  rowClassName?: (row: R) => string | undefined;
 }) {
   return (
     <div className="w-full overflow-hidden">
@@ -520,7 +523,7 @@ export function Table<R extends Record<string, any>>({
             <tr
               key={i}
               onClick={onRowClick ? () => onRowClick(r) : undefined}
-              className={cn(onRowClick && 'cursor-pointer hover:bg-fill')}
+              className={cn(onRowClick && 'cursor-pointer hover:bg-fill', rowClassName?.(r))}
             >
               {columns.map((c) => (
                 <td

@@ -5,6 +5,7 @@
 import type { ApiPromo, Categoria, HorarioDia, LimitePeriodo, TipoBeneficio } from '@/types';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
 import { isoToDDMMAAAA } from '@/lib/utils';
+import { sumarDias } from '@/lib/fechas';
 
 // Rubros (las 6 opciones, sin "todos").
 export const RUBRO_OPTIONS: { value: Categoria; label: string }[] = (
@@ -132,6 +133,21 @@ export function promoVigente(p: PromoVigencia, hoy: string): boolean {
 export function promoVencida(p: PromoVigencia, hoy: string): boolean {
   const { hasta } = rangoVigencia(p);
   return !!hasta && hasta < hoy;
+}
+
+// ¿Vence dentro de los próximos `dias` días (hoy inclusive)? "Sin vencimiento" (2099) no cuenta.
+export function promoPorVencer(p: PromoVigencia, hoy: string, dias = 30): boolean {
+  const { hasta } = rangoVigencia(p);
+  return !!hasta && hoy <= hasta && hasta <= sumarDias(hoy, dias);
+}
+
+// Clave del query param ?resaltar= con el que el aviso de vencimientos linkea a Beneficios.
+export type Resaltar = 'vencidos' | 'por-vencer';
+export function promoResaltada(p: PromoVigencia & Pick<ApiPromo, 'activa'>, resaltar: string | null, hoy: string): boolean {
+  if (!p.activa) return false;
+  if (resaltar === 'vencidos') return promoVencida(p, hoy);
+  if (resaltar === 'por-vencer') return promoPorVencer(p, hoy);
+  return false;
 }
 
 // Días válidos normalizados a number[] 0–6 (la API puede mandar array o CSV "1,2,3").

@@ -4,6 +4,7 @@
 // beneficio en la app del miembro al seleccionarlo.
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, LogoBox, PButton, PCard, PChip, Table, type Column } from '@/components/panel/kit';
 import { Icon } from '@/components/panel/Icon';
@@ -22,6 +23,7 @@ import {
   diasLabel,
   estadoPromo,
   limiteLabel,
+  promoResaltada,
   tipoBeneficioLabel,
   vigenciaLabel,
 } from '@/lib/opciones';
@@ -133,7 +135,11 @@ export default function LocalBeneficios() {
     [activeLocalId],
   );
 
-  const [filtro, setFiltro] = useState<Filtro>('todos');
+  // ?resaltar=vencidos|por-vencer: llega desde el aviso de Inicio. Resalta las
+  // filas afectadas y, para vencidos, arranca con ese filtro puesto.
+  const [params, setParams] = useSearchParams();
+  const resaltar = params.get('resaltar');
+  const [filtro, setFiltro] = useState<Filtro>(resaltar === 'vencidos' ? 'vencido' : 'todos');
   const [selId, setSelId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ApiPromo | null>(null);
@@ -168,6 +174,8 @@ export default function LocalBeneficios() {
           const estadoDe = (p: ApiPromo) => estadoPromo(p, hoy);
           const cuenta = (f: Filtro) => (f === 'todos' ? promos.length : promos.filter((p) => estadoDe(p) === f).length);
           const rows = promos.filter((p) => filtro === 'todos' || estadoDe(p) === filtro);
+          const resaltada = (p: ApiPromo) => promoResaltada(p, resaltar, hoy);
+          const nResaltadas = resaltar ? promos.filter(resaltada).length : 0;
           const sel = promos.find((p) => p.id === selId) ?? null;
           const canjesDe = (p: ApiPromo) => d.porPromo.get(p.id) ?? d.porPromo.get(`t:${p.titulo}`) ?? 0;
           const local = { nombre: activeLocal?.nombre ?? '', logo_url: activeLocal?.logo_url ?? null };
@@ -239,6 +247,24 @@ export default function LocalBeneficios() {
                   ))}
                 </div>
 
+                {nResaltadas > 0 && (
+                  <div className="flex items-center justify-between gap-3 rounded-[10px] border border-warn/40 bg-warn-soft px-3.5 py-2 text-[12.5px] text-ink">
+                    <span>
+                      Resaltando <b>{nResaltadas}</b>{' '}
+                      {resaltar === 'vencidos'
+                        ? nResaltadas === 1 ? 'beneficio vencido' : 'beneficios vencidos'
+                        : nResaltadas === 1 ? 'beneficio que vence en 30 días' : 'beneficios que vencen en 30 días'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setParams({})}
+                      className="rounded-md px-2 py-0.5 text-[12px] font-bold text-graytext transition-colors hover:bg-warn/20"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                )}
+
                 <PCard pad={0}>
                   {promos.length === 0 ? (
                     <PanelEmpty
@@ -258,7 +284,13 @@ export default function LocalBeneficios() {
                   ) : (
                     <div className="overflow-x-auto">
                       <div className="min-w-[540px]">
-                        <Table columns={columns} rows={rows} dense onRowClick={(p) => setSelId(p.id)} />
+                        <Table
+                          columns={columns}
+                          rows={rows}
+                          dense
+                          onRowClick={(p) => setSelId(p.id)}
+                          rowClassName={(p) => (resaltada(p) ? 'bg-warn-soft hover:bg-warn/20' : undefined)}
+                        />
                       </div>
                     </div>
                   )}
