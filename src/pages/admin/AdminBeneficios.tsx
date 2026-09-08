@@ -11,6 +11,8 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { BeneficioFormModal } from '@/components/panel/BeneficioFormModal';
 import { ConfirmDialog, RowMenu } from '@/components/panel/RowMenu';
 import { api } from '@/lib/api';
+import { hoyAR } from '@/lib/fechas';
+import { promoVencida } from '@/lib/opciones';
 import { useAsync } from '@/hooks/useAsync';
 import { ADMIN_NAV } from '@/data/panelMock';
 import type { ApiLocal, ApiPromo } from '@/types';
@@ -84,6 +86,7 @@ export default function AdminBeneficios() {
               />
             );
           }
+          const hoy = hoyAR();
           const byLocal = new Map<string, ApiPromo[]>();
           for (const p of d.promos) {
             const arr = byLocal.get(p.local_id) ?? [];
@@ -151,6 +154,15 @@ export default function AdminBeneficios() {
                                 onClick={() => openEdit(p)}
                                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
                               >
+                                {/* Vencido: círculo naranja con triángulo, a la izquierda del tag. */}
+                                {promoVencida(p, hoy) && (
+                                  <span
+                                    className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-soon text-white"
+                                    title="Beneficio vencido"
+                                  >
+                                    <Icon name="warn" size={11} strokeWidth={2.4} />
+                                  </span>
+                                )}
                                 <Icon name="tag" size={15} className="text-mute" />
                                 <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{p.titulo}</span>
                               </button>

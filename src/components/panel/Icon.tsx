@@ -3,6 +3,7 @@
 // pantallas del panel referencian iconos por nombre (igual que en las refs).
 
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   BarChart3,
@@ -79,6 +80,7 @@ const ICONS = {
   sliders: SlidersHorizontal,
   flash: Zap,
   help: HelpCircle,
+  warn: AlertTriangle,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
