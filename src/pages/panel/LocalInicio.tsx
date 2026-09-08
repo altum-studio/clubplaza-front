@@ -3,16 +3,17 @@
 // (últimos 7) y actividad reciente de validaciones, todo desde la API
 // (api.promos.mine + api.canjes.statsMine + api.canjes.mine).
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, Bars, PButton, PCard, Stat } from '@/components/panel/kit';
+import { Icon } from '@/components/panel/Icon';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR } from '@/lib/fechas';
-import { promoPublicada, promoVigenteHoy } from '@/lib/opciones';
+import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR, sumarDias } from '@/lib/fechas';
+import { promoPublicada, promoVencida, promoVigenteHoy, rangoVigencia } from '@/lib/opciones';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
@@ -68,6 +69,14 @@ export default function LocalInicio() {
           const vigentes = d.promos.data.filter((p) => promoVigenteHoy(p, hoy, diaSemanaAR())).length;
           // Publicados: activos y no vencidos (vigentes hoy o algún día de la semana).
           const publicados = d.promos.data.filter((p) => promoPublicada(p, hoy)).length;
+          // Vencimientos (mismo criterio que el admin): activos vencidos y los que vencen en 30 días.
+          const en30 = sumarDias(hoy, 30);
+          const activas = d.promos.data.filter((p) => p.activa);
+          const vencidos = activas.filter((p) => promoVencida(p, hoy)).length;
+          const porVencer = activas.filter((p) => {
+            const { hasta } = rangoVigencia(p);
+            return !!hasta && hoy <= hasta && hasta <= en30;
+          }).length;
 
           return (
             <div className="flex flex-col gap-4">
@@ -88,6 +97,31 @@ export default function LocalInicio() {
                   icon="users"
                 />
               </div>
+
+              {/* Aviso de vencimientos (solo si hay algo que avisar). */}
+              {(vencidos > 0 || porVencer > 0) && (
+                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px]">
+                  {vencidos > 0 && (
+                    <Link to="/panel/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                      <Icon name="clock" size={14} className="flex-shrink-0 text-bad" />
+                      <span>
+                        <b>{vencidos}</b>{' '}
+                        {vencidos === 1 ? 'beneficio vencido sigue publicado' : 'beneficios vencidos siguen publicados'}
+                      </span>
+                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                    </Link>
+                  )}
+                  {porVencer > 0 && (
+                    <Link to="/panel/beneficios" className="group flex items-center gap-2 text-ink hover:underline">
+                      <Icon name="cal" size={14} className="flex-shrink-0 text-warn" />
+                      <span>
+                        <b>{porVencer}</b> {porVencer === 1 ? 'beneficio vence' : 'beneficios vencen'} en los próximos 30 días
+                      </span>
+                      <Icon name="chevR" size={14} className="text-mute group-hover:text-ink" />
+                    </Link>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
                 <PCard title="Canjes por día" sub={`Últimos 7 días${hoyIdx >= 0 ? ' · hoy parcial' : ''}`}>
