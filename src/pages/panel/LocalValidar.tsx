@@ -19,26 +19,17 @@ import { useLocalScope } from '@/hooks/useLocalScope';
 import { api, ApiError, humanizeError } from '@/lib/api';
 import type { ApiPromo, EscaneoResult, MiembroPorCodigo } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diasLabel, limiteLabel } from '@/lib/opciones';
+import { diasLabel, limiteLabel, promoVigenteHoy } from '@/lib/opciones';
 import { diaSemanaAR, hoyAR } from '@/lib/fechas';
 
 type Lookup = { codigo: string; esc: EscaneoResult; miembro: MiembroPorCodigo | null };
 type CanjeMsg = { ok: boolean; text: string };
 
-// Un beneficio se puede aplicar HOY si está activo, hoy cae en sus días válidos
-// y está dentro de la vigencia. (El backend hace la validación autoritativa en el
-// canje; esto evita ofrecer en el selector algo que igual sería rechazado.)
+// Un beneficio se puede aplicar HOY si es "vigente" según la definición canónica
+// compartida (activo + vigencia + día válido, en huso Argentina). El backend hace
+// la validación autoritativa en el canje; esto evita ofrecer algo que rechazaría.
 function disponibleHoy(p: ApiPromo): boolean {
-  if (!p.activa) return false;
-  // "Hoy" en huso Argentina (no el del dispositivo).
-  const dias = p.dias ?? [];
-  if (dias.length > 0 && !dias.includes(diaSemanaAR())) return false; // 0=Dom … 6=Sáb
-  const hoyStr = hoyAR();
-  const desde = p.vigencia_desde ?? p.fecha_inicio ?? '';
-  const hasta = p.vigencia_hasta ?? p.fecha_fin ?? '';
-  if (desde && hoyStr < desde) return false;
-  if (hasta && hoyStr > hasta) return false;
-  return true;
+  return promoVigenteHoy(p, hoyAR(), diaSemanaAR());
 }
 
 export default function LocalValidar() {

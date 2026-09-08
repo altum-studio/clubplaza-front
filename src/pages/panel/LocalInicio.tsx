@@ -11,7 +11,8 @@ import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diaSemanaDe, formatoAR } from '@/lib/fechas';
+import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR } from '@/lib/fechas';
+import { promoVigenteHoy } from '@/lib/opciones';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
@@ -59,16 +60,14 @@ export default function LocalInicio() {
           const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
           const canjesHoy = serie.length ? serie[serie.length - 1] : 0;
           const recientes = d.recientes?.data ?? [];
+          const hoy = hoyAR();
+          // Vigente (definición canónica): activa + dentro de vigencia + hoy es día válido.
+          const vigentes = d.promos.data.filter((p) => promoVigenteHoy(p, hoy, diaSemanaAR())).length;
 
           return (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Stat
-                  live
-                  label="Beneficios activos"
-                  value={String(d.promos.data.filter((p) => p.activa).length)}
-                  icon="tag"
-                />
+                <Stat live label="Beneficios activos" value={String(vigentes)} icon="tag" />
                 <Stat live label="Beneficios totales" value={String(d.promos.count)} icon="chart" />
                 <Stat live label="Canjes hoy" value={d.stats ? String(canjesHoy) : '—'} icon="ticket" />
                 <Stat

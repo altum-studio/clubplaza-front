@@ -134,6 +134,43 @@ export function promoVencida(p: PromoVigencia, hoy: string): boolean {
   return !!hasta && hasta < hoy;
 }
 
+// Días válidos normalizados a number[] 0–6 (la API puede mandar array o CSV "1,2,3").
+export function normalizarDias(dias: unknown): number[] {
+  const arr = Array.isArray(dias) ? dias : typeof dias === 'string' ? dias.split(',') : [];
+  return arr.map((d) => Number(String(d).trim())).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+}
+
+type PromoEstado = PromoVigencia & Pick<ApiPromo, 'activa' | 'dias'>;
+
+// ── Definiciones canónicas (valen para admin y local) ──
+// VIGENTE: activa, dentro de la vigencia y hoy es un día válido.
+export function promoVigenteHoy(p: PromoEstado, hoy: string, diaSemana: number): boolean {
+  if (!p.activa || !promoVigente(p, hoy)) return false;
+  const dias = normalizarDias(p.dias);
+  return dias.length === 0 || dias.includes(diaSemana);
+}
+
+// PUBLICADA: activa y todavía no vencida (vigente hoy o algún día de la semana).
+export function promoPublicada(p: PromoEstado, hoy: string): boolean {
+  return p.activa && !promoVencida(p, hoy);
+}
+
+// Estado para listados. Prioridad: pausado > vencido > programado > activo.
+export type EstadoPromo = 'activo' | 'pausado' | 'vencido' | 'programado';
+export function estadoPromo(p: PromoEstado, hoy: string): EstadoPromo {
+  if (!p.activa) return 'pausado';
+  if (promoVencida(p, hoy)) return 'vencido';
+  const { desde } = rangoVigencia(p);
+  if (desde && desde > hoy) return 'programado';
+  return 'activo';
+}
+export const ESTADO_PROMO_LABEL: Record<EstadoPromo, string> = {
+  activo: 'Activo',
+  pausado: 'Pausado',
+  vencido: 'Vencido',
+  programado: 'Programado',
+};
+
 export function vigenciaLabel(opts: {
   indefinida?: boolean;
   desde?: string | null;
