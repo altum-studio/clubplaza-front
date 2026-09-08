@@ -12,6 +12,7 @@ import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import type { CanjeHistorialItem } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
+import { formatoAR } from '@/lib/fechas';
 
 const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
   ok: { tone: 'ok', label: 'Aplicado' },
@@ -19,15 +20,9 @@ const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
   repetido: { tone: 'warn', label: 'Repetido' },
 };
 
+// Timestamp UTC de la API → hora Argentina.
 function fechaLabel(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatoAR(iso, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) || '—';
 }
 
 const columns: Column<CanjeHistorialItem>[] = [

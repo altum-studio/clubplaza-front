@@ -22,6 +22,7 @@ import { slugify } from '@/lib/utils';
 import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
+import { diaSemanaAR } from '@/lib/fechas';
 import type { Categoria, Promo } from '@/types';
 
 // Mezcla al azar (Fisher-Yates) sin mutar el original.
@@ -84,7 +85,7 @@ export default function HomePage() {
   // días). Es INDEPENDIENTE de los filtros de Rubro/Fecha (esos afinan la grilla).
   // El orden es ALEATORIO (no agrupado por marca) y se re-mezcla cada tanto.
   const beneficiosHoy = useMemo(() => {
-    const hoy = new Date().getDay();
+    const hoy = diaSemanaAR(); // día de hoy en Argentina, no el del dispositivo
     return shuffle(promosVisibles.filter((p) => p.dias.includes(hoy)));
     // shuffleSeed fuerza el re-mezclado periódico.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,7 +96,7 @@ export default function HomePage() {
   const beneficiosFiltrados = useMemo(() => {
     const porRubro = (p: Promo) => rubro === 'todos' || p.categoria === rubro;
     if (dia === 'todos') return promosVisibles.filter(porRubro);
-    const d = dia === 'hoy' ? new Date().getDay() : dia;
+    const d = dia === 'hoy' ? diaSemanaAR() : dia;
     return promosVisibles.filter((p) => p.dias.includes(d) && porRubro(p));
   }, [promosVisibles, rubro, dia]);
 

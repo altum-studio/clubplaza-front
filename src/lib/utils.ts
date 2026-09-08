@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { fechaAR } from "./fechas"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -21,9 +22,9 @@ export function isoToDDMMAAAA(iso: string): string {
   return `${dd}/${mm}/${yyyy}`
 }
 
-/** ¿La fecha de hoy cae dentro del rango [desde, hasta] (ISO)? */
+/** ¿La fecha de hoy (en Argentina) cae dentro del rango [desde, hasta] (ISO)? */
 export function vigenteHoy(desde: string, hasta: string, now = new Date()): boolean {
-  const today = now.toISOString().slice(0, 10)
+  const today = fechaAR(now)
   return desde <= today && today <= hasta
 }
 

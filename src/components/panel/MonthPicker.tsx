@@ -3,6 +3,7 @@
 // No deja ir al futuro (‹ navega al pasado; › se deshabilita en el mes actual).
 
 import { Icon } from './Icon';
+import { hoyAR } from '@/lib/fechas';
 
 const MES_NOMBRES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -13,10 +14,11 @@ const MES_NOMBRES = [
 const MES_MAS_LARGO = MES_NOMBRES.reduce((a, b) => (b.length > a.length ? b : a), '');
 
 // Año/mes (mes 0-indexado) del mes actual desplazado `offset` meses.
+// "Mes actual" = en huso Argentina (no el del dispositivo).
 function monthDate(offset: number): { year: number; month: number } {
-  const now = new Date();
-  const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-  return { year: d.getFullYear(), month: d.getMonth() };
+  const hoy = hoyAR();
+  const d = new Date(Date.UTC(Number(hoy.slice(0, 4)), Number(hoy.slice(5, 7)) - 1 + offset, 1));
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() };
 }
 
 export function monthLabel(offset: number): string {

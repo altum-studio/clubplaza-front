@@ -27,17 +27,12 @@ const MES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep',
 const mesCorto = (ym: string) => `${MES_ABBR[Number(ym.slice(5, 7)) - 1] ?? ''} '${ym.slice(2, 4)}`;
 
 // Rango [desde, hasta] (YYYY-MM-DD) de la ventana de 7 días `back` semanas atrás
-// (back=0 = últimos 7 días, terminando hoy). Incluye un label corto DD/M – DD/M.
+// (back=0 = últimos 7 días, terminando HOY en Argentina). Label corto D/M – D/M.
 function weekRange(back: number): { desde: string; hasta: string; label: string } {
-  const iso = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const end = new Date();
-  end.setHours(0, 0, 0, 0);
-  end.setDate(end.getDate() - back * 7);
-  const start = new Date(end);
-  start.setDate(start.getDate() - 6);
-  const label = `${start.getDate()}/${start.getMonth() + 1} – ${end.getDate()}/${end.getMonth() + 1}`;
-  return { desde: iso(start), hasta: iso(end), label };
+  const hasta = sumarDias(hoyAR(), -back * 7);
+  const desde = sumarDias(hasta, -6);
+  const dm = (ymd: string) => `${Number(ymd.slice(8, 10))}/${Number(ymd.slice(5, 7))}`;
+  return { desde, hasta, label: `${dm(desde)} – ${dm(hasta)}` };
 }
 
 // Enumera 'YYYY-MM' desde `from` hasta `to` inclusive (serie de canjes por mes).

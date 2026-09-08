@@ -11,6 +11,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
+import { diaSemanaDe, formatoAR } from '@/lib/fechas';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
@@ -19,10 +20,9 @@ const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
   repetido: { tone: 'warn', label: 'Repetido' },
 };
 
+// Timestamp UTC de la API → hora Argentina.
 function horaLabel(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return formatoAR(iso, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function LocalInicio() {
@@ -56,10 +56,7 @@ export default function LocalInicio() {
         {(d) => {
           const dias = d.stats?.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((x) => x.cantidad);
-          const labels = dias.map((x) => {
-            const dt = new Date(`${x.fecha}T00:00:00`);
-            return isNaN(dt.getTime()) ? '' : DOW[dt.getDay()];
-          });
+          const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
           const canjesHoy = serie.length ? serie[serie.length - 1] : 0;
           const recientes = d.recientes?.data ?? [];
 

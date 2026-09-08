@@ -12,6 +12,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
+import { diaSemanaDe } from '@/lib/fechas';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
@@ -37,10 +38,7 @@ export default function LocalStats() {
         {(s) => {
           const dias = s.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((d) => d.cantidad);
-          const labels = dias.map((d) => {
-            const dt = new Date(`${d.fecha}T00:00:00`);
-            return isNaN(dt.getTime()) ? '' : DOW[dt.getDay()];
-          });
+          const labels = dias.map((d) => DOW[diaSemanaDe(d.fecha)] ?? '');
           const total7 = serie.reduce((a, b) => a + b, 0);
           const porMiembro = s.miembros_unicos_mes ? s.canjes_mes / s.miembros_unicos_mes : 0;
 

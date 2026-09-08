@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { AltaBucket } from '@/types';
+import { diaSemanaDe } from '@/lib/fechas';
 
 const BRAND = '#23753a';
 const MES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -16,18 +17,19 @@ const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 type Vista = 'mes' | 'semana';
 
+// Los buckets diarios son días de calendario ('YYYY-MM-DD'): se leen como tales,
+// sin pasar por el huso del dispositivo.
 function axisLabel(b: AltaBucket, vista: Vista): string {
   if (vista === 'mes') return MES_ABBR[Number(b.periodo.slice(5, 7)) - 1] ?? '';
-  const d = new Date(`${b.periodo}T00:00:00`);
-  return isNaN(d.getTime()) ? '' : DOW[d.getDay()];
+  return DOW[diaSemanaDe(b.periodo)] ?? '';
 }
 function fullLabel(b: AltaBucket, vista: Vista): string {
   if (vista === 'mes') {
     return `${MES_FULL[Number(b.periodo.slice(5, 7)) - 1] ?? ''} ${b.periodo.slice(0, 4)}`;
   }
-  const d = new Date(`${b.periodo}T00:00:00`);
-  if (isNaN(d.getTime())) return b.periodo;
-  return `${DOW[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const dow = DOW[diaSemanaDe(b.periodo)];
+  if (!dow) return b.periodo;
+  return `${dow} ${b.periodo.slice(8, 10)}/${b.periodo.slice(5, 7)}`;
 }
 
 // `parcial`: el último bucket es el período EN CURSO (mes/día de hoy, incompleto).

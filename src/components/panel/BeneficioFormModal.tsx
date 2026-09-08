@@ -13,12 +13,10 @@ import { PButton, Toggle } from './kit';
 import { DaysPicker, ImagePicker, SelectInput, TextArea, TextInput } from './FormControls';
 import { CATEGORIA_LABEL } from '@/lib/categorias';
 import { LIMITE_PERIODO, TIPO_BENEFICIO, VIGENCIA_INDEF_HASTA, esVigenciaIndefinida } from '@/lib/opciones';
+import { hoyAR } from '@/lib/fechas';
 
-// Fecha de hoy en formato ISO (yyyy-mm-dd), en la zona horaria local.
-const hoyISO = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+// Fecha de hoy en formato ISO (yyyy-mm-dd), en huso Argentina.
+const hoyISO = () => hoyAR();
 
 export function BeneficioFormModal({
   open,
@@ -109,10 +107,7 @@ export function BeneficioFormModal({
 
     // El backend exige vigencia siempre. "Sin vencimiento" → fecha centinela
     // lejana (desde hoy) que el front muestra como indefinido.
-    const hoy = new Date();
-    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(
-      hoy.getDate(),
-    ).padStart(2, '0')}`;
+    const hoyStr = hoyISO();
 
     const base = {
       titulo: titulo.trim(),
