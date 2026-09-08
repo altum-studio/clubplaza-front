@@ -71,15 +71,15 @@ export default function LocalStats() {
             <div className="flex flex-col gap-4">
               {/* ── KPIs (reales) ── */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Stat live label="Canjes del mes" value={String(s.canjes_mes)} icon="ticket" />
-                <Stat live label="Miembros activos del mes" value={String(s.miembros_unicos_mes)} icon="users" />
+                <Stat live label="Canjes del mes" info="Canjes válidos en tu local en el mes elegido." value={String(s.canjes_mes)} icon="ticket" />
+                <Stat live label="Miembros activos del mes" info="Miembros distintos que canjearon al menos una vez en el mes elegido." value={String(s.miembros_unicos_mes)} icon="users" />
                 <Stat
                   live
-                  label="Canjes / miembro"
+                  label="Canjes / miembro" info="Promedio de canjes por miembro activo en el mes."
                   value={porMiembro ? porMiembro.toFixed(1).replace('.', ',') : '—'}
                   icon="chart"
                 />
-                <Stat live label="Últimos 7 días" value={String(total7)} icon="up" />
+                <Stat live label="Últimos 7 días" info="Canjes de los últimos 7 días hasta hoy." value={String(total7)} icon="up" />
               </div>
 
               {/* ── Gráficos ── */}

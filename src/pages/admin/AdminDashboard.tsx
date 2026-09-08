@@ -211,9 +211,9 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-4 lg:gap-[18px]">
               {/* Totales globales: NO dependen del mes seleccionado. */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Stat live label="Miembros totales" value={String(b.miembrosCount)} icon="users" />
-                <Stat live label="Locales activos totales" value={String(b.localesCount)} icon="store" />
-                <Stat live label="Beneficios publicados totales" value={String(b.promos)} icon="tag" />
+                <Stat live label="Miembros totales" info="Usuarios registrados en ClubPlaza, de todos los roles." value={String(b.miembrosCount)} icon="users" />
+                <Stat live label="Locales activos totales" info="Locales con estado Disponible. No incluye Próximamente ni Inactivos." value={String(b.localesCount)} icon="store" />
+                <Stat live label="Beneficios publicados totales" info="Beneficios activos y dentro de su vigencia hoy." value={String(b.promos)} icon="tag" />
               </div>
 
               {/* Aviso de vencimientos (solo si hay algo que avisar). */}
@@ -352,9 +352,9 @@ export default function AdminDashboard() {
                     <MonthPicker offset={monthOffset} onChange={setMonthOffset} />
                   </div>
                   {md?.canjesMes != null ? (
-                    <Stat live label="Canjes del mes" value={String(md.canjesMes)} icon="ticket" />
+                    <Stat live label="Canjes del mes" info="Canjes válidos de todos los locales en el mes elegido." value={String(md.canjesMes)} icon="ticket" />
                   ) : (
-                    <Stat live label="Canjes del mes" value={mesData.loading ? '…' : '—'} icon="ticket" />
+                    <Stat live label="Canjes del mes" info="Canjes válidos de todos los locales en el mes elegido." value={mesData.loading ? '…' : '—'} icon="ticket" />
                   )}
                   <PCard title="Top locales por canjes" sub="Ordenado de mayor a menor">
                     {mesData.loading ? (

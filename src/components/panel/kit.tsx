@@ -267,6 +267,48 @@ function StatValue({ value }: { value: ReactNode }) {
   return <>{target === null ? value : n}</>;
 }
 
+// ⓘ junto al label de un KPI: tooltip con una descripción breve. Aparece con
+// hover (desktop) y con tap (móvil); se cierra tocando afuera o con Escape.
+export function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return (
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        aria-label="Qué significa"
+        aria-expanded={open}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-faint transition-colors hover:text-graytext"
+      >
+        <Icon name="info" size={14} strokeWidth={2} />
+      </button>
+      <span
+        role="tooltip"
+        className={cn(
+          'pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-ink px-2.5 py-1.5 text-left text-[11.5px] font-medium normal-case leading-snug tracking-normal text-white shadow-[0_6px_20px_rgba(0,0,0,0.25)] transition-opacity',
+          open ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+        )}
+      >
+        {text}
+      </span>
+    </span>
+  );
+}
+
 export function Stat({
   label,
   value,
@@ -276,6 +318,7 @@ export function Stat({
   icon,
   spark,
   live = false,
+  info,
 }: {
   label: string;
   value?: ReactNode;
@@ -287,6 +330,8 @@ export function Stat({
   // `live`: dato REAL del backend (totales de la API) → se muestra aunque
   // METRICS_SOON esté activo (que sólo afecta a las métricas simuladas).
   live?: boolean;
+  /** Descripción breve del KPI: muestra un ⓘ con tooltip junto al label. */
+  info?: string;
 }) {
   if (METRICS_SOON && !live) {
     return (
@@ -308,7 +353,10 @@ export function Stat({
   return (
     <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(20,40,25,0.04)]">
       <div className="flex items-center justify-between">
-        <span className="text-[12.5px] font-semibold text-graytext">{label}</span>
+        <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-graytext">
+          {label}
+          {info && <InfoTip text={info} />}
+        </span>
         {icon && (
           <span className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-brand-soft">
             <Icon name={icon} size={17} className="text-brand" />

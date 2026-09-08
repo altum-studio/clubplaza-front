@@ -157,10 +157,10 @@ export default function AdminUsuarios() {
           return (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Stat live label="Usuarios" value={String(d.total)} icon="users" />
-                <Stat live label="Miembros" value={String(count('comun'))} icon="user" />
-                <Stat live label="Comercios" value={String(count('local'))} icon="store" />
-                <Stat live label="Administradores" value={String(count('admin'))} icon="gear" />
+                <Stat live label="Usuarios" info="Total de cuentas registradas, de todos los roles." value={String(d.total)} icon="users" />
+                <Stat live label="Miembros" info="Cuentas con rol Miembro (socios del club)." value={String(count('comun'))} icon="user" />
+                <Stat live label="Comercios" info="Cuentas de locales adheridos." value={String(count('local'))} icon="store" />
+                <Stat live label="Administradores" info="Cuentas con acceso a este panel." value={String(count('admin'))} icon="gear" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

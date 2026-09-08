@@ -80,15 +80,15 @@ export default function LocalInicio() {
                 {/* Una sola card: vigentes hoy, con el total publicado como referencia. */}
                 <Stat
                   live
-                  label="Beneficios vigentes"
+                  label="Beneficios vigentes" info="Activos, dentro de su vigencia y válidos hoy según sus días."
                   value={String(vigentes)}
                   unit={`de ${publicados} publicados`}
                   icon="tag"
                 />
-                <Stat live label="Canjes hoy" value={d.stats ? String(canjesHoy) : '—'} icon="ticket" />
+                <Stat live label="Canjes hoy" info="Canjes válidos registrados hoy en tu local." value={d.stats ? String(canjesHoy) : '—'} icon="ticket" />
                 <Stat
                   live
-                  label="Miembros activos del mes"
+                  label="Miembros activos del mes" info="Miembros distintos que canjearon al menos una vez en tu local este mes."
                   value={d.stats ? String(d.stats.miembros_unicos_mes) : '—'}
                   icon="users"
                 />

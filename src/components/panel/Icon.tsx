@@ -18,6 +18,7 @@ import {
   Eye,
   Filter,
   HelpCircle,
+  Info,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -81,6 +82,7 @@ const ICONS = {
   flash: Zap,
   help: HelpCircle,
   warn: AlertTriangle,
+  info: Info,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

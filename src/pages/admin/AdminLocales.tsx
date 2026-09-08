@@ -173,10 +173,10 @@ export default function AdminLocales() {
           return (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Stat live label="Locales" value={String(page.count)} icon="store" />
-                <Stat live label="Activos" value={String(nDisponible)} icon="check" />
-                <Stat live label="Inactivos" value={String(nInactivo)} icon="store" />
-                <Stat live label="Beneficios totales" value={String(page.totalBenef)} icon="tag" />
+                <Stat live label="Locales" info="Todos los locales cargados, en cualquier estado." value={String(page.count)} icon="store" />
+                <Stat live label="Activos" info="Locales con estado Disponible." value={String(nDisponible)} icon="check" />
+                <Stat live label="Inactivos" info="Locales dados de baja; no se muestran a los miembros." value={String(nInactivo)} icon="store" />
+                <Stat live label="Beneficios totales" info="Beneficios cargados entre todos los locales, vigentes o no." value={String(page.totalBenef)} icon="tag" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
