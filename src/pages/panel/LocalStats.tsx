@@ -72,7 +72,7 @@ export default function LocalStats() {
               {/* ── KPIs (reales) ── */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Stat live label="Canjes del mes" value={String(s.canjes_mes)} icon="ticket" />
-                <Stat live label="Miembros únicos" value={String(s.miembros_unicos_mes)} icon="users" />
+                <Stat live label="Miembros activos del mes" value={String(s.miembros_unicos_mes)} icon="users" />
                 <Stat
                   live
                   label="Canjes / miembro"

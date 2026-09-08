@@ -83,7 +83,7 @@ export default function LocalInicio() {
                 <Stat live label="Canjes hoy" value={d.stats ? String(canjesHoy) : '—'} icon="ticket" />
                 <Stat
                   live
-                  label="Miembros del mes"
+                  label="Miembros activos del mes"
                   value={d.stats ? String(d.stats.miembros_unicos_mes) : '—'}
                   icon="users"
                 />
