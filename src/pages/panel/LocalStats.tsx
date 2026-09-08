@@ -4,8 +4,9 @@
 // canjeado. (El backend devuelve el mes actual; el selector queda como referencia.)
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Bars, PCard, Stat } from '@/components/panel/kit';
+import { Bars, PButton, PCard, Stat } from '@/components/panel/kit';
 import { MonthPicker, monthLabel, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
@@ -17,6 +18,7 @@ import { diaSemanaDe, hoyAR } from '@/lib/fechas';
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function LocalStats() {
+  const navigate = useNavigate();
   const [monthOffset, setMonthOffset] = useState(0);
   const { activeLocalId } = useLocalScope();
   const mes = monthValue(monthOffset);
@@ -32,7 +34,15 @@ export default function LocalStats() {
       userName="Comercio"
       userRole="Comercio adherido"
       topbarTitle="Estadísticas de canjes"
-      topbarActions={<MonthPicker offset={monthOffset} onChange={setMonthOffset} />}
+      topbarActions={
+        <>
+          <MonthPicker offset={monthOffset} onChange={setMonthOffset} />
+          {/* Historial no entra en la nav inferior (6 ítems): link fijo acá. */}
+          <PButton variant="outline" icon="clock" onClick={() => navigate('/panel/historial')}>
+            Historial
+          </PButton>
+        </>
+      }
     >
       <DataView state={state}>
         {(s) => {

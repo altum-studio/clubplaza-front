@@ -2,17 +2,19 @@
 // Panel Local · Historial de validaciones (canjes). Lista real desde
 // GET /api/canjes/mine: qué miembro usó qué beneficio, cuándo y su estado.
 
+import { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, PCard, Table, type Column } from '@/components/panel/kit';
+import { MonthPicker, monthLabel, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import type { CanjeHistorialItem } from '@/types';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { formatoAR } from '@/lib/fechas';
+import { formatoAR, mesAR } from '@/lib/fechas';
 
 const ESTADO: Record<string, { tone: 'ok' | 'bad' | 'warn'; label: string }> = {
   ok: { tone: 'ok', label: 'Aplicado' },
@@ -71,8 +73,12 @@ const columns: Column<CanjeHistorialItem>[] = [
 export default function LocalHistorial() {
   const navigate = useNavigate();
   const { activeLocalId } = useLocalScope();
+  // Mes elegido (mismo selector que Stats). /canjes/mine no filtra por mes, así
+  // que se filtra acá sobre la fecha convertida a hora Argentina.
+  const [monthOffset, setMonthOffset] = useState(0);
+  const mes = monthValue(monthOffset);
   const state = useAsync(
-    () => api.canjes.mine({ local_id: activeLocalId ?? undefined, limit: 100 }),
+    () => api.canjes.mine({ local_id: activeLocalId ?? undefined, limit: 500 }),
     [activeLocalId],
   );
 
@@ -83,6 +89,7 @@ export default function LocalHistorial() {
       userName="Comercio"
       userRole="Comercio adherido"
       topbarTitle="Historial de validaciones"
+      topbarActions={<MonthPicker offset={monthOffset} onChange={setMonthOffset} />}
     >
       <button
         type="button"
@@ -93,23 +100,39 @@ export default function LocalHistorial() {
       </button>
 
       <DataView state={state}>
-        {(d) =>
-          d.data.length === 0 ? (
-            <PanelEmpty
-              icon="clock"
-              title="Todavía no hay validaciones"
-              hint="Cuando valides credenciales y apliques beneficios, cada canje va a aparecer acá."
-            />
-          ) : (
+        {(d) => {
+          const delMes = d.data.filter((c) => mesAR(c.fecha) === mes);
+          if (d.data.length === 0) {
+            return (
+              <PanelEmpty
+                icon="clock"
+                title="Todavía no hay validaciones"
+                hint="Cuando valides credenciales y apliques beneficios, cada canje va a aparecer acá."
+              />
+            );
+          }
+          if (delMes.length === 0) {
+            return (
+              <PanelEmpty
+                icon="cal"
+                title={`Sin validaciones en ${monthLabel(monthOffset)}`}
+                hint="Probá con otro mes desde el selector de arriba."
+              />
+            );
+          }
+          return (
             <PCard pad={0}>
               <div className="overflow-x-auto">
                 <div className="min-w-[560px]">
-                  <Table columns={columns} rows={d.data} dense />
+                  <Table columns={columns} rows={delMes} dense />
                 </div>
               </div>
+              <div className="border-t border-line-soft px-4 py-3 text-xs text-mute">
+                {delMes.length} {delMes.length === 1 ? 'validación' : 'validaciones'} en {monthLabel(monthOffset)}
+              </div>
             </PCard>
-          )
-        }
+          );
+        }}
       </DataView>
     </PanelShell>
   );
