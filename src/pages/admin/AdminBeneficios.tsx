@@ -147,22 +147,23 @@ export default function AdminBeneficios() {
                           promos.map((p) => (
                             <div
                               key={p.id}
-                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white"
+                              className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white"
                             >
+                              {/* Vencido: círculo naranja con triángulo en el margen izquierdo,
+                                  fuera del flujo para que el tag y el título no se desplacen. */}
+                              {promoVencida(p, hoy) && (
+                                <span
+                                  className="pointer-events-none absolute left-[-26px] top-1/2 flex h-[18px] w-[18px] -translate-y-1/2 items-center justify-center rounded-full bg-soon text-white"
+                                  title="Beneficio vencido"
+                                >
+                                  <Icon name="warn" size={11} strokeWidth={2.4} />
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => openEdit(p)}
                                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
                               >
-                                {/* Vencido: círculo naranja con triángulo, a la izquierda del tag. */}
-                                {promoVencida(p, hoy) && (
-                                  <span
-                                    className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-soon text-white"
-                                    title="Beneficio vencido"
-                                  >
-                                    <Icon name="warn" size={11} strokeWidth={2.4} />
-                                  </span>
-                                )}
                                 <Icon name="tag" size={15} className="text-mute" />
                                 <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{p.titulo}</span>
                               </button>
