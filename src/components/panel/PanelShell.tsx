@@ -147,7 +147,7 @@ export function PanelShell({
             </span>
             {/* Logo del local activo (switcher si gestiona varios) / avatar admin */}
             <div className="ml-1">
-              <LocalSwitcher size={30} fallbackName={accountName} menuDir="down" />
+              <LocalSwitcher size={30} fallbackName={accountName} menuDir="down" align="right" />
             </div>
             <button
               type="button"

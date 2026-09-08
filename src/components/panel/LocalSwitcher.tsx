@@ -25,10 +25,14 @@ export function LocalSwitcher({
   size = 32,
   fallbackName = 'NN',
   menuDir = 'up',
+  align = 'left',
 }: {
   size?: number;
   fallbackName?: string;
   menuDir?: 'up' | 'down';
+  /** Borde del avatar al que se ancla el menú. En la barra superior (avatar a la
+   *  derecha de la pantalla) va 'right' para que se expanda hacia la izquierda. */
+  align?: 'left' | 'right';
 }) {
   const { misLocales, activeLocal, activeLocalId, setActiveLocalId } = useLocalScope();
   const [open, setOpen] = useState(false);
@@ -69,9 +73,9 @@ export function LocalSwitcher({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className={`absolute left-0 z-50 w-60 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.18)] ${
-              menuDir === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
-            }`}
+            className={`absolute z-50 w-60 max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-line bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.18)] ${
+              align === 'right' ? 'right-0' : 'left-0'
+            } ${menuDir === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}
           >
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.6px] text-mute">
               Cambiar de local
