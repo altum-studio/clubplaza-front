@@ -218,7 +218,7 @@ export default function AdminDashboard() {
 
               {/* Aviso de vencimientos (solo si hay algo que avisar). */}
               {(b.vencidos > 0 || b.porVencer > 0) && (
-                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px] transition-colors hover:bg-warn/30">
+                <div className="flex flex-col gap-1.5 rounded-[12px] border border-warn/40 bg-warn-soft px-4 py-3 text-[12.5px] transition-colors hover:bg-[oklch(0.925_0.06_80)]">
                   {b.vencidos > 0 && (
                     <Link
                       to="/admin/beneficios?resaltar=vencidos"

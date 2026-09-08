@@ -15,6 +15,7 @@ import { api } from '@/lib/api';
 import { hoyAR } from '@/lib/fechas';
 import { promoResaltada, promoVencida } from '@/lib/opciones';
 import { useAsync } from '@/hooks/useAsync';
+import { useFlash } from '@/hooks/useFlash';
 import { ADMIN_NAV } from '@/data/panelMock';
 import type { ApiLocal, ApiPromo } from '@/types';
 
@@ -32,9 +33,10 @@ export default function AdminBeneficios() {
   const [lockedLocal, setLockedLocal] = useState<ApiLocal | null>(null);
   const [del, setDel] = useState<ApiPromo | null>(null);
   // ?resaltar=vencidos|por-vencer (desde el aviso del dashboard): despliega los
-  // locales con beneficios afectados y resalta esas filas.
-  const [params, setParams] = useSearchParams();
+  // locales con beneficios afectados y hace destellar esas filas unos segundos.
+  const [params] = useSearchParams();
   const resaltar = params.get('resaltar');
+  const flash = useFlash(resaltar);
   // null = todavía no tocó nada → se usa el auto-despliegue del resaltado.
   const [expanded, setExpanded] = useState<Set<string> | null>(null);
 
@@ -98,30 +100,13 @@ export default function AdminBeneficios() {
             arr.push(p);
             byLocal.set(p.local_id, arr);
           }
-          const resaltada = (p: ApiPromo) => promoResaltada(p, resaltar, hoy);
-          const resaltadas = resaltar ? d.promos.filter(resaltada) : [];
-          // Sin interacción previa, arrancan abiertos los locales con beneficios resaltados.
-          const abiertos = expanded ?? new Set(resaltadas.map((p) => p.local_id));
+          const afectada = (p: ApiPromo) => promoResaltada(p, resaltar, hoy);
+          const resaltada = (p: ApiPromo) => flash && afectada(p);
+          // Sin interacción previa, arrancan abiertos los locales con beneficios afectados.
+          const abiertos = expanded ?? new Set(d.promos.filter(afectada).map((p) => p.local_id));
 
           return (
             <div className="flex flex-col gap-4">
-              {resaltadas.length > 0 && (
-                <div className="flex items-center justify-between gap-3 rounded-[10px] border border-warn/40 bg-warn-soft px-3.5 py-2 text-[12.5px] text-ink">
-                  <span>
-                    Resaltando <b>{resaltadas.length}</b>{' '}
-                    {resaltar === 'vencidos'
-                      ? resaltadas.length === 1 ? 'beneficio vencido' : 'beneficios vencidos'
-                      : resaltadas.length === 1 ? 'beneficio que vence en 30 días' : 'beneficios que vencen en 30 días'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setParams({})}
-                    className="rounded-md px-2 py-0.5 text-[12px] font-bold text-graytext transition-colors hover:bg-warn/20"
-                  >
-                    Quitar
-                  </button>
-                </div>
-              )}
               <PCard pad={0}>
                 {d.locales.map((l, i) => {
                   const promos = byLocal.get(l.id) ?? [];
@@ -174,8 +159,8 @@ export default function AdminBeneficios() {
                             promos.map((p) => (
                               <div
                                 key={p.id}
-                                className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                                  resaltada(p) ? 'bg-warn-soft hover:bg-warn/20' : 'hover:bg-white'
+                                className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-700 ${
+                                  resaltada(p) ? 'bg-warn-soft' : 'hover:bg-white'
                                 }`}
                               >
                                 {/* Vencido: círculo naranja con triángulo en el margen izquierdo,
