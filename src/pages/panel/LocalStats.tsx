@@ -57,6 +57,9 @@ export default function LocalStats() {
             return n === 1 || n % 5 === 0 ? String(n) : '';
           });
           const hoy = hoyAR();
+          // Barra de HOY (por fecha, no por posición): resaltada y con trama de "parcial".
+          // En un mes pasado no existe → ninguna barra resaltada.
+          const hoyIdx = dias.findIndex((d) => d.fecha.slice(0, 10) === hoy);
           // "Últimos 7 días" = los 7 últimos días hasta hoy dentro de la serie (no el mes entero).
           const total7 = dias
             .filter((d) => d.fecha.slice(0, 10) <= hoy)
@@ -81,9 +84,18 @@ export default function LocalStats() {
 
               {/* ── Gráficos ── */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
-                <PCard title="Canjes por día" sub={esMesEntero ? monthLabel(monthOffset) : 'Últimos 7 días'}>
+                <PCard
+                  title="Canjes por día"
+                  sub={(esMesEntero ? monthLabel(monthOffset) : 'Últimos 7 días') + (hoyIdx >= 0 ? ' · hoy parcial' : '')}
+                >
                   {serie.length ? (
-                    <Bars data={serie} labels={labels} highlight={serie.length - 1} h={210} />
+                    <Bars
+                      data={serie}
+                      labels={labels}
+                      highlight={hoyIdx >= 0 ? hoyIdx : undefined}
+                      parcial={hoyIdx >= 0 ? hoyIdx : undefined}
+                      h={210}
+                    />
                   ) : (
                     <PanelEmpty
                       icon="chart"

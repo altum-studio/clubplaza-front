@@ -60,7 +60,9 @@ export default function LocalInicio() {
           const serie = dias.map((x) => x.cantidad);
           const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
           // "Canjes hoy": el bucket cuya fecha es HOY (Argentina), no el último por posición.
-          const canjesHoy = dias.find((x) => x.fecha.slice(0, 10) === hoy)?.cantidad ?? 0;
+          // El mismo índice marca la barra de hoy como parcial en el gráfico.
+          const hoyIdx = dias.findIndex((x) => x.fecha.slice(0, 10) === hoy);
+          const canjesHoy = hoyIdx >= 0 ? dias[hoyIdx].cantidad : 0;
           const recientes = d.recientes?.data ?? [];
           // Vigente (definición canónica): activa + dentro de vigencia + hoy es día válido.
           const vigentes = d.promos.data.filter((p) => promoVigenteHoy(p, hoy, diaSemanaAR())).length;
@@ -88,9 +90,15 @@ export default function LocalInicio() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-                <PCard title="Canjes por día" sub="Últimos 7 días">
+                <PCard title="Canjes por día" sub={`Últimos 7 días${hoyIdx >= 0 ? ' · hoy parcial' : ''}`}>
                   {serie.length ? (
-                    <Bars data={serie} labels={labels} highlight={serie.length - 1} h={170} />
+                    <Bars
+                      data={serie}
+                      labels={labels}
+                      highlight={hoyIdx >= 0 ? hoyIdx : undefined}
+                      parcial={hoyIdx >= 0 ? hoyIdx : undefined}
+                      h={170}
+                    />
                   ) : (
                     <PanelEmpty
                       icon="chart"

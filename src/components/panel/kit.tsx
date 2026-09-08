@@ -358,14 +358,21 @@ export function Bars({
   labels,
   h = 150,
   highlight,
+  parcial,
 }: {
   data: number[];
   labels?: string[];
   h?: number;
   highlight?: number;
+  /** Índice del período EN CURSO (hoy, incompleto): se dibuja con trama. */
+  parcial?: number;
 }) {
   if (METRICS_SOON) return <SoonBox h={h} />;
   const max = Math.max(...data) || 1;
+  const fill = (i: number) => {
+    if (parcial === i) return `repeating-linear-gradient(135deg, ${BRAND} 0 3px, rgba(35,117,58,0.25) 3px 7px)`;
+    return highlight === i ? BRAND : 'rgba(35,117,58,0.22)';
+  };
   return (
     <div className="flex items-end gap-2.5 px-0.5" style={{ height: h }}>
       {data.map((v, i) => (
@@ -373,10 +380,11 @@ export function Bars({
           <div className="flex w-full flex-1 items-end">
             <div
               className="w-full rounded-t-[6px]"
+              title={parcial === i ? 'Hoy · parcial' : undefined}
               style={{
                 height: `${(v / max) * 100}%`,
                 minHeight: 4,
-                background: highlight === i ? BRAND : 'rgba(35,117,58,0.22)',
+                background: fill(i),
               }}
             />
           </div>
