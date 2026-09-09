@@ -102,7 +102,7 @@ export function filasCampania(
 export function aCSV(filas: string[][]): string {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lineas = [COLUMNAS.map(esc).join(';'), ...filas.map((f) => f.map(esc).join(';'))];
-  return `﻿${lineas.join('\r\n')}`;
+  return `\uFEFF${lineas.join('\r\n')}`;
 }
 
 export function descargarCSV(contenido: string, nombre: string) {
