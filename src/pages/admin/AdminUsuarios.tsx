@@ -143,8 +143,16 @@ export default function AdminUsuarios() {
             />
           </div>
           {esAdmin && (
-            <PButton variant="outline" icon="download" onClick={() => setExportOpen(true)} disabled={!state.data}>
-              Exportar para campañas
+            <PButton
+              variant="outline"
+              icon="download"
+              title="Exportar para campañas"
+              onClick={() => setExportOpen(true)}
+              disabled={!state.data}
+              className="flex-shrink-0"
+            >
+              {/* En móvil queda solo el ícono; el texto aparece desde sm. */}
+              <span className="hidden sm:inline">Exportar para campañas</span>
             </PButton>
           )}
           <PButton icon="plus" onClick={openNuevo}>

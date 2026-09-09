@@ -42,6 +42,7 @@ export function PButton({
   onClick,
   type = 'button',
   disabled = false,
+  title,
 }: {
   children?: ReactNode;
   variant?: PBtnVariant;
@@ -52,12 +53,16 @@ export function PButton({
   onClick?: () => void;
   type?: 'button' | 'submit';
   disabled?: boolean;
+  /** Tooltip + aria-label (útil cuando el botón queda solo con ícono en móvil). */
+  title?: string;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
+      aria-label={title}
       className={cn(
         'inline-flex items-center justify-center gap-[7px] whitespace-nowrap font-semibold tracking-[0.1px] transition-colors',
         PBTN_SIZE[size],
