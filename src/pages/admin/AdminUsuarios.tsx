@@ -8,8 +8,11 @@ import { Avatar, Badge, type Column, PButton, PCard, PChip, Stat, Table } from '
 import { Icon } from '@/components/panel/Icon';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { UsuarioFormModal } from '@/components/panel/UsuarioFormModal';
+import { ConfirmDialog } from '@/components/panel/RowMenu';
 import { useAsync } from '@/hooks/useAsync';
+import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { aCSV, descargarCSV, filasCampania, miembrosExportables, nombreArchivo } from '@/lib/exportCampanias';
 import type { ApiLocal, Profile, Role } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 import { ROLE_LABEL } from '@/lib/roles';
@@ -44,6 +47,19 @@ export default function AdminUsuarios() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Profile | null>(null);
+
+  // Exportar para campañas: SOLO admin (la ruta ya lo exige; se re-chequea el rol
+  // igual). Genera un CSV con contacto + canjes agregados; sin DNI ni credencial.
+  const { profile } = useAuth();
+  const esAdmin = profile?.rol === 'admin';
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportar = async () => {
+    const d = state.data;
+    if (!d || !esAdmin) return;
+    const canjes = await api.canjes.list({ limit: 5000 }).catch(() => ({ data: [], count: 0 }));
+    descargarCSV(aCSV(filasCampania(d.usuarios, canjes.data, d.locales)), nombreArchivo());
+  };
+  const nExportables = state.data ? miembrosExportables(state.data.usuarios).length : 0;
 
   const openNuevo = () => {
     setEditing(null);
@@ -126,6 +142,11 @@ export default function AdminUsuarios() {
               className="w-[150px] bg-transparent text-[13px] text-ink outline-none placeholder:text-faint"
             />
           </div>
+          {esAdmin && (
+            <PButton variant="outline" icon="download" onClick={() => setExportOpen(true)} disabled={!state.data}>
+              Exportar para campañas
+            </PButton>
+          )}
           <PButton icon="plus" onClick={openNuevo}>
             Nuevo usuario
           </PButton>
@@ -210,6 +231,18 @@ export default function AdminUsuarios() {
         locales={state.data?.locales ?? []}
         onClose={() => setModalOpen(false)}
         onSaved={state.reload}
+      />
+
+      <ConfirmDialog
+        open={exportOpen}
+        title="Exportar para campañas"
+        message={`Se va a descargar un CSV con ${nExportables} ${nExportables === 1 ? 'miembro activo' : 'miembros activos'}: nombre, email, celular, edad, mes de cumpleaños, fecha de alta y resumen de canjes. No incluye DNI ni credencial. El archivo tiene datos personales: usalo solo para comunicaciones del club y no lo compartas.`}
+        confirmLabel="Descargar CSV"
+        loadingLabel="Generando…"
+        variant="primary"
+        icon="download"
+        onConfirm={exportar}
+        onClose={() => setExportOpen(false)}
       />
     </PanelShell>
   );

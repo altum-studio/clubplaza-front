@@ -102,6 +102,9 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = 'Eliminar',
+  loadingLabel = 'Eliminando…',
+  variant = 'danger',
+  icon = 'trash',
   onConfirm,
   onClose,
 }: {
@@ -109,6 +112,10 @@ export function ConfirmDialog({
   title: string;
   message: string;
   confirmLabel?: string;
+  loadingLabel?: string;
+  /** 'danger' (default, para eliminar) o 'primary' para confirmaciones neutras. */
+  variant?: 'danger' | 'primary';
+  icon?: IconName;
   onConfirm: () => Promise<void>;
   onClose: () => void;
 }) {
@@ -145,8 +152,8 @@ export function ConfirmDialog({
           <PButton variant="soft" onClick={onClose}>
             Cancelar
           </PButton>
-          <PButton variant="danger" icon="trash" onClick={confirm}>
-            {loading ? 'Eliminando…' : confirmLabel}
+          <PButton variant={variant} icon={icon} onClick={confirm}>
+            {loading ? loadingLabel : confirmLabel}
           </PButton>
         </>
       }

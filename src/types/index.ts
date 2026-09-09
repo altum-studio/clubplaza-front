@@ -224,7 +224,11 @@ export interface CanjeHistorialItem {
   id: string;
   fecha: string;
   estado: string;
-  promo_id?: string; // no verificado en la API: el front cae al título si no viene
+  // Los ids sueltos no están confirmados en la respuesta de la API: el front
+  // cae al título (promo) o al código de credencial (usuario) si no vienen.
+  promo_id?: string;
+  usuario_id?: string;
+  local_id?: string;
   usuarios: { nombre: string; apellido: string; codigo: string };
   promos: { titulo: string };
 }
