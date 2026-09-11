@@ -275,5 +275,4 @@ export interface RegisterFormData {
   celular: string;
   password: string;
   terminos: boolean;
-  acepta_comunicaciones?: boolean; // opcional: novedades y promos del club
 }

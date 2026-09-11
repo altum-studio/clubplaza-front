@@ -45,8 +45,6 @@ export const registerSchema = z.object({
   terminos: z.boolean().refine((v) => v === true, {
     message: 'Debés aceptar los términos',
   }),
-  // Opcional y desmarcado por default: recibir novedades y promos del club.
-  comunicaciones: z.boolean(),
 });
 
 export type RegisterSchema = z.infer<typeof registerSchema>;

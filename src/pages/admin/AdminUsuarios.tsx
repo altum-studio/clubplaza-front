@@ -12,7 +12,7 @@ import { ConfirmDialog } from '@/components/panel/RowMenu';
 import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { aCSV, cuantosAceptan, descargarCSV, filasCampania, miembrosExportables, nombreArchivo } from '@/lib/exportCampanias';
+import { aCSV, descargarCSV, filasCampania, miembrosExportables, nombreArchivo } from '@/lib/exportCampanias';
 import type { ApiLocal, Profile, Role } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
 import { ROLE_LABEL } from '@/lib/roles';
@@ -60,7 +60,6 @@ export default function AdminUsuarios() {
     descargarCSV(aCSV(filasCampania(d.usuarios, canjes.data, d.locales)), nombreArchivo());
   };
   const nExportables = state.data ? miembrosExportables(state.data.usuarios).length : 0;
-  const nAceptan = state.data ? cuantosAceptan(state.data.usuarios) : 0;
 
   const openNuevo = () => {
     setEditing(null);
@@ -245,7 +244,7 @@ export default function AdminUsuarios() {
       <ConfirmDialog
         open={exportOpen}
         title="Exportar para campañas"
-        message={`Se va a descargar un CSV con ${nExportables} ${nExportables === 1 ? 'miembro activo' : 'miembros activos'}: nombre, email, celular, edad, mes de cumpleaños, fecha de alta, resumen de canjes y si acepta comunicaciones (${nAceptan} ${nAceptan === 1 ? 'aceptó' : 'aceptaron'}). No incluye DNI ni credencial. El archivo tiene datos personales: usalo solo para comunicaciones del club y no lo compartas.`}
+        message={`Se va a descargar un CSV con ${nExportables} ${nExportables === 1 ? 'miembro activo' : 'miembros activos'}: nombre, email, celular, edad, mes de cumpleaños, fecha de alta y resumen de canjes. No incluye DNI ni credencial. El archivo tiene datos personales: usalo solo para comunicaciones del club y no lo compartas.`}
         confirmLabel="Descargar CSV"
         loadingLabel="Generando…"
         variant="primary"

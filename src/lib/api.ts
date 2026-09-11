@@ -188,8 +188,6 @@ export interface RegisterPayload {
   dni: string;
   telefono: string;
   rol?: Role;
-  // Consentimiento opcional para novedades/promos (Ley 25.326). Default false.
-  acepta_comunicaciones?: boolean;
 }
 
 type LocalInput = Partial<
