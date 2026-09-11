@@ -120,6 +120,9 @@ export interface Profile {
   activo: boolean;
   created_at: string;
   locales?: { id: string; nombre: string } | null; // join cuando aplica
+  // Consentimiento para comunicaciones del club (novedades/promos) y cuándo se dio.
+  acepta_comunicaciones?: boolean;
+  acepta_comunicaciones_at?: string | null;
 }
 
 // Estado de publicación de un local (backend: columna `estado`).
@@ -250,6 +253,12 @@ export interface AltaBucket {
 // Métricas de canjes (GET /canjes/stats[/mine]).
 export interface CanjeStats {
   canjes_mes: number;
+  // Serie diaria del período consultado (sin mes: 7 días; con ?mes=: el mes
+  // entero). `canjes_ultimos_7_dias` es el nombre viejo del mismo dato y se
+  // mantiene por compatibilidad; preferir `serie` + desde/hasta.
+  serie?: { fecha: string; cantidad: number }[];
+  desde?: string;
+  hasta?: string;
   canjes_ultimos_7_dias: { fecha: string; cantidad: number }[];
   miembros_unicos_mes: number;
   beneficio_mas_canjeado: { promo_id: string; titulo: string; cantidad: number } | null;
@@ -266,4 +275,5 @@ export interface RegisterFormData {
   celular: string;
   password: string;
   terminos: boolean;
+  acepta_comunicaciones?: boolean; // opcional: novedades y promos del club
 }

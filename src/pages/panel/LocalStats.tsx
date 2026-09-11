@@ -46,7 +46,7 @@ export default function LocalStats() {
     >
       <DataView state={state}>
         {(s) => {
-          const dias = s.canjes_ultimos_7_dias ?? [];
+          const dias = s.serie ?? s.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((d) => d.cantidad);
           // Con ?mes= el backend manda TODOS los días del mes en este campo (no 7).
           // Título y eje se adaptan: mes entero → día del mes (1, 5, 10…); 7 días → Lun, Mar…

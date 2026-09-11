@@ -188,6 +188,8 @@ export interface RegisterPayload {
   dni: string;
   telefono: string;
   rol?: Role;
+  // Consentimiento opcional para novedades/promos (Ley 25.326). Default false.
+  acepta_comunicaciones?: boolean;
 }
 
 type LocalInput = Partial<
@@ -285,14 +287,13 @@ export const api = {
     // normaliza a mayúsculas, igual lo mandamos en upper por las dudas.
     byCodigo: (codigo: string) =>
       request<MiembroPorCodigo>(`/usuarios/codigo/${encodeURIComponent(codigo.trim().toUpperCase())}`),
-    // Altas de usuarios por período (para el gráfico del dashboard admin).
-    altas: (periodo: 'mes' | 'semana') =>
-      request<AltaBucket[]>('/usuarios/altas', { query: { periodo } }),
-    // Altas diarias en un rango [desde, hasta] (YYYY-MM-DD). Para navegar semanas
-    // pasadas en el gráfico. Devuelve un bucket por día (periodo = 'YYYY-MM-DD').
-    // TODO BACKEND: ver backend-spec-stats-por-mes.md (soporte de rango).
-    altasRango: (desde: string, hasta: string) =>
-      request<AltaBucket[]>('/usuarios/altas', { query: { desde, hasta } }),
+    // Altas por período (gráfico del dashboard admin). `rol` filtra (p. ej. solo
+    // miembros = 'comun'); sin rol suma todos los roles.
+    altas: (periodo: 'mes' | 'semana', rol?: Role) =>
+      request<AltaBucket[]>('/usuarios/altas', { query: { periodo, rol } }),
+    // Altas diarias en un rango [desde, hasta] (YYYY-MM-DD), un bucket por día.
+    altasRango: (desde: string, hasta: string, rol?: Role) =>
+      request<AltaBucket[]>('/usuarios/altas', { query: { desde, hasta, rol } }),
     create: (body: ProfileInput) => request<Profile>('/usuarios', { method: 'POST', body }),
     update: (id: string, body: ProfileInput) => request<Profile>(`/usuarios/${id}`, { method: 'PATCH', body }),
     remove: (id: string) => request<{ id: string }>(`/usuarios/${id}`, { method: 'DELETE' }),
@@ -361,8 +362,8 @@ export const api = {
       request<CanjeStats>('/canjes/stats/mine', { query }),
     stats: (query?: { local_id?: string; mes?: string }) =>
       request<CanjeStats>('/canjes/stats', { query }),
-    // Serie diaria de canjes en un rango [desde, hasta] (YYYY-MM-DD). Para navegar
-    // semanas pasadas en el gráfico. TODO BACKEND: ver backend-spec-stats-por-mes.md.
+    // Serie diaria de canjes en un rango [desde, hasta] (YYYY-MM-DD), para navegar
+    // semanas pasadas en el gráfico.
     serie: (desde: string, hasta: string) =>
       request<{ fecha: string; cantidad: number }[]>('/canjes/serie', { query: { desde, hasta } }),
   },

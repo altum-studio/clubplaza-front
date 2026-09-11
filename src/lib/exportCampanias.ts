@@ -24,6 +24,7 @@ export const COLUMNAS = [
   'Último canje',
   'Rubro favorito',
   'Local favorito',
+  'Acepta comunicaciones',
 ] as const;
 
 // Edad cumplida a la fecha `hoy` (YYYY-MM-DD). '' si no hay fecha válida.
@@ -43,6 +44,11 @@ function mesCumple(nac: string): string {
 /** Miembros a exportar: rol Miembro y cuenta activa. */
 export function miembrosExportables(usuarios: Profile[]): Profile[] {
   return usuarios.filter((u) => u.rol === 'comun' && u.activo);
+}
+
+/** Cuántos de los exportables aceptaron recibir comunicaciones (tilde del registro). */
+export function cuantosAceptan(usuarios: Profile[]): number {
+  return miembrosExportables(usuarios).filter((u) => u.acepta_comunicaciones === true).length;
 }
 
 export function filasCampania(
@@ -93,6 +99,9 @@ export function filasCampania(
       a?.ultimo ?? '',
       favorito?.rubro ? CATEGORIA_LABEL[favorito.rubro] : '',
       favorito?.nombre ?? '',
+      // Consentimiento explícito del tilde del registro. Los registrados antes
+      // del tilde figuran "No": filtrar por esta columna para campañas.
+      u.acepta_comunicaciones ? 'Sí' : 'No',
     ];
   });
 }

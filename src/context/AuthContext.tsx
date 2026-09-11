@@ -165,6 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       dni: data.dni,
       telefono: data.celular,
       rol: 'comun',
+      acepta_comunicaciones: data.acepta_comunicaciones ?? false,
     };
     const res = await api.auth.register(payload);
     setTokens(res.session);

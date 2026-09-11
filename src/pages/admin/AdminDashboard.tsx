@@ -1,6 +1,6 @@
 // pages/admin/AdminDashboard.tsx
-// Panel Admin · Dashboard general. KPIs reales, "Altas de usuarios" desde
-// GET /api/usuarios/altas (mes/semana; suma todos los roles) y "Top locales por
+// Panel Admin · Dashboard general. KPIs reales, "Altas de miembros" desde
+// GET /api/usuarios/altas?rol=comun (mes/semana/rango) y "Top locales por
 // canjes". El selector de mes actualiza los canjes del mes y el ranking (?mes=).
 
 import { useState } from 'react';
@@ -97,14 +97,13 @@ export default function AdminDashboard() {
     [],
   );
 
-  // Altas de usuarios: mes = 12 meses; semana = ventana de 7 días navegable.
-  // La semana actual usa el endpoint de siempre (funciona hoy); las anteriores
-  // piden datos por rango (necesita backend — ver spec; fallback a vacío).
+  // Altas de MIEMBROS (rol comun): mes = 12 meses; semana = ventana de 7 días
+  // navegable hacia atrás por rango de fechas.
   const altas = useAsync(() => {
-    if (vista === 'mes') return api.usuarios.altas('mes');
-    if (semanaBack === 0) return api.usuarios.altas('semana');
+    if (vista === 'mes') return api.usuarios.altas('mes', 'comun');
+    if (semanaBack === 0) return api.usuarios.altas('semana', 'comun');
     const { desde, hasta } = weekRange(semanaBack);
-    return api.usuarios.altasRango(desde, hasta).catch(() => [] as AltaBucket[]);
+    return api.usuarios.altasRango(desde, hasta, 'comun').catch(() => [] as AltaBucket[]);
   }, [vista, semanaBack]);
 
   // Serie de canjes en el MISMO formato que altas, para el toggle del gráfico.
@@ -114,7 +113,7 @@ export default function AdminDashboard() {
     if (vista === 'semana') {
       if (semanaBack === 0) {
         const s = await api.canjes.stats({});
-        return s.canjes_ultimos_7_dias.map((d) => ({ periodo: d.fecha, count: d.cantidad }));
+        return (s.serie ?? s.canjes_ultimos_7_dias).map((d) => ({ periodo: d.fecha, count: d.cantidad }));
       }
       const { desde, hasta } = weekRange(semanaBack);
       return api.canjes
@@ -201,8 +200,8 @@ export default function AdminDashboard() {
           const ultimoParcial = !!ultimo && (vista === 'mes' ? ultimo === hoy.slice(0, 7) : ultimo === hoy);
           const subBase = esAltas
             ? vista === 'mes'
-              ? 'Nuevos usuarios por mes'
-              : 'Nuevos usuarios por día'
+              ? 'Nuevos miembros por mes'
+              : 'Nuevos miembros por día'
             : vista === 'mes'
               ? 'Canjes por mes'
               : 'Canjes por día';
@@ -254,12 +253,11 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={() => setMetric((m) => (m === 'altas' ? 'canjes' : 'altas'))}
                       className="group -my-1 flex cursor-pointer items-center gap-1.5"
-                      aria-label={esAltas ? 'Ver canjes' : 'Ver altas de usuarios'}
-                      title={esAltas ? 'Ver canjes' : 'Ver altas de usuarios'}
+                      aria-label={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
+                      title={esAltas ? 'Ver canjes' : 'Ver altas de miembros'}
                     >
-                      {/* "usuarios" (no "miembros"): la serie de /usuarios/altas suma
-                          todos los roles y el endpoint no filtra por rol. */}
-                      <span>{esAltas ? 'Altas de usuarios' : 'Canjes'}</span>
+                      {/* Serie filtrada con ?rol=comun: cuenta solo miembros. */}
+                      <span>{esAltas ? 'Altas de miembros' : 'Canjes'}</span>
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-fill text-mute transition-colors group-hover:bg-brand/10 group-hover:text-brand">
                         <Icon name="chevR" size={15} />
                       </span>

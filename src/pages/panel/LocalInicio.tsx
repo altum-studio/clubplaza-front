@@ -57,7 +57,7 @@ export default function LocalInicio() {
       <DataView state={state}>
         {(d) => {
           const hoy = hoyAR();
-          const dias = d.stats?.canjes_ultimos_7_dias ?? [];
+          const dias = d.stats?.serie ?? d.stats?.canjes_ultimos_7_dias ?? [];
           const serie = dias.map((x) => x.cantidad);
           const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
           // "Canjes hoy": el bucket cuya fecha es HOY (Argentina), no el último por posición.

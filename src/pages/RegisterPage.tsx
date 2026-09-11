@@ -65,10 +65,12 @@ export default function RegisterPage() {
       celular: '',
       password: '',
       terminos: false,
+      comunicaciones: false,
     },
   });
 
   const terminos = watch('terminos');
+  const comunicaciones = watch('comunicaciones');
 
   const onSubmit = async (data: RegisterSchema) => {
     try {
@@ -80,6 +82,7 @@ export default function RegisterPage() {
         celular: data.celular,
         password: data.password,
         terminos: data.terminos,
+        acepta_comunicaciones: data.comunicaciones,
       });
       navigate(homeForRole(profile.rol), { replace: true });
     } catch (e) {
@@ -203,6 +206,32 @@ export default function RegisterPage() {
               {errors.terminos.message}
             </p>
           )}
+
+          {/* Consentimiento OPCIONAL para comunicaciones (separado de los términos). */}
+          <label className="mt-2.5 flex cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={comunicaciones}
+              onChange={(e) => setValue('comunicaciones', e.target.checked)}
+            />
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-[1.5px] ${
+                comunicaciones ? 'border-brand bg-brand' : 'border-line bg-white'
+              }`}
+            >
+              {comunicaciones && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 6.5l2.5 2.5 4.5-5" />
+                </svg>
+              )}
+            </span>
+            <span className="text-[10.5px] leading-[1.5] text-graytext">
+              Quiero recibir novedades, promociones y beneficios del club por email y WhatsApp.{' '}
+              <span className="text-faint">Opcional, podés cambiarlo cuando quieras.</span>
+            </span>
+          </label>
         </div>
 
         {/* CTA + link */}
