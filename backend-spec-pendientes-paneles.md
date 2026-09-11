@@ -2,6 +2,12 @@
 
 Fecha: 2026-09-09. El front ya está adaptado a todo lo que sigue: cuando el backend lo implemente, funciona sin cambios del lado del front (salvo donde se indica).
 
+> **Estado 2026-09-11: TODO VERIFICADO contra la API real.** Puntos 1 a 7 implementados y probados
+> (ids en canjes, `?rol=` en usuarios y altas, corte de mes en huso AR con un canje a las 23:30 del
+> 31/08, `serie`+`desde`/`hasta` en stats, `/canjes/serie` y `/usuarios/altas?desde&hasta`,
+> `acepta_comunicaciones` en registro/usuarios, rechazados persistidos con `motivo`). El front ya
+> consume todo. Queda este archivo como registro.
+
 ## 1. `GET /api/canjes` y `GET /api/canjes/mine`: devolver los ids sueltos
 
 Hoy cada canje viene con los joins (`usuarios{codigo,nombre,apellido}`, `promos{titulo}`) pero **no confirmamos** que traiga `usuario_id`, `promo_id` y `local_id`. El front los usa si vienen y si no cae a un fallback (código de credencial / título), pero:
