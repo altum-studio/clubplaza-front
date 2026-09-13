@@ -80,7 +80,7 @@ export default function LocalInicio() {
                 {/* Una sola card: vigentes hoy, con el total publicado como referencia. */}
                 <Stat
                   live
-                  label="Beneficios vigentes" info="Activos, dentro de su vigencia y válidos hoy según sus días."
+                  label="Disponibles hoy" info="Beneficios que un socio puede usar hoy en tu local. Los publicados que hoy no aplican por día o vigencia no cuentan."
                   value={String(vigentes)}
                   unit={`de ${publicados} publicados`}
                   icon="tag"
