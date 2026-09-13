@@ -22,7 +22,7 @@ import { slugify } from '@/lib/utils';
 import { useSocio } from '@/hooks/useSocio';
 import { useAuth } from '@/hooks/useAuth';
 import { RUBROS, labelCategoria } from '@/lib/categorias';
-import { diaSemanaAR } from '@/lib/fechas';
+import { diaSemanaAR, hoyAR } from '@/lib/fechas';
 import type { Categoria, Promo } from '@/types';
 
 // Mezcla al azar (Fisher-Yates) sin mutar el original.
@@ -85,8 +85,12 @@ export default function HomePage() {
   // días). Es INDEPENDIENTE de los filtros de Rubro/Fecha (esos afinan la grilla).
   // El orden es ALEATORIO (no agrupado por marca) y se re-mezcla cada tanto.
   const beneficiosHoy = useMemo(() => {
-    const hoy = diaSemanaAR(); // día de hoy en Argentina, no el del dispositivo
-    return shuffle(promosVisibles.filter((p) => p.dias.includes(hoy)));
+    const dow = diaSemanaAR(); // día de hoy en Argentina, no el del dispositivo
+    const hoy = hoyAR();
+    // Vigente hoy: día válido Y dentro de la vigencia (sin vencidos ni programados).
+    const vigente = (p: Promo) =>
+      (!p.vigente_desde || p.vigente_desde <= hoy) && (!p.vigente_hasta || hoy <= p.vigente_hasta);
+    return shuffle(promosVisibles.filter((p) => p.dias.includes(dow) && vigente(p)));
     // shuffleSeed fuerza el re-mezclado periódico.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promosVisibles, shuffleSeed]);
