@@ -1,29 +1,33 @@
 // pages/panel/LocalStats.tsx
-// Panel Local · Estadísticas de canjes. Datos reales desde GET /api/canjes/stats/mine:
-// canjes del mes, miembros únicos, serie de los últimos 7 días y beneficio más
-// canjeado. (El backend devuelve el mes actual; el selector queda como referencia.)
+// Panel Local · Estadísticas de canjes. Datos reales desde GET /api/canjes/stats/mine
+// (?mes=): canjes del mes, miembros activos, serie diaria y beneficio más canjeado.
+// Las promos del local se traen para mostrar el banner del beneficio más canjeado.
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
-import { Bars, PButton, PCard, Stat } from '@/components/panel/kit';
+import { LogoBox, PButton, PCard, Stat } from '@/components/panel/kit';
+import { AltasChart } from '@/components/panel/AltasChart';
 import { MonthPicker, monthLabel, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diaSemanaDe, hoyAR } from '@/lib/fechas';
-
-const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+import { ddmm, hoyAR } from '@/lib/fechas';
 
 export default function LocalStats() {
   const navigate = useNavigate();
   const [monthOffset, setMonthOffset] = useState(0);
-  const { activeLocalId } = useLocalScope();
+  const { activeLocalId, activeLocal } = useLocalScope();
   const mes = monthValue(monthOffset);
   const state = useAsync(
-    () => api.canjes.statsMine({ local_id: activeLocalId ?? undefined, mes }),
+    () =>
+      Promise.all([
+        api.canjes.statsMine({ local_id: activeLocalId ?? undefined, mes }),
+        // Promos del local: solo para el banner del beneficio más canjeado (si falla, sin imagen).
+        api.promos.mine({ local_id: activeLocalId ?? undefined, limit: 200 }).catch(() => null),
+      ]).then(([stats, promos]) => ({ stats, promos: promos?.data ?? [] })),
     [activeLocalId, mes],
   );
 
@@ -45,27 +49,25 @@ export default function LocalStats() {
       }
     >
       <DataView state={state}>
-        {(s) => {
-          const dias = s.serie ?? s.canjes_ultimos_7_dias ?? [];
-          const serie = dias.map((d) => d.cantidad);
-          // Con ?mes= el backend manda TODOS los días del mes en este campo (no 7).
-          // Título y eje se adaptan: mes entero → día del mes (1, 5, 10…); 7 días → Lun, Mar…
-          const esMesEntero = dias.length > 7;
-          const labels = dias.map((d) => {
-            if (!esMesEntero) return DOW[diaSemanaDe(d.fecha)] ?? '';
-            const n = Number(d.fecha.slice(8, 10));
-            return n === 1 || n % 5 === 0 ? String(n) : '';
-          });
+        {(d) => {
+          const s = d.stats;
           const hoy = hoyAR();
-          // Barra de HOY (por fecha, no por posición): resaltada y con trama de "parcial".
-          // En un mes pasado no existe → ninguna barra resaltada.
-          const hoyIdx = dias.findIndex((d) => d.fecha.slice(0, 10) === hoy);
-          // "Últimos 7 días" = los 7 últimos días hasta hoy dentro de la serie (no el mes entero).
-          const total7 = dias
-            .filter((d) => d.fecha.slice(0, 10) <= hoy)
-            .slice(-7)
-            .reduce((a, d) => a + d.cantidad, 0);
+          const esMesActual = mes === hoy.slice(0, 7);
+          // Serie diaria del mes elegido (con ?mes= el backend manda el mes entero).
+          // En el mes en curso se corta en HOY: los días futuros no aportan nada.
+          const dias = (s.serie ?? s.canjes_ultimos_7_dias ?? []).filter(
+            (x) => !esMesActual || x.fecha.slice(0, 10) <= hoy,
+          );
+          const buckets = dias.map((x) => ({ periodo: x.fecha.slice(0, 10), count: x.cantidad }));
+          const hoyParcial = esMesActual && buckets.length > 0 && buckets[buckets.length - 1].periodo === hoy;
+          // "Últimos 7 días" = los 7 últimos días de la serie (hasta hoy en el mes actual).
+          const total7 = dias.slice(-7).reduce((a, x) => a + x.cantidad, 0);
           const porMiembro = s.miembros_unicos_mes ? s.canjes_mes / s.miembros_unicos_mes : 0;
+          // Beneficio más canjeado + su banner (desde las promos del local).
+          const top = s.beneficio_mas_canjeado;
+          const topPromo = top ? d.promos.find((p) => p.id === top.promo_id) : undefined;
+          const topImg = topPromo?.banner_url ?? activeLocal?.logo_url ?? null;
+          const pct = top && s.canjes_mes ? Math.round((top.cantidad / s.canjes_mes) * 100) : 0;
 
           return (
             <div className="flex flex-col gap-4">
@@ -75,7 +77,8 @@ export default function LocalStats() {
                 <Stat live label="Miembros activos del mes" info="Miembros distintos que canjearon al menos una vez en el mes elegido." value={String(s.miembros_unicos_mes)} icon="users" />
                 <Stat
                   live
-                  label="Canjes / miembro" info="Promedio de canjes por miembro activo en el mes."
+                  label="Canjes / miembro"
+                  info="Promedio de canjes por miembro activo en el mes."
                   value={porMiembro ? porMiembro.toFixed(1).replace('.', ',') : '—'}
                   icon="chart"
                 />
@@ -86,16 +89,12 @@ export default function LocalStats() {
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
                 <PCard
                   title="Canjes por día"
-                  sub={(esMesEntero ? monthLabel(monthOffset) : 'Últimos 7 días') + (hoyIdx >= 0 ? ' · hoy parcial' : '')}
+                  sub={`${monthLabel(monthOffset)}${hoyParcial ? ` · hoy parcial · al ${ddmm(hoy)}` : ''}`}
                 >
-                  {serie.length ? (
-                    <Bars
-                      data={serie}
-                      labels={labels}
-                      highlight={hoyIdx >= 0 ? hoyIdx : undefined}
-                      parcial={hoyIdx >= 0 ? hoyIdx : undefined}
-                      h={210}
-                    />
+                  {buckets.length ? (
+                    <div className="h-[240px]">
+                      <AltasChart buckets={buckets} vista="dia" parcial={hoyParcial} />
+                    </div>
                   ) : (
                     <PanelEmpty
                       icon="chart"
@@ -105,14 +104,24 @@ export default function LocalStats() {
                   )}
                 </PCard>
 
-                <PCard title="Beneficio más canjeado">
-                  {s.beneficio_mas_canjeado ? (
-                    <div className="flex flex-col gap-1.5 py-3">
-                      <div className="text-[16px] font-extrabold leading-tight text-ink">
-                        {s.beneficio_mas_canjeado.titulo}
-                      </div>
-                      <div className="text-[13px] text-mute">
-                        {s.beneficio_mas_canjeado.cantidad} canjes este mes
+                <PCard title="Beneficio más canjeado" sub={monthLabel(monthOffset)}>
+                  {top ? (
+                    <div className="flex items-center gap-4 py-2">
+                      {topImg ? (
+                        <img
+                          src={topImg}
+                          alt=""
+                          className="h-16 w-16 flex-shrink-0 rounded-full border border-line object-cover"
+                        />
+                      ) : (
+                        <LogoBox size={64} />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-[16px] font-extrabold leading-tight text-ink">{top.titulo}</div>
+                        <div className="mt-1 text-[13px] text-graytext">
+                          <b className="text-ink">{top.cantidad}</b> {top.cantidad === 1 ? 'canje' : 'canjes'}
+                          {pct > 0 ? ` · ${pct}% de los canjes del mes` : ''}
+                        </div>
                       </div>
                     </div>
                   ) : (

@@ -15,12 +15,15 @@ const MES_FULL = [
 ];
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-type Vista = 'mes' | 'semana';
+// 'mes': buckets mensuales (eje: Ene, Feb…). 'semana': buckets diarios, pocos
+// (eje: Lun, Mar…). 'dia': buckets diarios de un mes entero (eje: 1, 2, 3…).
+type Vista = 'mes' | 'semana' | 'dia';
 
 // Los buckets diarios son días de calendario ('YYYY-MM-DD'): se leen como tales,
 // sin pasar por el huso del dispositivo.
 function axisLabel(b: AltaBucket, vista: Vista): string {
   if (vista === 'mes') return MES_ABBR[Number(b.periodo.slice(5, 7)) - 1] ?? '';
+  if (vista === 'dia') return String(Number(b.periodo.slice(8, 10)) || '');
   return DOW[diaSemanaDe(b.periodo)] ?? '';
 }
 function fullLabel(b: AltaBucket, vista: Vista): string {
