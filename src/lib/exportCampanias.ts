@@ -99,9 +99,9 @@ export function filasCampania(
 
 // CSV con BOM (para que Excel lea los acentos) y separador ';' (Excel en
 // español lo abre en columnas directo). Google Sheets también lo entiende.
-export function aCSV(filas: string[][]): string {
+export function aCSV(filas: string[][], columnas: readonly string[] = COLUMNAS): string {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const lineas = [COLUMNAS.map(esc).join(';'), ...filas.map((f) => f.map(esc).join(';'))];
+  const lineas = [columnas.map(esc).join(';'), ...filas.map((f) => f.map(esc).join(';'))];
   return `\uFEFF${lineas.join('\r\n')}`;
 }
 

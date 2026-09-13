@@ -3,6 +3,7 @@
 // (últimos 7) y actividad reciente de validaciones, todo desde la API
 // (api.promos.mine + api.canjes.statsMine + api.canjes.mine).
 
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PanelShell } from '@/components/panel/PanelShell';
 import { Badge, Bars, PButton, PCard, Stat } from '@/components/panel/kit';
@@ -12,7 +13,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
 import { LOCAL_NAV } from '@/data/panelMock';
-import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR } from '@/lib/fechas';
+import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR, rangoSemana } from '@/lib/fechas';
 import { promoPorVencer, promoPublicada, promoVencida, promoVigenteHoy } from '@/lib/opciones';
 
 const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -40,6 +41,14 @@ export default function LocalInicio() {
       ]).then(([promos, stats, recientes]) => ({ promos, stats, recientes })),
     [activeLocalId],
   );
+  // Navegación de semanas del gráfico: 0 = últimos 7 días (viene en stats),
+  // +1 = semana anterior (vía /canjes/serie), …
+  const [semanaBack, setSemanaBack] = useState(0);
+  const semana = useAsync(async () => {
+    if (semanaBack === 0) return null;
+    const { desde, hasta } = rangoSemana(semanaBack);
+    return api.canjes.serie(desde, hasta, activeLocalId ?? undefined).catch(() => []);
+  }, [semanaBack, activeLocalId]);
 
   return (
     <PanelShell
@@ -58,12 +67,14 @@ export default function LocalInicio() {
         {(d) => {
           const hoy = hoyAR();
           const dias = d.stats?.serie ?? d.stats?.canjes_ultimos_7_dias ?? [];
-          const serie = dias.map((x) => x.cantidad);
-          const labels = dias.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
           // "Canjes hoy": el bucket cuya fecha es HOY (Argentina), no el último por posición.
-          // El mismo índice marca la barra de hoy como parcial en el gráfico.
-          const hoyIdx = dias.findIndex((x) => x.fecha.slice(0, 10) === hoy);
-          const canjesHoy = hoyIdx >= 0 ? dias[hoyIdx].cantidad : 0;
+          const canjesHoy = dias.find((x) => x.fecha.slice(0, 10) === hoy)?.cantidad ?? 0;
+          // Gráfico: semana actual (stats) o una anterior (serie por rango).
+          const diasChart = semanaBack === 0 ? dias : (semana.data ?? []);
+          const serie = diasChart.map((x) => x.cantidad);
+          const labels = diasChart.map((x) => DOW[diaSemanaDe(x.fecha)] ?? '');
+          // La barra de hoy se marca como parcial (solo existe en la semana actual).
+          const hoyIdx = diasChart.findIndex((x) => x.fecha.slice(0, 10) === hoy);
           const recientes = d.recientes?.data ?? [];
           // Vigente (definición canónica): activa + dentro de vigencia + hoy es día válido.
           const vigentes = d.promos.data.filter((p) => promoVigenteHoy(p, hoy, diaSemanaAR())).length;
@@ -126,8 +137,36 @@ export default function LocalInicio() {
               )}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-                <PCard title="Canjes por día" sub={`Últimos 7 días${hoyIdx >= 0 ? ' · hoy parcial' : ''}`}>
-                  {serie.length ? (
+                <PCard
+                  title="Canjes por día"
+                  sub={`${semanaBack === 0 ? 'Últimos 7 días' : rangoSemana(semanaBack).label}${hoyIdx >= 0 ? ' · hoy parcial' : ''}`}
+                >
+                  {/* Navegador de semanas: ‹ semana anterior · › siguiente (hasta la actual) */}
+                  <div className="mb-2.5 flex items-center justify-between rounded-lg bg-fill px-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() => setSemanaBack((w) => w + 1)}
+                      aria-label="Semana anterior"
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-graytext hover:bg-white"
+                    >
+                      <Icon name="chevL" size={15} />
+                    </button>
+                    <span className="text-[12px] font-semibold text-graytext">
+                      {semanaBack === 0 ? 'Últimos 7 días' : rangoSemana(semanaBack).label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSemanaBack((w) => Math.max(0, w - 1))}
+                      disabled={semanaBack === 0}
+                      aria-label="Semana siguiente"
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-graytext hover:bg-white disabled:opacity-30"
+                    >
+                      <Icon name="chevR" size={15} />
+                    </button>
+                  </div>
+                  {semanaBack > 0 && semana.loading ? (
+                    <div className="flex items-center justify-center py-12 text-[13px] text-mute">Cargando…</div>
+                  ) : serie.length ? (
                     <Bars
                       data={serie}
                       labels={labels}
@@ -138,8 +177,8 @@ export default function LocalInicio() {
                   ) : (
                     <PanelEmpty
                       icon="chart"
-                      title="Sin canjes todavía"
-                      hint="Cuando valides credenciales vas a ver la evolución acá."
+                      title={semanaBack > 0 ? 'Sin datos para esta semana' : 'Sin canjes todavía'}
+                      hint={semanaBack > 0 ? 'No hay registros en este rango.' : 'Cuando valides credenciales vas a ver la evolución acá.'}
                     />
                   )}
                 </PCard>

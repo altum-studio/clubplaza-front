@@ -13,7 +13,7 @@ import { MonthPicker, monthValue } from '@/components/panel/MonthPicker';
 import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { api } from '@/lib/api';
-import { ddmm, hoyAR, sumarDias } from '@/lib/fechas';
+import { ddmm, hoyAR, rangoSemana } from '@/lib/fechas';
 import { promoPorVencer, promoVencida, promoVigente } from '@/lib/opciones';
 import type { AltaBucket, ApiLocal, ApiPromo, Profile } from '@/types';
 import { ADMIN_NAV } from '@/data/panelMock';
@@ -26,14 +26,8 @@ const MESES_VISTA = 6;
 const MES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const mesCorto = (ym: string) => `${MES_ABBR[Number(ym.slice(5, 7)) - 1] ?? ''} '${ym.slice(2, 4)}`;
 
-// Rango [desde, hasta] (YYYY-MM-DD) de la ventana de 7 días `back` semanas atrás
-// (back=0 = últimos 7 días, terminando HOY en Argentina). Label corto D/M – D/M.
-function weekRange(back: number): { desde: string; hasta: string; label: string } {
-  const hasta = sumarDias(hoyAR(), -back * 7);
-  const desde = sumarDias(hasta, -6);
-  const dm = (ymd: string) => `${Number(ymd.slice(8, 10))}/${Number(ymd.slice(5, 7))}`;
-  return { desde, hasta, label: `${dm(desde)} – ${dm(hasta)}` };
-}
+// La ventana semanal navegable usa rangoSemana() de lib/fechas (huso AR).
+const weekRange = rangoSemana;
 
 // Enumera 'YYYY-MM' desde `from` hasta `to` inclusive (serie de canjes por mes).
 function monthsRange(from: string, to: string): string[] {

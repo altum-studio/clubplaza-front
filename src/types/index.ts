@@ -232,7 +232,8 @@ export interface CanjeHistorialItem {
   promo_id?: string;
   usuario_id?: string;
   local_id?: string;
-  usuarios: { nombre: string; apellido: string; codigo: string };
+  // email: pedido al backend (spec pendientes-paneles §8); hasta entonces no viene.
+  usuarios: { nombre: string; apellido: string; codigo: string; email?: string };
   promos: { titulo: string };
 }
 

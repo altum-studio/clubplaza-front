@@ -54,3 +54,12 @@ export function formatoAR(iso: string, opts: Intl.DateTimeFormatOptions): string
   if (isNaN(d.getTime())) return '';
   return d.toLocaleString('es-AR', { timeZone: TZ_AR, ...opts });
 }
+
+/** Ventana de 7 días que termina hoy (AR), desplazada `back` semanas hacia atrás.
+ *  Devuelve [desde, hasta] 'YYYY-MM-DD' y un label corto "D/M – D/M". */
+export function rangoSemana(back: number): { desde: string; hasta: string; label: string } {
+  const hasta = sumarDias(hoyAR(), -back * 7);
+  const desde = sumarDias(hasta, -6);
+  const dm = (ymd: string) => `${Number(ymd.slice(8, 10))}/${Number(ymd.slice(5, 7))}`;
+  return { desde, hasta, label: `${dm(desde)} – ${dm(hasta)}` };
+}

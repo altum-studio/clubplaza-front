@@ -47,3 +47,7 @@ Columna `acepta_comunicaciones` (boolean, default false) + `acepta_comunicacione
 - `dias` de promos llega como array de enteros en `/promos` y `/promos/mine`.
 - Horarios que cruzan medianoche se aceptan.
 - 403 al pedir datos de otro `local_id`.
+
+## 8. Email del miembro en el historial de canjes (nuevo, 2026-09-12)
+
+`GET /api/canjes/mine` (y `GET /api/canjes`) devuelven `usuarios: { nombre, apellido, codigo }`. El panel local ahora exporta desde Historial la lista de miembros que validaron en el mes y necesita el **email**. **Pedido:** agregar `email` al join de `usuarios` en ambos listados. El front ya lo lee si viene (columna vacía mientras tanto).

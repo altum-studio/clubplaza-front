@@ -362,7 +362,8 @@ export const api = {
       request<CanjeStats>('/canjes/stats', { query }),
     // Serie diaria de canjes en un rango [desde, hasta] (YYYY-MM-DD), para navegar
     // semanas pasadas en el gráfico.
-    serie: (desde: string, hasta: string) =>
-      request<{ fecha: string; cantidad: number }[]>('/canjes/serie', { query: { desde, hasta } }),
+    // local_id: acota al local (panel local / ranking); sin él, todos los locales.
+    serie: (desde: string, hasta: string, local_id?: string) =>
+      request<{ fecha: string; cantidad: number }[]>('/canjes/serie', { query: { desde, hasta, local_id } }),
   },
 };
