@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import type { Promo } from '@/types';
 import { api, humanizeError } from '@/lib/api';
 import { mapPromo } from '@/lib/mapApi';
+import { hoyAR } from '@/lib/fechas';
+import { promoVencida } from '@/lib/opciones';
 
 export function usePromos() {
   const [promos, setPromos] = useState<Promo[]>([]);
@@ -25,7 +27,12 @@ export function usePromos() {
         ]);
         if (cancel) return;
         const locMap = new Map(l.data.map((x) => [x.id, { nombre: x.nombre, logo_url: x.logo_url }]));
-        setPromos(p.data.map((pr) => mapPromo(pr, locMap.get(pr.local_id))));
+        // Los vencidos no se muestran en la app del socio en ningún lado (el
+        // backend los sigue devolviendo mientras estén activos).
+        const hoy = hoyAR();
+        setPromos(
+          p.data.filter((pr) => !promoVencida(pr, hoy)).map((pr) => mapPromo(pr, locMap.get(pr.local_id))),
+        );
       } catch (e) {
         if (!cancel) setError(humanizeError(e));
       } finally {

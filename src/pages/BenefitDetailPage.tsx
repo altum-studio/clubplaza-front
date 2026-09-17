@@ -19,6 +19,7 @@ import { labelCategoria } from '@/lib/categorias';
 import { tipoBeneficioLabel, vigenciaLabel, diasLabel, limiteLabel } from '@/lib/opciones';
 import { BenefitValue } from '@/components/benefits/BenefitValue';
 import { vigenteHoy } from '@/lib/utils';
+import { hoyAR } from '@/lib/fechas';
 
 export default function BenefitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,10 @@ export default function BenefitDetailPage() {
 
   if (loading) return <DetailSkeleton />;
 
-  if (error || !promo) {
+  // Un beneficio vencido no se muestra aunque se llegue por link directo.
+  const vencido = !!promo && !!promo.vigente_hasta && promo.vigente_hasta.slice(0, 10) < hoyAR();
+
+  if (error || !promo || vencido) {
     return (
       <AppCanvas>
         <div className={`${STATUS_PAD} px-4`}>
@@ -78,7 +82,10 @@ export default function BenefitDetailPage() {
             <ChevronLeft size={20} />
           </button>
         </div>
-        <ErrorState message={error ?? 'No encontramos ese beneficio'} onRetry={() => navigate('/beneficios')} />
+        <ErrorState
+          message={vencido ? 'Este beneficio ya no está disponible' : (error ?? 'No encontramos ese beneficio')}
+          onRetry={() => navigate('/beneficios')}
+        />
       </AppCanvas>
     );
   }
