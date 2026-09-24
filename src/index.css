@@ -160,11 +160,16 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Fondo verde de marca en html+body: además de teñir la zona fuera del lienzo,
+     hace que Safari de iPhone pinte la barra de dirección de verde (junto con la
+     etiqueta theme-color del index.html). En Android/Chrome alcanza con theme-color. */
+  html {
+    background: #23753a;
+  }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
     margin: 0;
-    /* Fondo neutro fuera del marco del teléfono (mismo tono que el wireflow). */
-    background: #faf9f5;
+    background: #23753a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
