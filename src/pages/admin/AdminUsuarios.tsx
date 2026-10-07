@@ -33,8 +33,8 @@ export default function AdminUsuarios() {
       // un usuario también se pueden elegir los inactivos.
       Promise.all([
         api.usuarios.listAll(),
-        api.locales.list({ activo: true, limit: 200 }),
-        api.locales.list({ activo: false, limit: 200 }),
+        api.locales.list({ activo: true, limit: 200 }, { auth: true }),
+        api.locales.list({ activo: false, limit: 200 }, { auth: true }),
       ]).then(([u, act, inact]) => {
         const byId = new Map<string, ApiLocal>();
         for (const l of [...act.data, ...inact.data]) byId.set(l.id, l);

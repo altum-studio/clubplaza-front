@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { BenefitImage } from './BenefitImage';
 import { LocalLogo } from './LocalLogo';
 import { Button } from '@/components/ui/app-button';
+import { useDragScroll } from '@/hooks/useDragScroll';
 import type { Promo } from '@/types';
 
 const AUTOPLAY_MS = 4500;
@@ -49,6 +50,19 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
     setActive(best);
   };
 
+  // Con mouse: agarrar y arrastrar. Pausa el avance automático y, al soltar,
+  // centra la tarjeta más cercana (igual que al deslizar con el dedo).
+  useDragScroll(scrollerRef, {
+    onDragStart: () => {
+      pausedRef.current = true;
+    },
+    onDragEnd: () => {
+      pausedRef.current = false;
+      handleScroll();
+      centerOn(activeRef.current);
+    },
+  });
+
   // Si cambia la lista (ej: cambia el filtro de fecha) NO reiniciamos el scroll:
   // dejamos la posición donde está y solo recalculamos el dot activo. Así el
   // filtro y el carrusel son independientes.
@@ -86,7 +100,7 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
           onTouchEnd={() => {
             pausedRef.current = false;
           }}
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-[10%] pb-1 sm:px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="cp-drag flex snap-x snap-mandatory gap-3 overflow-x-auto px-[10%] pb-1 sm:px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {promos.map((p) => (
             <article

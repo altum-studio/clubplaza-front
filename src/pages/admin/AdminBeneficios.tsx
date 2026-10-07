@@ -13,7 +13,7 @@ import { BeneficioFormModal } from '@/components/panel/BeneficioFormModal';
 import { ConfirmDialog, RowMenu } from '@/components/panel/RowMenu';
 import { api } from '@/lib/api';
 import { hoyAR } from '@/lib/fechas';
-import { promoResaltada, promoVencida } from '@/lib/opciones';
+import { promoPublicada, promoResaltada, promoVencida } from '@/lib/opciones';
 import { useAsync } from '@/hooks/useAsync';
 import { useFlash } from '@/hooks/useFlash';
 import { ADMIN_NAV } from '@/data/panelMock';
@@ -22,8 +22,13 @@ import type { ApiLocal, ApiPromo } from '@/types';
 export default function AdminBeneficios() {
   const state = useAsync(
     () =>
-      Promise.all([api.locales.list({ limit: 200 }), api.promos.list({ limit: 500 })]).then(
-        ([l, p]) => ({ locales: l.data, promos: p.data, publicados: p.count }),
+      Promise.all([api.locales.list({ limit: 200 }, { auth: true }), api.promos.list({ limit: 500 }, { auth: true })]).then(
+        // "Publicados" = activos y no vencidos (los vencidos pasan solos a inactivos).
+        ([l, p]) => ({
+          locales: l.data,
+          promos: p.data,
+          publicados: p.data.filter((pr) => promoPublicada(pr, hoyAR())).length,
+        }),
       ),
     [],
   );
@@ -181,8 +186,10 @@ export default function AdminBeneficios() {
                                   <Icon name="tag" size={15} className="text-mute" />
                                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{p.titulo}</span>
                                 </button>
-                                <Badge tone={p.activa ? 'ok' : 'mute'} dot={false}>
-                                  {p.activa ? 'Publicado' : 'Inactivo'}
+                                {/* Vencido = inactivo automáticamente (sin tocar el tilde). Si se
+                                    extiende la fecha, vuelve a figurar como publicado. */}
+                                <Badge tone={promoPublicada(p, hoy) ? 'ok' : 'mute'} dot={false}>
+                                  {promoPublicada(p, hoy) ? 'Publicado' : 'Inactivo'}
                                 </Badge>
                                 <RowMenu
                                   items={[

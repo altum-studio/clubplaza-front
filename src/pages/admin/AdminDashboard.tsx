@@ -61,8 +61,8 @@ export default function AdminDashboard() {
   const base = useAsync(
     () =>
       Promise.all([
-        api.locales.list({ limit: 500 }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
-        api.promos.list({ limit: 500 }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
+        api.locales.list({ limit: 500 }, { auth: true }).catch(() => ({ data: [] as ApiLocal[], count: 0 })),
+        api.promos.list({ limit: 500 }, { auth: true }).catch(() => ({ data: [] as ApiPromo[], count: 0 })),
         api.usuarios.list({ limit: 1 }).catch(() => ({ data: [] as Profile[], count: 0 })),
       ]).then(([l, p, u]) => {
         const hoy = hoyAR();

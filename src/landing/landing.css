@@ -1,22 +1,6 @@
 /* landing.css — estilos propios de la landing de pauta (/sumate).
    Los tokens de marca vienen de src/index.css; acá solo lo exclusivo. */
 
-/* Carrusel de logos: desfila en loop (la pista está duplicada → mueve -50%). */
-.cp-marquee {
-  animation: cpMarquee var(--cp-marquee-dur, 50s) linear infinite;
-}
-.cp-marquee:hover {
-  animation-play-state: paused;
-}
-@keyframes cpMarquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* Barra de scroll oculta en carruseles horizontales (sigue siendo scrolleable). */
 .cp-noscrollbar {
   scrollbar-width: none;
@@ -33,8 +17,3 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cp-marquee {
-    animation: none;
-  }
-}

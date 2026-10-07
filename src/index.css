@@ -292,3 +292,16 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Carruseles que se "agarran y arrastran" con el mouse (hook useDragScroll).
+   Mano abierta solo en equipos con mouse; mano cerrada mientras se arrastra. */
+@media (hover: hover) and (pointer: fine) {
+  .cp-drag {
+    cursor: grab;
+  }
+}
+.cp-dragging,
+.cp-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}

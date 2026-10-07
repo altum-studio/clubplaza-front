@@ -52,6 +52,8 @@ export function BeneficioFormModal({
   const [limitePeriodo, setLimitePeriodo] = useState<LimitePeriodo>('dia');
   const [bannerUrl, setBannerUrl] = useState('');
   const [activa, setActiva] = useState(true);
+  // La fecha "hasta" ya pasó → el beneficio está vencido (inactivo automático).
+  const vencidoEnForm = !indefinida && !!hasta && hasta < hoyISO();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -281,7 +283,14 @@ export function BeneficioFormModal({
         >
           <div>
             <div className="text-[13px] font-bold text-ink">Beneficio activo</div>
-            <div className="text-[11.5px] text-mute">Visible para los miembros</div>
+            {vencidoEnForm ? (
+              // Vencido: queda inactivo solo, aunque el tilde esté prendido.
+              <div className="text-[11.5px] font-semibold text-soon">
+                Vencido: no se muestra a los miembros. Extendé “Vigente hasta” para volver a publicarlo.
+              </div>
+            ) : (
+              <div className="text-[11.5px] text-mute">Visible para los miembros</div>
+            )}
           </div>
           <Toggle on={activa} />
         </button>

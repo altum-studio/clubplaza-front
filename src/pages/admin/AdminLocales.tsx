@@ -30,9 +30,9 @@ export default function AdminLocales() {
       // defecto lista solo activos, así que pedimos ambos y los mergeamos.
       // (Desactivar un local no lo borra; solo lo oculta a los miembros.)
       Promise.all([
-        api.locales.list({ activo: true, limit: 50 }),
-        api.locales.list({ activo: false, limit: 50 }),
-        api.promos.list({ limit: 500 }),
+        api.locales.list({ activo: true, limit: 50 }, { auth: true }),
+        api.locales.list({ activo: false, limit: 50 }, { auth: true }),
+        api.promos.list({ limit: 500 }, { auth: true }),
       ]).then(([act, inact, p]) => {
         const byId = new Map<string, ApiLocal>();
         for (const l of [...act.data, ...inact.data]) byId.set(l.id, l);

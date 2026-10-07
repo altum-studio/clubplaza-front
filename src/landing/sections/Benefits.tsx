@@ -3,9 +3,11 @@
 // siguiente tarjeta asomándose (invita a deslizar). Compu: grilla de 4.
 // Si la API falla, la sección no se muestra (el resto de la landing sigue).
 
+import { useRef } from 'react';
 import { BenefitImage } from '@/components/benefits/BenefitImage';
 import { BenefitValue } from '@/components/benefits/BenefitValue';
 import { LocalLogo } from '@/components/benefits/LocalLogo';
+import { useDragScroll } from '@/hooks/useDragScroll';
 import { valorLabel } from '@/lib/opciones';
 import type { Promo } from '@/types';
 import { URL_BENEFICIOS } from '../links';
@@ -14,6 +16,10 @@ import type { LandingData } from '../useLandingData';
 const CARD = 'w-[78%] max-w-[300px] shrink-0 snap-start md:w-auto md:max-w-none';
 
 export function Benefits({ data }: { data: LandingData }) {
+  // Con mouse se puede agarrar y arrastrar (en la compu ancha es grilla: no aplica).
+  const scrollerRef = useRef<HTMLUListElement>(null);
+  useDragScroll(scrollerRef);
+
   if (data.status === 'error') return null;
   if (data.status === 'ready' && data.destacados.length === 0) return null;
 
@@ -27,7 +33,9 @@ export function Benefits({ data }: { data: LandingData }) {
           </h2>
         </div>
 
-        <ul className="cp-noscrollbar mt-5 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 pb-2 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-[30px]">
+        <ul
+          ref={scrollerRef}
+          className="cp-drag cp-noscrollbar mt-5 flex snap-x snap-mandatory scroll-px-5 gap-3.5 overflow-x-auto px-5 pb-2 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-[30px]">
           {data.status === 'loading'
             ? Array.from({ length: 4 }).map((_, i) => (
                 <li key={i} className={CARD} aria-hidden="true">

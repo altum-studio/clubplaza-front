@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { LocalLogo } from './LocalLogo';
 import { slugify, cn } from '@/lib/utils';
+import { useDragScroll } from '@/hooks/useDragScroll';
 import type { LocalEstado } from '@/types';
 
 interface Local {
@@ -59,6 +60,9 @@ export function LocalsMarquee({ locales }: { locales: Local[] }) {
     }, 1600);
   };
 
+  // Con mouse: agarrar y arrastrar (pausa el auto-scroll; retoma al rato).
+  useDragScroll(scrollerRef, { onDragStart: pause, onDragEnd: resumeSoon });
+
   if (locales.length === 0) return null;
 
   // Duplicamos para que el loop sea continuo (seamless).
@@ -76,7 +80,7 @@ export function LocalsMarquee({ locales }: { locales: Local[] }) {
           pause();
           resumeSoon();
         }}
-        className="flex gap-5 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="cp-drag flex gap-5 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {pista.map((l, i) => (
           <Link

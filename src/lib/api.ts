@@ -99,7 +99,27 @@ async function parse(res: Response) {
   return body;
 }
 
-async function tryRefresh(): Promise<boolean> {
+// Un solo refresh a la vez: si varias requests lo piden juntas, comparten el
+// mismo (Supabase rota el refresh token; usarlo dos veces en paralelo falla).
+let refreshing: Promise<boolean> | null = null;
+function tryRefresh(): Promise<boolean> {
+  refreshing ??= doRefresh().finally(() => {
+    refreshing = null;
+  });
+  return refreshing;
+}
+
+// ¿El access token (JWT) vence en menos de 30 s? Si no se puede leer, asumimos que no.
+function tokenPorVencer(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 - Date.now() < 30_000;
+  } catch {
+    return false;
+  }
+}
+
+async function doRefresh(): Promise<boolean> {
   const refresh = getRefreshToken();
   if (!refresh) return false;
   try {
@@ -133,6 +153,11 @@ async function request<T>(path: string, opts: ReqOpts = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth) {
+    // Renovamos ANTES si el token está por vencer: los endpoints de auth opcional
+    // (listas públicas) no responden 401 con un token vencido, lo tratan como
+    // visitante anónimo, y el admin dejaría de ver lo inactivo sin aviso.
+    const actual = getAccessToken();
+    if (actual && !_retry && tokenPorVencer(actual)) await tryRefresh();
     const t = getAccessToken();
     if (t) headers.Authorization = `Bearer ${t}`;
   }
@@ -297,8 +322,10 @@ export const api = {
     remove: (id: string) => request<{ id: string }>(`/usuarios/${id}`, { method: 'DELETE' }),
   },
   locales: {
-    list: (query?: { activo?: boolean; limit?: number; offset?: number }) =>
-      request<Paginated<ApiLocal>>('/locales', { query, auth: false }),
+    // `opts.auth`: mandar el token (paneles de admin). Sin token el backend solo
+    // devuelve locales disponibles/próximamente; con token de admin, también los inactivos.
+    list: (query?: { activo?: boolean; limit?: number; offset?: number }, opts?: { auth?: boolean }) =>
+      request<Paginated<ApiLocal>>('/locales', { query, auth: opts?.auth ?? false }),
     get: (id: string) => request<ApiLocal>(`/locales/${id}`, { auth: false }),
     create: (body: LocalInput) => request<ApiLocal>('/locales', { method: 'POST', body }),
     update: (id: string, body: LocalInput) => request<ApiLocal>(`/locales/${id}`, { method: 'PATCH', body }),
@@ -309,8 +336,12 @@ export const api = {
     mias: () => request<ApiLocal[]>('/locales/mias'),
   },
   promos: {
-    list: (query?: { local_id?: string; rubro?: Categoria; activa?: boolean; limit?: number; offset?: number }) =>
-      request<Paginated<ApiPromo>>('/promos', { query, auth: false }),
+    // `opts.auth`: mandar el token (paneles de admin). Sin token el backend solo
+    // devuelve las publicadas (ignora `activa`); con token de admin, también las inactivas.
+    list: (
+      query?: { local_id?: string; rubro?: Categoria; activa?: boolean; limit?: number; offset?: number },
+      opts?: { auth?: boolean },
+    ) => request<Paginated<ApiPromo>>('/promos', { query, auth: opts?.auth ?? false }),
     get: (id: string) => request<ApiPromo>(`/promos/${id}`, { auth: false }),
     create: (body: PromoInput) => request<ApiPromo>('/promos', { method: 'POST', body }),
     update: (id: string, body: PromoInput) => request<ApiPromo>(`/promos/${id}`, { method: 'PATCH', body }),
