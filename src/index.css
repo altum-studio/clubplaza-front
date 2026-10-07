@@ -173,14 +173,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  /* En la compu (mouse) los navegadores no tiñen la barra: ahí el fondo de los
-     costados va blanco, del mismo tono que el contenido, para que se vea continuo. */
-  @media (hover: hover) and (pointer: fine) {
-    html,
-    body {
-      background: #fbfcfb;
-    }
-  }
   /* Mobile-first: el lienzo del teléfono se centra en pantallas grandes. */
   #root {
     display: flex;
