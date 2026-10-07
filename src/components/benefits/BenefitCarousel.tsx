@@ -50,16 +50,15 @@ export function BenefitCarousel({ promos }: { promos: Promo[] }) {
     setActive(best);
   };
 
-  // Con mouse: agarrar y arrastrar. Pausa el avance automático y, al soltar,
-  // centra la tarjeta más cercana (igual que al deslizar con el dedo).
+  // Con mouse: agarrar y arrastrar. Pausa el avance automático; al soltar, el
+  // hook desliza suave hasta la tarjeta según el impulso (las tarjetas son
+  // snap-center) y los dots se actualizan solos con onScroll.
   useDragScroll(scrollerRef, {
     onDragStart: () => {
       pausedRef.current = true;
     },
     onDragEnd: () => {
       pausedRef.current = false;
-      handleScroll();
-      centerOn(activeRef.current);
     },
   });
 
