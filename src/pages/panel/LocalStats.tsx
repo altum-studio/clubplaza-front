@@ -16,6 +16,7 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
+import { serieLocal } from '@/lib/serieLocal';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { ddmm, hoyAR, rangoSemana } from '@/lib/fechas';
 
@@ -40,7 +41,7 @@ export default function LocalStats() {
   const semana = useAsync(async () => {
     if (vista !== 'semana') return null;
     const { desde, hasta } = rangoSemana(semanaBack);
-    return api.canjes.serie(desde, hasta, activeLocalId ?? undefined).catch(() => []);
+    return serieLocal(desde, hasta, activeLocalId ?? undefined);
   }, [vista, semanaBack, activeLocalId]);
 
   return (
@@ -155,7 +156,9 @@ export default function LocalStats() {
                       <Icon name="chevR" size={15} />
                     </button>
                   </div>
-                  {vista === 'semana' && semana.loading ? (
+                  {vista === 'semana' && semana.error ? (
+                    <PanelEmpty icon="chart" title="No se pudo cargar esta semana" hint={semana.error} />
+                  ) : vista === 'semana' && semana.loading ? (
                     <div className="flex items-center justify-center py-14 text-[13px] text-mute">Cargando…</div>
                   ) : buckets.length ? (
                     <div className="h-[240px]">

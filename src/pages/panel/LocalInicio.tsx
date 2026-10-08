@@ -12,6 +12,7 @@ import { DataView, PanelEmpty } from '@/components/panel/DataState';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalScope } from '@/hooks/useLocalScope';
 import { api } from '@/lib/api';
+import { serieLocal } from '@/lib/serieLocal';
 import { LOCAL_NAV } from '@/data/panelMock';
 import { diaSemanaAR, diaSemanaDe, formatoAR, hoyAR, rangoSemana } from '@/lib/fechas';
 import { promoPorVencer, promoPublicada, promoVencida, promoVigenteHoy } from '@/lib/opciones';
@@ -47,7 +48,7 @@ export default function LocalInicio() {
   const semana = useAsync(async () => {
     if (semanaBack === 0) return null;
     const { desde, hasta } = rangoSemana(semanaBack);
-    return api.canjes.serie(desde, hasta, activeLocalId ?? undefined).catch(() => []);
+    return serieLocal(desde, hasta, activeLocalId ?? undefined);
   }, [semanaBack, activeLocalId]);
 
   return (
@@ -164,7 +165,9 @@ export default function LocalInicio() {
                       <Icon name="chevR" size={15} />
                     </button>
                   </div>
-                  {semanaBack > 0 && semana.loading ? (
+                  {semanaBack > 0 && semana.error ? (
+                    <PanelEmpty icon="chart" title="No se pudo cargar esta semana" hint={semana.error} />
+                  ) : semanaBack > 0 && semana.loading ? (
                     <div className="flex items-center justify-center py-12 text-[13px] text-mute">Cargando…</div>
                   ) : serie.length ? (
                     <Bars
