@@ -117,7 +117,7 @@ export default function LocalInicio() {
                       <Icon name="clock" size={14} className="flex-shrink-0 text-bad" />
                       <span>
                         <b>{vencidos}</b>{' '}
-                        {vencidos === 1 ? 'beneficio vencido sigue publicado' : 'beneficios vencidos siguen publicados'}
+                        {vencidos === 1 ? 'beneficio vencido e inactivo' : 'beneficios vencidos e inactivos'}
                       </span>
                       <Icon name="chevR" size={14} className="text-mute" />
                     </Link>
