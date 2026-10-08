@@ -88,6 +88,12 @@ export function trackWhatsappClick() {
   window.gtag?.('event', 'whatsapp_click');
 }
 
+/** Toque en "Cómo llegar" (modo: auto, transporte, bici, a pie, mapa). */
+export function trackComoLlegar(modo: string) {
+  window.fbq?.('trackCustom', 'ClickComoLlegar', { modo });
+  window.gtag?.('event', 'como_llegar_click', { modo });
+}
+
 function currentCampaignParams(): URLSearchParams {
   const now = new URLSearchParams(window.location.search);
   const out = new URLSearchParams();

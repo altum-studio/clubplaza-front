@@ -9,6 +9,7 @@ import { LocalesStrip } from './sections/LocalesStrip';
 import { Benefits } from './sections/Benefits';
 import { HowItWorks } from './sections/HowItWorks';
 import { Faq } from './sections/Faq';
+import { ComoLlegar } from './sections/ComoLlegar';
 import { FinalCta } from './sections/FinalCta';
 import { Footer } from './sections/Footer';
 import { StickyCta } from './sections/StickyCta';
@@ -27,6 +28,7 @@ export function LandingPage() {
         <Benefits data={data} />
         <HowItWorks />
         <Faq />
+        <ComoLlegar />
         <FinalCta ctaRef={finalCtaRef} />
       </main>
       <Footer />
