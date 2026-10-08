@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Landing de pauta de ClubPlaza (/sumate). Entrada aparte de la app: carga
+         solo lo necesario para la landing. No está linkeada desde la plataforma. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#23753a" />
+    <title>ClubPlaza · Beneficios exclusivos en Green Plaza</title>
+    <meta
+      name="description"
+      content="Sumate gratis a ClubPlaza, el club de beneficios de Green Plaza. Mostrá tu credencial digital y ahorrá en los locales adheridos."
+    />
+    <!-- Página pensada para llegar por link (anuncios / redes): fuera del buscador. -->
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://www.greenplaza.com.ar/sumate" />
+
+    <!-- Vista previa al compartir (WhatsApp, Instagram, Facebook) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ClubPlaza · Green Plaza" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:title" content="Sumate gratis a ClubPlaza" />
+    <meta
+      property="og:description"
+      content="Beneficios exclusivos en los locales de Green Plaza. Tu credencial digital, en el celular."
+    />
+    <meta property="og:url" content="https://www.greenplaza.com.ar/sumate" />
+    <meta property="og:image" content="https://www.greenplaza.com.ar/landing/hero-desktop.jpg" />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="810" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/svg+xml" href="/clubplaza-front/favicon.svg?v=3" />
+
+    <!-- La foto de la portada es lo primero que se ve: la pedimos antes que nada. -->
+    <link rel="preload" as="image" href="/clubplaza-front/landing/hero-mobile.jpg" media="(max-width: 767px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/clubplaza-front/landing/hero-desktop.jpg" media="(min-width: 768px)" fetchpriority="high" />
+
+    <!-- Tipografías de marca: Montserrat (UI) + Spline Sans Mono (código de socio) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/clubplaza-front/assets/sumate-BTMwaNLJ.js"></script>
+    <link rel="modulepreload" crossorigin href="/clubplaza-front/assets/BenefitValue-DCIUk1_O.js">
+    <link rel="stylesheet" crossorigin href="/clubplaza-front/assets/BenefitValue-Bqyvnqbx.css">
+    <link rel="stylesheet" crossorigin href="/clubplaza-front/assets/sumate-CXPQFBIf.css">
+  </head>
+  <body>
+    <div id="landing"></div>
+  </body>
+</html>
